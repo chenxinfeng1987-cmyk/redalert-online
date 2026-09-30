@@ -61,6 +61,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <label style="cursor:pointer;color:#ffd700;font-size:11px;border:1px solid rgba(255,215,0,.3);padding:2px 8px;border-radius:4px">📤 上传图片<input type="file" id="mapUpload" accept="image/*" style="display:none" onchange="handleMapUpload(event)"></label>
   <div class="res" id="eRes"></div>
   <div style="color:#8f8;font-size:12px" id="timer">0:00</div>
+  <div id="netstat" style="color:#4af;font-size:11px;white-space:nowrap"></div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
 <div id="selinfo"></div>
@@ -1966,6 +1967,7 @@ function tick(){
     ensureMiners();
     upPwr();
     buildPanels_update();updateSelInfo();updateResUI();checkWin();
+    var _ns=document.getElementById('netstat');if(_ns)_ns.textContent=(NET.mode==='off')?'':('延迟 '+NET.ping+'ms');
     units=units.filter(function(u){return u.hp>0;});
     miners=miners.filter(function(m){return m.hp>0;});
     blds=blds.filter(function(b){return b.hp>0;});
@@ -1978,8 +1980,8 @@ function tick(){
 // ================= 联机（WebSocket 房主权威） =================
 var RA_VER='RA1';
 var NET={mode:'off',ws:null,server:'',room:'',cid:'',name:'',isHost:false,connected:false,
-  players:{},desireSide:0,pw:null,pu:null,winSide:-1,alive:[1,1,1,1],ghosts:[],
-  snapAcc:0,snapEvery:4,uStore:{},bStore:{},mStore:{},started:false};
+  players:{},desireSide:0,pw:null,pu:null,winSide:-1,alive:[1,1,1,1],ghosts:[],ping:0,pingTimer:0,
+  snapAcc:0,snapEvery:3,uStore:{},bStore:{},mStore:{},started:false};
 
 function lbMsg(s){var e=document.getElementById('lb-msg');if(e)e.textContent=s||'';}
 function defaultServer(){
@@ -2007,10 +2009,10 @@ function netConnect(server,onopen,onfail){
   var ws; try{ws=new WebSocket(server);}catch(e){onfail&&onfail('地址无效: '+server);return;}
   NET.ws=ws; var done=false;
   var to=setTimeout(function(){if(!done){done=true;try{ws.close();}catch(e){}onfail&&onfail('连接超时：服务器可能正在唤醒，请等1分钟再试');}},12000);
-  ws.onopen=function(){done=true;clearTimeout(to);NET.connected=true;try{if(NET.hb)clearInterval(NET.hb);}catch(e){}NET.hb=setInterval(function(){netSend({t:'ping'});},8000);onopen&&onopen();};
+  ws.onopen=function(){done=true;clearTimeout(to);NET.connected=true;try{if(NET.hb)clearInterval(NET.hb);if(NET.pingTimer)clearInterval(NET.pingTimer);}catch(e){}NET.hb=setInterval(function(){netSend({t:'ping'});},8000);NET.pingTimer=setInterval(function(){netSend({t:'ping',ts:Date.now()});},2000);onopen&&onopen();};
   ws.onmessage=function(ev){try{onNetMsg(JSON.parse(ev.data));}catch(e){}};
   ws.onerror=function(){if(!done){done=true;clearTimeout(to);onfail&&onfail('连接失败');}};
-  ws.onclose=function(){NET.connected=false;try{if(NET.hb)clearInterval(NET.hb);}catch(e){}};
+  ws.onclose=function(){NET.connected=false;try{if(NET.hb)clearInterval(NET.hb);if(NET.pingTimer)clearInterval(NET.pingTimer);}catch(e){}};
 }
 
 function lbCreate(){
@@ -2094,6 +2096,7 @@ function hostStart(){
 
 function onNetMsg(m){
   switch(m.t){
+    case 'pong': if(m.ts)NET.ping=Date.now()-m.ts;break;
     case 'err': lbMsg(m.msg||'错误');break;
     case 'created':
       NET.cid=m.cid;NET.isHost=true;
@@ -2133,7 +2136,12 @@ function idsOf(us){var a=[];for(var i=0;i<us.length;i++)a.push(us[i].id);return 
 function netCmd(o){if(NET.mode==='guest'){o.t='cmd';netSend(o);}}
 function applyMove(us,x,y){us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;});}
 function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});}
-function orderMove(us,x,y){if(NET.mode==='guest')netCmd({k:'move',u:idsOf(us),x:x,y:y});else applyMove(us,x,y);}
+function orderMove(us,x,y){
+  if(NET.mode==='guest'){
+    netCmd({k:'move',u:idsOf(us),x:x,y:y});
+    for(var i=0;i<us.length;i++){us[i]._ptx=x;us[i]._pty=y;us[i]._pred=true;}
+  } else applyMove(us,x,y);
+}
 function orderAttack(us,tgt,kind){if(NET.mode==='guest')netCmd({k:'attack',u:idsOf(us),kt:kind,tid:tgt.id});else applyAttack(us,tgt);}
 function unitsOfSide(side,ids){var out=[],map={};for(var i=0;i<ids.length;i++)map[ids[i]]=1;for(var j=0;j<units.length;j++){var u=units[j];if(u.hp>0&&u.side===side&&map[u.id])out.push(u);}return out;}
 function findEnt(kind,id){var arr=kind==='unit'?units:kind==='bld'?blds:miners;for(var i=0;i<arr.length;i++)if(arr[i].id===id&&arr[i].hp>0)return arr[i];return null;}
@@ -2172,9 +2180,9 @@ function tryHostTrain(side,type){
 // ---- 快照（房主→客人）----
 function hostSnapshot(){
   var i,U=[],B=[],M=[],O=[],Bl=[],S=[],Nk=[];
-  for(i=0;i<units.length;i++){var u=units[i];if(u.hp<=0)continue;U.push([u.id,u.side,u.type,~~u.x,~~u.y,u.hp,~~u.mhp,u.lv||0,u.kills||0,u.cooldown>0?1:0,u.ord==='m'?1:u.ord==='a'?2:0]);}
+  for(i=0;i<units.length;i++){var u=units[i];if(u.hp<=0)continue;U.push([u.id,u.side,u.type,Math.round(u.x*2)/2,Math.round(u.y*2)/2,u.hp,~~u.mhp,u.lv||0,u.kills||0,u.cooldown>0?1:0,u.ord==='m'?1:u.ord==='a'?2:0]);}
   for(i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;B.push([b.id,b.side,b.type,~~b.x,~~b.y,b.hp,~~b.mhp,b.ready?1:0,b.bt||0,b.sz,b.nukeCd||0]);}
-  for(i=0;i<miners.length;i++){var mi=miners[i];if(mi.hp<=0)continue;M.push([mi.id,mi.side,~~mi.x,~~mi.y,mi.hp,mi.carry,mi.st]);}
+  for(i=0;i<miners.length;i++){var mi=miners[i];if(mi.hp<=0)continue;M.push([mi.id,mi.side,Math.round(mi.x*2)/2,Math.round(mi.y*2)/2,mi.hp,mi.carry,mi.st]);}
   for(i=0;i<ores.length;i++)O.push([~~ores[i].x,~~ores[i].y,ores[i].a]);
   for(i=0;i<bullets.length;i++){var bl=bullets[i];Bl.push([~~bl.x,~~bl.y,~~bl.tx,~~bl.ty,bl.side]);}
   for(i=0;i<supplies.length;i++)S.push([~~supplies[i].x,~~supplies[i].y,supplies[i].val,supplies[i].life]);
@@ -2191,9 +2199,9 @@ function reconcile(store,recs,up){
   for(var k in store)if(!seen[k])delete store[k];
   return arr;
 }
-function upU(o,r,isNew){var d=UD[r[2]]||{};o.type=r[2];o.side=r[1];o._tx=r[3];o._ty=r[4];if(isNew){o.x=r[3];o.y=r[4];o.rng=d.rng||100;o.atk=d.atk||0;o.spd=d.spd||1;o.rt=d.rt||30;o.ar=d.ar||'lt';}o.hp=r[5];o.mhp=r[6];o.lv=r[7];o.kills=r[8];o.cooldown=r[9];o.ord=r[10]===1?'m':r[10]===2?'a':null;}
+function upU(o,r,isNew){var d=UD[r[2]]||{};o.type=r[2];o.side=r[1];o._ax=r[3];o._ay=r[4];if(isNew){o.x=r[3];o.y=r[4];o.rng=d.rng||100;o.atk=d.atk||0;o.spd=d.spd||1;o.rt=d.rt||30;o.ar=d.ar||'lt';o._pred=false;}o.hp=r[5];o.mhp=r[6];o.lv=r[7];o.kills=r[8];o.cooldown=r[9];o.ord=r[10]===1?'m':r[10]===2?'a':null;}
 function upB(o,r,isNew){var d=BD[r[2]]||{};o.type=r[2];o.side=r[1];o.x=r[3];o.y=r[4];o.hp=r[5];o.mhp=r[6];o.ready=r[7];o.bt=r[8];o.sz=r[9];o.nukeCd=r[10];if(isNew){o.atk=d.atk||0;o.art=d.art||0;}}
-function upM(o,r,isNew){o.side=r[1];o._tx=r[2];o._ty=r[3];if(isNew){o.x=r[2];o.y=r[3];}o.hp=r[4];o.carry=r[5];o.st=r[6];}
+function upM(o,r,isNew){o.side=r[1];o._ax=r[2];o._ay=r[3];if(isNew){o.x=r[2];o.y=r[3];}o.hp=r[4];o.carry=r[5];o.st=r[6];}
 function guestApply(m){
   units=reconcile(NET.uStore,m.U,upU);
   blds=reconcile(NET.bStore,m.B,upB);
@@ -2224,16 +2232,29 @@ function guestOver(m){
   document.getElementById('gom').textContent=(m.win===mySide)?'你是最后的赢家':(m.win>=0?SIDES[m.win].n+'赢得了战争':'游戏结束');
   document.getElementById('gameover').style.display='flex';
 }
+var _gfrT=0;
 function guestFrame(){
-  var i,u,m2;
-  for(i=0;i<units.length;i++){u=units[i];if(u._tx!==undefined){u.x+=(u._tx-u.x)*0.25;u.y+=(u._ty-u.y)*0.25;}}
-  for(i=0;i<miners.length;i++){m2=miners[i];if(m2._tx!==undefined){m2.x+=(m2._tx-m2.x)*0.25;m2.y+=(m2._ty-m2.y)*0.25;}}
-  for(i=bullets.length-1;i>=0;i--){var b=bullets[i],dx=b.tx-b.x,dy=b.ty-b.y,d=Math.hypot(dx,dy)||1;if(d<10){bullets.splice(i,1);continue;}b.x+=dx/d*b.spd;b.y+=dy/d*b.spd;}
+  var now=Date.now();
+  var dt=_gfrT?Math.max(0.3,Math.min(3,(now-_gfrT)/16.67)):1; _gfrT=now;
+  var k=Math.min(0.6,0.25*dt);
+  var i,u;
+  for(i=0;i<units.length;i++){
+    u=units[i];
+    if(u._pred&&u._ptx!==undefined){
+      var dx=u._ptx-u.x,dy=u._pty-u.y,d=Math.hypot(dx,dy),step=(u.spd||1)*dt;
+      if(d<2||d<=step){u.x=u._ptx;u.y=u._pty;u._pred=false;}
+      else{u.x+=dx/d*step;u.y+=dy/d*step;}
+      if(u._ax!==undefined){var ex=u._ax-u.x,ey=u._ay-u.y;if(Math.hypot(ex,ey)>90){u.x+=ex*0.15;u.y+=ey*0.15;}}
+    } else if(u._ax!==undefined){u.x+=(u._ax-u.x)*k;u.y+=(u._ay-u.y)*k;}
+  }
+  for(i=0;i<miners.length;i++){var m2=miners[i];if(m2._ax!==undefined){m2.x+=(m2._ax-m2.x)*k;m2.y+=(m2._ay-m2.y)*k;}}
+  for(i=bullets.length-1;i>=0;i--){var b=bullets[i],bx=b.tx-b.x,by=b.ty-b.y,bd=Math.hypot(bx,by)||1;if(bd<10){bullets.splice(i,1);continue;}b.x+=bx/bd*b.spd;b.y+=by/bd*b.spd;}
   updateParticles();
   var mm=~~(gt/3600),ss=~~((gt%3600)/60);
   document.getElementById('timer').textContent=mm+':'+(ss<10?'0':'')+ss;
   gold=sideGold[mySide];pwr=NET.pw?NET.pw[mySide]:0;pwrU=NET.pu?NET.pu[mySide]:0;
   buildPanels_update();updateSelInfo();updateResUI();
+  var ns=document.getElementById('netstat');if(ns)ns.textContent='延迟 '+NET.ping+'ms';
   selU=selU.filter(function(o){return units.indexOf(o)>=0;});
   if(selB&&blds.indexOf(selB)<0)selB=null;
 }

@@ -79,7 +79,7 @@ wss.on('connection', function (ws) {
 });
 
 function handle(ws, m) {
-  if (m.t === 'ping') { send(ws, { t: 'pong' }); return; }
+  if (m.t === 'ping') { send(ws, { t: 'pong', ts: m.ts }); return; }
 
   if (m.t === 'create') {
     const room = String(m.room || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
