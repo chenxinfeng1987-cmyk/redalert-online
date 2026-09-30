@@ -208,7 +208,7 @@ var nukes=[];
 var nukeFx=[];
 var screenFlash=0;
 
-function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;mm.width=160;mm.height=120;}
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();}
 resize();onresize=resize;
 
 function handleMapUpload(e){
@@ -244,7 +244,7 @@ function handleMapUpload(e){
         for(var a2=1;a2<=3;a2++){ais[a2]={timer:1800+~~(Math.random()*1200),wave:0,bt:400,ut:200,strategy:strategies[a2-1],atkOn:false,atkSide:null,raidCd:600};}
         ais[0]={timer:1800+~~(Math.random()*1200),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*3)],atkOn:false,atkSide:null,raidCd:600};
         placeOres();placeBases();
-        var _h=cornerOf(mySide);camX=_h.x-W/2/camZ;camY=_h.y-H/2/camZ;
+        var _h=cornerOf(mySide);focusOnBase(mySide);
         buildPanels();
       }catch(err){
         document.getElementById('mapname').textContent='❌ 转换失败: '+err.message;
@@ -285,7 +285,7 @@ function genMap(){
     else genFort(cols,rows);
   }
   placeOres();placeBases();
-  var _h=cornerOf(mySide);camX=_h.x-W/2/camZ;camY=_h.y-H/2/camZ;
+  var _h=cornerOf(mySide);focusOnBase(mySide);
   if(mType!=='custom')document.getElementById('mapname').textContent={symmetric:'对称竞技',lanes:'战术三路',open:'开阔战场',fortress:'据点争夺'}[mType];
   buildPanels();
 }
@@ -1201,8 +1201,18 @@ function spawnUnit(type,x,y,side){
 }
 
 var tileCols=['#3a7a2a','#b0a070','#2a5a2a','#2a5a9a','#888','#666'];
-function worldToScr(wx,wy){return{x:(wx-camX)*camZ,y:(wy-camY)*camZ};}
-function scrToWorld(sx,sy){return{x:sx/camZ+camX,y:sy/camZ+camY};}
+function viewRotK(){var k=[0,2,1,3][mySide&3];return (k===undefined)?0:k;}
+function viewExt(){var hw=(W/2)/camZ,hh=(H/2)/camZ;var k=viewRotK();return{ex:(k%2===0?hw:hh),ey:(k%2===0?hh:hw)};}
+function rotToScreen(dx,dy,k){if(k===1)return{x:dy,y:-dx};if(k===2)return{x:-dx,y:-dy};if(k===3)return{x:-dy,y:dx};return{x:dx,y:dy};}
+function rotToWorld(sxr,syr,k){if(k===1)return{x:-syr,y:sxr};if(k===2)return{x:-sxr,y:-syr};if(k===3)return{x:syr,y:-sxr};return{x:sxr,y:syr};}
+function worldToScr(wx,wy){var r=rotToScreen(wx-camX,wy-camY,viewRotK());return{x:W/2+r.x*camZ,y:H/2+r.y*camZ};}
+function scrToWorld(sx,sy){var r=rotToWorld((sx-W/2)/camZ,(sy-H/2)/camZ,viewRotK());return{x:camX+r.x,y:camY+r.y};}
+function miniScale(){return 160/MW;}
+function miniSize(){return (viewRotK()%2===0)?{w:160,h:120}:{w:120,h:160};}
+function worldToMini(wx,wy){var s=miniScale(),r=rotToScreen(wx-MW/2,wy-MH/2,viewRotK()),z=miniSize();return{x:z.w/2+r.x*s,y:z.h/2+r.y*s};}
+function miniToWorld(px,py){var s=miniScale(),z=miniSize(),r=rotToWorld((px-z.w/2)/s,(py-z.h/2)/s,viewRotK());return{x:MW/2+r.x,y:MH/2+r.y};}
+function setMiniCanvas(){var z=miniSize();if(mm.width!==z.w){mm.width=z.w;mm.height=z.h;mm.style.width=z.w+'px';mm.style.height=z.h+'px';}}
+function focusOnBase(side){var c=cornerOf(side),k=[0,2,1,3][side&3]||0,d=rotToWorld((W*0.30-W/2)/camZ,(H*0.62-H/2)/camZ,k);camX=c.x-d.x;camY=c.y-d.y;}
 
 function sideColor(side){return SIDES[side]?SIDES[side].c:'#888';}
 function sideDk(side){return SIDES[side]?SIDES[side].dk:'#444';}
@@ -1245,12 +1255,13 @@ function draw(){
   var esc=8/camZ;
   if(mpx<W*0.05)camX-=esc;if(mpx>W*0.95)camX+=esc;
   if(mpy<50)camY-=esc;if(mpy>H-180)camY+=esc;
-  camX=Math.max(-200,Math.min(MW-W/camZ+200,camX));
-  camY=Math.max(-200,Math.min(MH-H/camZ+200,camY));
+  var ve=viewExt();
+  camX=Math.max(ve.ex-200,Math.min(MW-ve.ex+200,camX));
+  camY=Math.max(ve.ey-200,Math.min(MH-ve.ey+200,camY));
   var cols=Math.ceil(MW/T),rows=Math.ceil(MH/T);
-  var stx=Math.max(0,~~(camX/T)-1),sty=Math.max(0,~~(camY/T)-1);
-  var etx=Math.min(cols,Math.ceil((camX+W/camZ)/T)+1);
-  var ety=Math.min(rows,Math.ceil((camY+H/camZ)/T)+1);
+  var stx=Math.max(0,~~((camX-ve.ex)/T)-1),sty=Math.max(0,~~((camY-ve.ey)/T)-1);
+  var etx=Math.min(cols,Math.ceil((camX+ve.ex)/T)+1);
+  var ety=Math.min(rows,Math.ceil((camY+ve.ey)/T)+1);
   var sc=T*camZ;
   for(var ty=sty;ty<ety;ty++){
     for(var tx=stx;tx<etx;tx++){
@@ -1544,23 +1555,29 @@ function draw(){
 }
 
 function drawMinimap(){
-  mx2.fillStyle='#111';mx2.fillRect(0,0,160,120);
-  var sx=160/MW,sy=120/MH;
+  setMiniCanvas();
+  var z=miniSize();
+  mx2.fillStyle='#111';mx2.fillRect(0,0,z.w,z.h);
   var cols=Math.ceil(MW/T),rows=Math.ceil(MH/T);
+  var ts=Math.max(1,T*miniScale()+1);
   for(var y=0;y<rows;y++){for(var x=0;x<cols;x++){
     if(y>=mData.length||x>=mData[y].length)continue;
+    var mp=worldToMini(x*T+T/2,y*T+T/2);
     mx2.fillStyle=tileCols[mData[y][x]]||'#3a7a2a';
-    mx2.fillRect(x*T*sx,y*T*sy,Math.ceil(T*sx)+1,Math.ceil(T*sy)+1);
+    mx2.fillRect(mp.x-ts/2,mp.y-ts/2,ts,ts);
   }}
-  units.forEach(function(u){if(u.hp<=0)return;mx2.fillStyle=sideColor(u.side);mx2.fillRect(u.x*sx-1,u.y*sy-1,2,2);});
-  miners.forEach(function(m){if(m.hp<=0)return;mx2.fillStyle=sideColor(m.side);mx2.fillRect(m.x*sx-1,m.y*sy-1,2,2);});
+  function dot(wx,wy,rad,col){var mp2=worldToMini(wx,wy);mx2.fillStyle=col;mx2.fillRect(mp2.x-rad,mp2.y-rad,rad*2,rad*2);}
+  units.forEach(function(u){if(u.hp<=0)return;dot(u.x,u.y,1,sideColor(u.side));});
+  miners.forEach(function(m){if(m.hp<=0)return;dot(m.x,m.y,1,sideColor(m.side));});
   blds.forEach(function(b){
     if(b.hp<=0)return;
-    mx2.fillStyle=sideColor(b.side);
-    if(b.type==='hq'){mx2.fillRect(b.x*sx-3,b.y*sy-3,6,6);mx2.fillStyle='#fff';mx2.font='6px sans-serif';mx2.textAlign='left';mx2.fillText(SIDES[b.side]&&SIDES[b.side].fl||'',b.x*sx+3,b.y*sy-2);}
-    else mx2.fillRect(b.x*sx-2,b.y*sy-2,4,4);
+    if(b.type==='hq'){var mp3=worldToMini(b.x,b.y);mx2.fillStyle=sideColor(b.side);mx2.fillRect(mp3.x-3,mp3.y-3,6,6);mx2.fillStyle='#fff';mx2.font='6px sans-serif';mx2.textAlign='left';mx2.fillText(SIDES[b.side]&&SIDES[b.side].fl||'',mp3.x+4,mp3.y-2);}
+    else dot(b.x,b.y,2,sideColor(b.side));
   });
-  mx2.strokeStyle='#fff';mx2.lineWidth=1;mx2.strokeRect(camX*sx,camY*sy,(W/camZ)*sx,(H/camZ)*sy);
+  var ve=viewExt();
+  var a=worldToMini(camX-ve.ex,camY-ve.ey),b2=worldToMini(camX+ve.ex,camY+ve.ey);
+  mx2.strokeStyle='#fff';mx2.lineWidth=1;
+  mx2.strokeRect(Math.min(a.x,b2.x),Math.min(a.y,b2.y),Math.abs(b2.x-a.x),Math.abs(b2.y-a.y));
 }
 
 var mcp=document.getElementById('minimap');
@@ -1569,7 +1586,7 @@ function getPos(e){return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clien
 function onDown(e){
   if(gOver){genMap();return;}
   var p=getPos(e);
-  if(e.target===mcp){var r=mm.getBoundingClientRect();camX=((p.x-r.left)/r.width)*MW-W/2/camZ;camY=((p.y-r.top)/r.height)*MH-H/2/camZ;return;}
+  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;return;}
   if(p.y<36)return;
   if(e.button===2){
     var wp=scrToWorld(p.x,p.y);
@@ -1665,8 +1682,8 @@ cv.ontouchend=function(e){onUp(e);};
 document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;selU=[];selB=null;buildPanels();updateSelInfo();}};
 
 var mmDrag=false;
-mm.onmousedown=function(e){mmDrag=true;var r=mm.getBoundingClientRect();camX=((e.clientX-r.left)/r.width)*MW-W/2/camZ;camY=((e.clientY-r.top)/r.height)*MH-H/2/camZ;};
-mm.onmousemove=function(e){if(!mmDrag)return;var r=mm.getBoundingClientRect();camX=((e.clientX-r.left)/r.width)*MW-W/2/camZ;camY=((e.clientY-r.top)/r.height)*MH-H/2/camZ;};
+mm.onmousedown=function(e){mmDrag=true;var r=mm.getBoundingClientRect();var wpt=miniToWorld(((e.clientX-r.left)/r.width)*mm.width,((e.clientY-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;};
+mm.onmousemove=function(e){if(!mmDrag)return;var r=mm.getBoundingClientRect();var wpt=miniToWorld(((e.clientX-r.left)/r.width)*mm.width,((e.clientY-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;};
 mm.onmouseup=function(){mmDrag=false;};
 
 function changeMap(v){
@@ -1792,7 +1809,7 @@ function updateWeather(){
     weather=r<0.4?'clear':r<0.75?'rain':'fog';
     weatherTimer=1200+~~(Math.random()*1800);
     var wn={clear:'☀️ 晴朗',rain:'🌧️ 暴雨 减速50%',fog:'🌫️ 浓雾 视野受限'};
-    parts.push({x:camX+W/2/camZ,y:camY+100,vx:0,vy:0,life:120,col:'#fff',sz:2});
+    var _wh=scrToWorld(W/2,60);parts.push({x:_wh.x,y:_wh.y,vx:0,vy:0,life:120,col:'#fff',sz:2});
     document.getElementById('mapname').textContent=wn[weather];
     setTimeout(function(){if(mType!=='custom')document.getElementById('mapname').textContent={symmetric:'对称竞技',lanes:'战术三路',open:'开阔战场',fortress:'据点争夺'}[mType]||mType;else document.getElementById('mapname').textContent=wn[weather];},4000);
   }
@@ -2230,7 +2247,7 @@ function guestStart(m){
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
-  var h=cornerOf(mySide);camX=h.x-W/2/camZ;camY=h.y-H/2/camZ;
+  var h=cornerOf(mySide);focusOnBase(mySide);
   buildPanels();
   NET.mode='guest';NET.started=true;NET.pw=[0,0,0,0];NET.pu=[0,0,0,0];NET.alive=[1,1,1,1];
   closeLobby();
