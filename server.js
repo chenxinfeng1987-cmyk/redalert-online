@@ -53,8 +53,10 @@ wss.on('connection', function (ws) {
   ws._room = null;
   ws._role = null;
   ws._name = '';
+  ws._lastSeen = Date.now();
 
   ws.on('message', function (raw) {
+    ws._lastSeen = Date.now();
     let m;
     try { m = JSON.parse(raw.toString()); } catch (e) { return; }
     if (!m || typeof m.t !== 'string') return;
@@ -124,3 +126,11 @@ function handle(ws, m) {
 }
 
 server.listen(PORT, function () { console.log('redalert-server listening on ' + PORT); });
+
+// 心跳剔除：25秒未收到任何消息则断开（页面直接关闭时也能及时通知房主）
+setInterval(function () {
+  const now = Date.now();
+  wss.clients.forEach(function (c) {
+    if (c._lastSeen && now - c._lastSeen > 25000) { try { c.terminate(); } catch (e) { } }
+  });
+}, 10000);

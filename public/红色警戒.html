@@ -1980,10 +1980,10 @@ function netConnect(server,onopen,onfail){
   var ws; try{ws=new WebSocket(server);}catch(e){onfail&&onfail('地址无效: '+server);return;}
   NET.ws=ws; var done=false;
   var to=setTimeout(function(){if(!done){done=true;try{ws.close();}catch(e){}onfail&&onfail('连接超时：服务器可能正在唤醒，请等1分钟再试');}},12000);
-  ws.onopen=function(){done=true;clearTimeout(to);NET.connected=true;onopen&&onopen();};
+  ws.onopen=function(){done=true;clearTimeout(to);NET.connected=true;try{if(NET.hb)clearInterval(NET.hb);}catch(e){}NET.hb=setInterval(function(){netSend({t:'ping'});},8000);onopen&&onopen();};
   ws.onmessage=function(ev){try{onNetMsg(JSON.parse(ev.data));}catch(e){}};
   ws.onerror=function(){if(!done){done=true;clearTimeout(to);onfail&&onfail('连接失败');}};
-  ws.onclose=function(){NET.connected=false;};
+  ws.onclose=function(){NET.connected=false;try{if(NET.hb)clearInterval(NET.hb);}catch(e){}};
 }
 
 function lbCreate(){
