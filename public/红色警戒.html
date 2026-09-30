@@ -191,7 +191,7 @@ var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0;
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null;
-var mpx=0,mpy=0;
+var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
 var ais=[null,null,null,null];
 var mType='symmetric';
@@ -1253,8 +1253,12 @@ function drawFlag(x,y,w,h,side){
 function draw(){
   cx.fillStyle='#0a0a0a';cx.fillRect(0,0,W,H);
   var esc=8/camZ;
-  if(mpx<W*0.05)camX-=esc;if(mpx>W*0.95)camX+=esc;
-  if(mpy<50)camY-=esc;if(mpy>H-180)camY+=esc;
+  if(mptrIn){
+    var mvx=0,mvy=0;
+    if(mpx<W*0.05)mvx-=1;else if(mpx>W*0.95)mvx+=1;
+    if(mpy<50)mvy-=1;else if(mpy>H-180)mvy+=1;
+    if(mvx||mvy){var wd=rotToWorld(mvx*esc,mvy*esc,viewRotK());camX+=wd.x;camY+=wd.y;}
+  }
   var ve=viewExt();
   camX=Math.max(ve.ex-200,Math.min(MW-ve.ex+200,camX));
   camY=Math.max(ve.ey-200,Math.min(MH-ve.ey+200,camY));
@@ -1634,7 +1638,7 @@ function onDown(e){
 }
 function onMove(e){
   if(e)e.preventDefault();
-  var p=getPos(e);mpx=p.x;mpy=p.y;
+  var p=getPos(e);mpx=p.x;mpy=p.y;mptrIn=true;
   if(bldMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
 }
@@ -1674,7 +1678,7 @@ function onUp(e){
 }
 function onWheel(e){camZ=Math.max(0.5,Math.min(4,camZ*(e.deltaY>0?0.9:1.1)));}
 
-cv.onmousedown=onDown;cv.onmousemove=onMove;cv.onmouseup=onUp;cv.onwheel=onWheel;
+cv.onmousedown=onDown;cv.onmousemove=onMove;cv.onmouseup=onUp;cv.onwheel=onWheel;cv.onmouseleave=function(){mptrIn=false;};
 cv.oncontextmenu=function(e){e.preventDefault();};
 cv.ontouchstart=function(e){e.preventDefault();onDown(e);};
 cv.ontouchmove=function(e){e.preventDefault();onMove(e);};
