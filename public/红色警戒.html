@@ -1599,7 +1599,13 @@ function onDown(e){
   if(p.y>H-170)return;
   if(bldMode){
     if(canBuild(bldMode,bldX,bldY)){
-      if(NET.mode==='guest'){netCmd({k:'build',type:bldMode,x:bldX,y:bldY});}
+      if(NET.mode==='guest'){
+        netCmd({k:'build',type:bldMode,x:bldX,y:bldY});
+        var _gd=BD[bldMode];
+        sideGold[mySide]=Math.max(0,sideGold[mySide]-_gd.g);gold=sideGold[mySide];
+        var _gh={id:-1,type:bldMode,side:mySide,x:bldX,y:bldY,hp:_gd.hp,mhp:_gd.hp,ready:0,bt:120,sz:_gd.sz,atk:0,art:0,_ghost:1,t:Date.now()};
+        NET.ghosts.push(_gh);blds.push(_gh);
+      }
       else{gold-=BD[bldMode].g;sideGold[mySide]=gold;var nb=addB(bldMode,bldX,bldY,mySide);nb.ready=0;nb.bt=120;
         if(bldMode==='tunnel'){var tx2=~~(bldX/T),ty2=~~(bldY/T);for(var dx2=-1;dx2<=1;dx2++)for(var dy2=-1;dy2<=1;dy2++){if(ty2+dy2>=0&&ty2+dy2<mData.length&&tx2+dx2>=0&&tx2+dx2<mData[0].length)mData[ty2+dy2][tx2+dx2]=0;}}
       }
@@ -1951,8 +1957,8 @@ function tick(){
 // ================= 联机（WebSocket 房主权威） =================
 var RA_VER='RA1';
 var NET={mode:'off',ws:null,server:'',room:'',cid:'',name:'',isHost:false,connected:false,
-  players:{},desireSide:0,pw:null,pu:null,winSide:-1,alive:[1,1,1,1],
-  snapAcc:0,snapEvery:8,uStore:{},bStore:{},mStore:{},started:false};
+  players:{},desireSide:0,pw:null,pu:null,winSide:-1,alive:[1,1,1,1],ghosts:[],
+  snapAcc:0,snapEvery:4,uStore:{},bStore:{},mStore:{},started:false};
 
 function lbMsg(s){var e=document.getElementById('lb-msg');if(e)e.textContent=s||'';}
 function defaultServer(){
@@ -2013,7 +2019,7 @@ function lbJoin(){
 function lbLeave(){
   netSend({t:'leave'});
   try{if(NET.ws)NET.ws.close();}catch(e){}
-  NET.mode='off';NET.started=false;NET.isHost=false;NET.players={};NET.room='';
+  NET.mode='off';NET.started=false;NET.isHost=false;NET.players={};NET.room='';NET.ghosts=[];
   document.getElementById('lb-main').style.display='block';
   document.getElementById('lb-room-view').style.display='none';
   humanSide=[true,false,false,false];mySide=0;
@@ -2118,6 +2124,7 @@ function hostApplyCmd(m){
   else if(m.k==='build'){tryHostBuild(side,m.type,m.x,m.y);}
   else if(m.k==='train'){tryHostTrain(side,m.type);}
   else if(m.k==='miner'){hostMinerRedirect(side,m.x,m.y);}
+  hostSnapshot();
 }
 function hostMinerRedirect(side,x,y){
   miners.forEach(function(m){
@@ -2170,6 +2177,16 @@ function guestApply(m){
   units=reconcile(NET.uStore,m.U,upU);
   blds=reconcile(NET.bStore,m.B,upB);
   miners=reconcile(NET.mStore,m.M,upM);
+  if(NET.ghosts.length){
+    var _now=Date.now(),_keep=[];
+    for(var _gi=0;_gi<NET.ghosts.length;_gi++){
+      var _g=NET.ghosts[_gi],_mt=false;
+      for(var _bi=0;_bi<blds.length;_bi++){var _b=blds[_bi];if(_b.side===_g.side&&_b.type===_g.type&&Math.abs(_b.x-_g.x)<80&&Math.abs(_b.y-_g.y)<80){_mt=true;break;}}
+      if(!_mt&&_now-_g.t<4000)_keep.push(_g);
+    }
+    NET.ghosts=_keep;
+    for(var _gj=0;_gj<NET.ghosts.length;_gj++)blds.push(NET.ghosts[_gj]);
+  }
   ores=[];for(var i=0;i<m.O.length;i++)ores.push({x:m.O[i][0],y:m.O[i][1],a:m.O[i][2],m:1500});
   bullets=[];for(i=0;i<m.Bl.length;i++)bullets.push({x:m.Bl[i][0],y:m.Bl[i][1],tx:m.Bl[i][2],ty:m.Bl[i][3],side:m.Bl[i][4],spd:5,life:30,dmg:0});
   supplies=[];for(i=0;i<m.S.length;i++)supplies.push({x:m.S[i][0],y:m.S[i][1],val:m.S[i][2],life:m.S[i][3]});
@@ -2209,7 +2226,7 @@ function guestStart(m){
   NET.bStore={};NET.mStore={};NET.uStore={};
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
-  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];
+  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
