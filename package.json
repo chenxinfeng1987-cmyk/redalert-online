@@ -1,0 +1,16 @@
+{
+  "name": "redalert-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "红色警戒 联机中转服务器（静态托管 + WebSocket 转发）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
