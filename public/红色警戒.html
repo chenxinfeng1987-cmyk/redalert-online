@@ -1118,7 +1118,6 @@ function runAI(side){
   var ai=ais[side];if(!ai)return;
   ai.timer--;ai.bt--;ai.ut--;
   var myGold=sideGold[side];
-  if(gt%240===0)sideGold[side]+=400;
   var myHQ=blds.find(function(b){return b.type==='hq'&&b.side===side&&b.hp>0;});
   var hx=myHQ?myHQ.x:MW/2,hy=myHQ?myHQ.y:MH/2;
   var strat=ai.strategy||'infantry';
