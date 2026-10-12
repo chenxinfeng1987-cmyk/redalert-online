@@ -59,6 +59,18 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   #selinfo{bottom:auto;top:148px;left:6px;min-width:120px}
   #hint{display:none}
 }
+#btToggle{margin-left:auto;padding:5px 12px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:13px;color:#8f8;cursor:pointer;user-select:none}
+#bottom.collapsed .pbody{display:none!important}
+@media(max-height:520px){
+  .pbody{max-height:88px;min-height:0;padding:4px}
+  .ptab{padding:3px 9px;font-size:11px}
+  #btToggle{padding:3px 10px;font-size:12px}
+  .ic{width:52px;padding:3px 2px}
+  .ic .e{font-size:14px}
+  .ic .n{font-size:8px}
+  .ic .p{font-size:7px}
+  #selinfo{top:44px;bottom:auto;left:6px;min-width:108px;font-size:10px}
+}
 </style></head><body>
 <canvas id="c"></canvas><canvas id="minimap"></canvas>
 <div id="topbar">
@@ -83,6 +95,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
     <div class="ptab" onclick="showTab('u')">⚔️ 兵种</div>
+    <div id="btToggle" onclick="togglePanel()" title="收起/展开面板">▾</div>
   </div>
   <div class="pbody on" id="pb"></div>
   <div class="pbody" id="pu"></div>
@@ -1763,6 +1776,13 @@ function changeMap(v){
   }
   mType=v;genMap();
 }
+function togglePanel(){
+  var b=document.getElementById('bottom'),t=document.getElementById('btToggle');
+  var on=b.classList.toggle('collapsed');
+  t.textContent=on?'▴':'▾';
+  try{localStorage.setItem('ra_panel',on?'1':'0')}catch(e){}
+}
+(function(){try{if(localStorage.getItem('ra_panel')==='1'){document.getElementById('bottom').classList.add('collapsed');document.getElementById('btToggle').textContent='▴';}}catch(e){}})();
 function showTab(t){
   document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:1)?' on':'');});
   document.getElementById('pb').className='pbody'+(t==='b'?' on':'');
