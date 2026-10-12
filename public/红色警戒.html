@@ -47,6 +47,18 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #lb-players{margin-top:6px;min-height:20px}
 #lb-players span{display:inline-block;margin:2px 8px 2px 0}
 #lb-code{color:#ffd700;letter-spacing:2px;font-size:16px}
+@media(max-width:760px){
+  #topbar{overflow-x:auto;white-space:nowrap;font-size:10px;padding:0 6px;gap:6px}
+  #topbar .info{display:none}
+  #minimap{top:44px;bottom:auto;right:6px;height:96px;width:auto}
+  #bottom{right:0}
+  .ptabs{flex-wrap:nowrap}
+  .ptab{white-space:nowrap;padding:6px 12px;font-size:12px}
+  .ic{width:60px}
+  .ic .e{font-size:16px}
+  #selinfo{bottom:auto;top:148px;left:6px;min-width:120px}
+  #hint{display:none}
+}
 </style></head><body>
 <canvas id="c"></canvas><canvas id="minimap"></canvas>
 <div id="topbar">
@@ -63,6 +75,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="res" id="eRes"></div>
   <div style="color:#8f8;font-size:12px" id="timer">0:00</div>
   <div id="netstat" style="color:#4af;font-size:11px;white-space:nowrap"></div>
+  <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
 <div id="selinfo"></div>
@@ -1590,12 +1603,14 @@ var mcp=document.getElementById('minimap');
 function getPos(e){var t=(e.touches&&e.touches.length)?e.touches:(e.changedTouches&&e.changedTouches.length)?e.changedTouches:null;if(t&&t[0])return{x:t[0].clientX,y:t[0].clientY};return{x:e.clientX,y:e.clientY};}
 function isLeft(e){return !e.button||e.button===0;}
 
+function uiTop(){var tb=document.getElementById('topbar');return tb?tb.getBoundingClientRect().bottom:36;}
+function uiBottomTop(){var bt=document.getElementById('bottom');if(!bt)return H;return bt.getBoundingClientRect().top;}
 function onDown(e){
   upSkip=false;
   if(gOver){upSkip=true;genMap();return;}
   var p=getPos(e);
   if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;upSkip=true;return;}
-  if(p.y<36){upSkip=true;return;}
+  if(p.y<uiTop()){upSkip=true;return;}
   if(e.button===2){
     var wp=scrToWorld(p.x,p.y);
     if(selU.length>0){
@@ -1621,7 +1636,7 @@ function onDown(e){
     }
     upSkip=true;return;
   }
-  if(p.y>H-170){upSkip=true;return;}
+  if(p.y>uiBottomTop()){upSkip=true;return;}
   if(bldMode){
     var _bp=scrToWorld(p.x,p.y);bldX=_bp.x;bldY=_bp.y;
     if(canBuild(bldMode,bldX,bldY)){
@@ -1659,7 +1674,7 @@ function onUp(e){
       blds.forEach(function(b){if(b.side!==mySide||b.hp<=0)return;if(Math.abs(b.x-wp.x)<b.sz*T/2&&Math.abs(b.y-wp.y)<b.sz*T/2)selB=b;});
     }
   }else if(!isDrag&&e&&isLeft(e)){
-    var p=getPos(e);if(p.y<36||p.y>H-170)return;var wp=scrToWorld(p.x,p.y);
+    var p=getPos(e);if(p.y<uiTop()||p.y>uiBottomTop())return;var wp=scrToWorld(p.x,p.y);
     if(selU.length>0){
       var clickedEnemy=false;
       units.forEach(function(u){if(u.side!==mySide&&Math.hypot(u.x-wp.x,u.y-wp.y)<20){orderAttack(selU,u,'unit');clickedEnemy=true;}});
@@ -1681,6 +1696,21 @@ function onUp(e){
     }
   }
   mdn=false;sBox=null;isDrag=false;updateSelInfo();
+}
+function goLandscape(){
+  var el=document.documentElement;
+  var req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen;
+  function lockHint(){
+    var o=screen.orientation;
+    if(o&&o.lock){o.lock('landscape').catch(function(){alert('已进入全屏。若仍是竖屏，请手动旋转手机（如开启了自动旋转锁定请先关闭）');});}
+    else{alert('已进入全屏。若仍是竖屏，请手动旋转手机（如开启了自动旋转锁定请先关闭）');}
+  }
+  if(!req){alert('本浏览器不支持自动全屏，请手动旋转手机到横屏（如开启了自动旋转锁定请先关闭）');return;}
+  try{
+    var p=req.call(el);
+    if(p&&p.then){p.then(lockHint).catch(function(){alert('无法进入全屏，请手动旋转手机到横屏（如开启了自动旋转锁定请先关闭）');});}
+    else{lockHint();}
+  }catch(e){alert('无法进入全屏，请手动旋转手机到横屏');}
 }
 function onWheel(e){camZ=Math.max(0.5,Math.min(4,camZ*(e.deltaY>0?0.9:1.1)));}
 
