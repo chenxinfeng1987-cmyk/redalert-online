@@ -18,6 +18,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .ic{width:74px;padding:5px 3px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);text-align:center;cursor:pointer;position:relative}
 .ic:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15)}
+.ic.on{border-color:#4af;background:rgba(79,172,254,.18);box-shadow:0 0 6px rgba(79,172,254,.5)}
 .ic .e{font-size:20px;line-height:1.2}.ic .n{font-size:9px;color:#ccc}.ic .p{font-size:8px;color:#ffd700}
 .ic.lk{opacity:.3;pointer-events:none}.ic.lk::after{content:'\1F512';position:absolute;top:1px;right:1px;font-size:9px}
 #selinfo{position:fixed;bottom:160px;left:8px;background:rgba(10,10,20,.92);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;z-index:10;display:none;min-width:150px;line-height:1.6;border:1px solid rgba(255,255,255,.08)}
@@ -191,7 +192,7 @@ var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0;
-var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null;
+var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
 var ais=[null,null,null,null];
@@ -1590,10 +1591,11 @@ function getPos(e){var t=(e.touches&&e.touches.length)?e.touches:(e.changedTouch
 function isLeft(e){return !e.button||e.button===0;}
 
 function onDown(e){
-  if(gOver){genMap();return;}
+  upSkip=false;
+  if(gOver){upSkip=true;genMap();return;}
   var p=getPos(e);
-  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;return;}
-  if(p.y<36)return;
+  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;upSkip=true;return;}
+  if(p.y<36){upSkip=true;return;}
   if(e.button===2){
     var wp=scrToWorld(p.x,p.y);
     if(selU.length>0){
@@ -1617,10 +1619,11 @@ function onDown(e){
       });}
       parts.push({x:wp.x,y:wp.y,vx:0,vy:0,life:30,col:'#fc0',sz:6});
     }
-    return;
+    upSkip=true;return;
   }
-  if(p.y>H-170)return;
+  if(p.y>H-170){upSkip=true;return;}
   if(bldMode){
+    var _bp=scrToWorld(p.x,p.y);bldX=_bp.x;bldY=_bp.y;
     if(canBuild(bldMode,bldX,bldY)){
       if(NET.mode==='guest'){
         netCmd({k:'build',type:bldMode,x:bldX,y:bldY});
@@ -1634,7 +1637,7 @@ function onDown(e){
       }
       bldMode=null;buildPanels();
     }
-    return;
+    upSkip=true;return;
   }
   mdn=true;dsx=p.x;dsy=p.y;isDrag=false;
 }
@@ -1645,6 +1648,7 @@ function onMove(e){
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
 }
 function onUp(e){
+  if(upSkip){upSkip=false;mdn=false;sBox=null;isDrag=false;return;}
   if(isDrag&&sBox){
     var x1=Math.min(sBox.x1,sBox.x2),y1=Math.min(sBox.y1,sBox.y2);
     var x2=Math.max(sBox.x1,sBox.x2),y2=Math.max(sBox.y1,sBox.y2);
@@ -1772,7 +1776,7 @@ function buildPanels(){
 function buildPanels_update(){
   var cards=document.querySelectorAll('#pb .ic');
   var keys=Object.keys(BD).filter(function(k){return k!=='hq';});
-  for(var i=0;i<cards.length&&i<keys.length;i++){var id=keys[i],d=BD[id];var hasReq=(!d.rq||blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;}))&&techUnlocked(id,mySide);cards[i].className='ic'+((!hasReq||gold<d.g)?' lk':'');}
+  for(var i=0;i<cards.length&&i<keys.length;i++){var id=keys[i],d=BD[id];var hasReq=(!d.rq||blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;}))&&techUnlocked(id,mySide);cards[i].className='ic'+((!hasReq||gold<d.g)?' lk':'')+(bldMode===keys[i]?' on':'');}
   var ucards=document.querySelectorAll('#pu .ic');
   var ukeys=Object.keys(UD);
   for(var i=0;i<ucards.length&&i<ukeys.length;i++){var id=ukeys[i],d=UD[id],c=unitCost(d);var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});ucards[i].className='ic'+((!hasBld||gold<c||!techUnlocked(id,mySide))?' lk':'');}
@@ -2319,4 +2323,52 @@ document.getElementById('lb-close').onclick=function(){if(!NET.started)closeLobb
 genMap();
 loadBldImgs();
 tick();
+
+if(location.search.indexOf('test=touch')>=0){
+  (function(){
+    var res={};
+    var hq=blds.filter(function(b){return b.type==='hq'&&b.side===mySide&&b.hp>0;})[0];
+    res.hqFound=!!hq;
+    camX=hq.x;camY=hq.y;camZ=1.5;
+    function tap(x,y){
+      var t={identifier:1,target:cv,clientX:x,clientY:y,pageX:x,pageY:y,screenX:x,screenY:y};
+      cv.ontouchstart({touches:[t],targetTouches:[t],changedTouches:[t],target:cv,preventDefault:function(){}});
+      cv.ontouchend({touches:[],targetTouches:[],changedTouches:[t],target:cv,preventDefault:function(){}});
+    }
+    // 1) 触摸己方基地 -> 选中
+    selU=[];selB=null;bldMode=null;updateSelInfo();
+    tap(W/2,H/2);
+    res.selectHq=(selB===hq&&selU.length===0);
+    // 2) 放置电厂
+    selU=[];selB=null;updateSelInfo();
+    var spot=null;
+    for(var rr=180;rr<=560&&!spot;rr+=40){
+      for(var a=0;a<8&&!spot;a++){
+        var x=hq.x+Math.cos(a*Math.PI/4)*rr,y=hq.y+Math.sin(a*Math.PI/4)*rr;
+        if(canBuild('power',x,y))spot={x:x,y:y};
+      }
+    }
+    res.spotFound=!!spot;
+    if(spot){
+      camX=spot.x;camY=spot.y;
+      var nb0=blds.filter(function(b){return b.type==='power'&&b.side===mySide;}).length;
+      bldMode='power';buildPanels_update();
+      tap(W/2,H/2);
+      var nb1=blds.filter(function(b){return b.type==='power'&&b.side===mySide;}).length;
+      res.placed=(nb1===nb0+1);
+      res.bldModeCleared=(bldMode===null);
+      res.noSpuriousSel=(selU.length===0&&selB===null);
+    }
+    // 3) 卡片高亮
+    bldMode='wall';buildPanels_update();
+    var card=document.querySelector('#pb .ic[data-id="wall"]');
+    res.cardOn=!!(card&&/\bon\b/.test(card.className));
+    bldMode=null;buildPanels_update();
+    var ok=res.hqFound&&res.selectHq&&res.spotFound&&res.placed&&res.bldModeCleared&&res.cardOn&&res.noSpuriousSel;
+    var d=document.createElement('div');d.id='testresult';
+    d.setAttribute('data-ok',ok?'1':'0');
+    d.textContent='TESTTOUCH '+JSON.stringify(res)+' OK='+(ok?'1':'0');
+    document.body.appendChild(d);
+  })();
+}
 </script></body></html>
