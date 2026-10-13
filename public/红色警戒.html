@@ -1716,7 +1716,7 @@ function getPos(e){var t=(e.touches&&e.touches.length)?e.touches:(e.changedTouch
 function isLeft(e){return !e.button||e.button===0;}
 
 function uiTop(){var tb=document.getElementById('topbar');return tb?tb.getBoundingClientRect().bottom:36;}
-function uiBottomTop(){var bt=document.getElementById('bottom');if(!bt)return H;return bt.getBoundingClientRect().top;}
+function uiBottomTop(){var bt=document.getElementById('bottom');if(!bt)return H;if(bt.classList.contains('mobhide'))return H;var r=bt.getBoundingClientRect();if(r.height===0)return H;return r.top;}
 function onDown(e){
   upSkip=false;
   if(gOver){upSkip=true;genMap();return;}
