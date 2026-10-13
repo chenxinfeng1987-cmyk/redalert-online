@@ -57,7 +57,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   .ptab{white-space:nowrap;padding:6px 12px;font-size:12px}
   .ic{width:60px}
   .ic .e{font-size:16px}
-  #selinfo{bottom:auto;top:148px;left:6px;min-width:120px}
+  #selinfo{bottom:auto;top:42px;left:6px;min-width:0;max-width:70vw;padding:4px 8px;font-size:10px}
   #hint{display:none}
 }
 #btToggle{margin-left:auto;padding:5px 12px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:13px;color:#8f8;cursor:pointer;user-select:none}
@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1013</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1014</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1770,7 +1770,8 @@ function onDown(e){
 }
 function onMove(e){
   if(e)e.preventDefault();
-  var p=getPos(e);mpx=p.x;mpy=p.y;mptrIn=true;
+  var p=getPos(e);
+  if(!(e&&e.touches)){mpx=p.x;mpy=p.y;mptrIn=true;}
   if(bldMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
 }
@@ -1852,11 +1853,12 @@ cv.ontouchmove=function(e){
 };
 cv.ontouchend=function(e){
   e.preventDefault();
+  mptrIn=false;
   if(pinch){if(e.touches.length<2){pinch=null;pinchDone=true;}return;}
   if(pinchDone){if(e.touches.length===0)pinchDone=false;return;}
   onUp(e);
 };
-cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDrag=false;};
+cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDrag=false;mptrIn=false;};
 document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;selU=[];selB=null;buildPanels();updateSelInfo();}};
 
 var mmDrag=false;
@@ -2037,16 +2039,21 @@ function canBuild(type,x,y,side){
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;if(Math.abs(b.x-x)<(b.sz*T/2+sz)&&Math.abs(b.y-y)<(b.sz*T/2+sz))return false;}
   return true;
 }
+var _selKey=null,_selHide=0;
 function updateSelInfo(){
   var el=document.getElementById('selinfo');
+  var key=selU.length?('u'+(selU[0]?selU[0].id:0)+'x'+selU.length):(selB?('b'+selB.id):'');
+  if(key!==_selKey){_selKey=key;_selHide=gt+240;}
+  var mob=isMobileUI();
   if(selU.length>0){
     var u=selU[0],d=UD[u.type];
-    el.style.display='block';
-    el.innerHTML='<b>'+d.n+'</b>'+(u.lv?' ⭐Lv'+u.lv:'')+' ×'+selU.length+'<br>HP: '+u.hp+'/'+u.mhp+'<br>ATK: '+u.atk+' RNG: '+u.rng+(u.type==='apc'?'<br>乘员 '+(u.cargo?u.cargo.length:0)+'/'+(u.cap||4)+' <button onclick="unloadApc(selU[0])" style="background:#2a4a2a;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:2px 8px;margin-left:4px;">📤卸载</button>':'')+'<br>击杀: <b>'+(u.kills||0)+'/3</b><div class="hb"><div class="hf" style="width:'+(u.hp/u.mhp*100)+'%"></div></div>';
+    var vis=!mob||gt<_selHide||u.type==='apc';
+    el.style.display=vis?'block':'none';
+    el.innerHTML='<b>'+d.n+'</b>'+(u.lv?'⭐Lv'+u.lv:'')+' ×'+selU.length+(mob?'':'<br>HP: '+u.hp+'/'+u.mhp+'<br>ATK: '+u.atk+' RNG: '+u.rng)+(u.type==='apc'?'<br>乘员 '+(u.cargo?u.cargo.length:0)+'/'+(u.cap||4)+' <button onclick="unloadApc(selU[0])" style="background:#2a4a2a;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:1px 6px;margin-left:4px;">📤卸载</button>':'')+(mob?'':'<br>击杀: <b>'+(u.kills||0)+'/3</b>')+'<div class="hb"><div class="hf" style="width:'+(u.hp/u.mhp*100)+'%"></div></div>';
   }else if(selB){
-    var d=BD[selB.type];
-    el.style.display='block';
-    el.innerHTML='<b>'+d.n+'</b>'+(selB.type==='nukesilo'&&selB.nukeCd?'<br>☢️ 核弹: '+Math.ceil(selB.nukeCd/60)+'s':'')+' ['+SIDES[selB.side].n+']<br>HP: '+selB.hp+'/'+selB.mhp+'<div class="hb"><div class="hf" style="width:'+(selB.hp/BD[selB.type].hp*100)+'%"></div></div>';
+    var d2=BD[selB.type];
+    el.style.display=(!mob||gt<_selHide)?'block':'none';
+    el.innerHTML='<b>'+d2.n+'</b>'+(selB.type==='nukesilo'&&selB.nukeCd?'<br>☢️ 核弹: '+Math.ceil(selB.nukeCd/60)+'s':'')+(mob?'':' ['+SIDES[selB.side].n+']')+'<br>HP: '+selB.hp+'/'+selB.mhp+'<div class="hb"><div class="hf" style="width:'+(selB.hp/BD[selB.type].hp*100)+'%"></div></div>';
   }else{el.style.display='none';}
 }
 
