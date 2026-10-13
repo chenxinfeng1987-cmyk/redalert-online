@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1017</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1018</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -798,6 +798,7 @@ function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
   u.ex=0;
   u.kills=0;
+  if(u.type==='heli'&&u.cap){u.cap+=2;}
   u.atk=Math.floor(u.atk*1.15)+2;
   u.mhp=Math.floor(u.mhp*1.1);
   u.hp=u.mhp;
@@ -962,6 +963,22 @@ function updateUnits(){
           var d2=dist(u,b);if(d2<nd){nd=d2;nbs=b;}}
         u._dSide=nbs?nbs.side:((u.side+1)%SIDES.length);
       }
+      var eU=null,eD=1e9;
+      for(var i=0;i<units.length;i++){var e=units[i];
+        if(e.side===u.side||e.hp<=0||e.riding)continue;
+        var d2=dist(u,e);if(d2<eD){eD=d2;eU=e;}}
+      if(eU&&eD<=90&&!spyVis(u)){
+        if(u._svTgt!==eU){u._svTgt=eU;u._svT=0;}
+        u._svT=(u._svT||0)+1;
+        if(gt%8===0)parts.push({x:eU.x,y:eU.y-14,vx:(Math.random()-0.5)*2,vy:-1,life:16,col:'#f0f',sz:3});
+        if(u._svT>=300){
+          eU.side=u.side;eU.tgt=null;eU.tx=undefined;eU.ty=undefined;eU._path=null;eU.ord=null;
+          u._svT=0;u._svTgt=null;
+          parts.push({x:eU.x,y:eU.y,vx:0,vy:0,life:40,col:'#f0f',sz:14});
+        }
+        return;
+      }
+      if(!eU||eD>90)u._svT=0;
       var sT=null;
       if(u.tgt&&u.tgt.hp>0&&blds.indexOf(u.tgt)>=0&&u.tgt.side!==u.side&&u.tgt.type!=='hq'&&u.tgt.type!=='bridge')sT=u.tgt;
       if(!sT){
@@ -977,7 +994,7 @@ function updateUnits(){
           if(!spyVis(u)){
             u._cv=(u._cv||0)+1;
             if(gt%6===0)parts.push({x:sT.x+(Math.random()-0.5)*30,y:sT.y-sT.sz*T*0.4,vx:0,vy:-1,life:14,col:'#f0f',sz:3});
-            if(u._cv>=200){
+            if(u._cv>=300){
               sT.side=u.side;u._cv=0;u.tgt=null;
               parts.push({x:sT.x,y:sT.y,vx:0,vy:0,life:45,col:'#f0f',sz:16});
             }
