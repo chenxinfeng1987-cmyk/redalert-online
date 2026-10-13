@@ -24,15 +24,15 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #selinfo{position:fixed;bottom:160px;left:8px;background:rgba(10,10,20,.92);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;z-index:10;display:none;min-width:150px;line-height:1.6;border:1px solid rgba(255,255,255,.08)}
 #selinfo .hb{width:100%;height:5px;background:#333;border-radius:3px;margin-top:3px}
 #selinfo .hf{height:100%;background:#0f0;border-radius:3px}
-#gameover{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#gameover{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #gameover h2{font-size:30px;color:#fff}
 #gameover .rb{padding:8px 28px;font-size:14px;border:2px solid #fff;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer}
 #hint{position:fixed;bottom:155px;right:176px;background:rgba(10,10,20,.85);color:#667;font-size:9px;padding:4px 7px;border-radius:4px;z-index:10;line-height:1.4}
 #netbtn{color:#4af;border:1px solid rgba(68,170,255,.4);padding:2px 9px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap}
 #netbtn:hover{background:rgba(68,170,255,.12)}
-#lobby{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:300;display:none;align-items:center;justify-content:center}
+#lobby{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);z-index:300;display:none;align-items:center;justify-content:center}
 #lobby.on{display:flex}
-#lobby .lb{background:#15161f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px;width:360px;color:#ddd;font-size:13px;line-height:1.7;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#lobby .lb{background:#15161f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px;width:360px;max-width:92vw;box-sizing:border-box;color:#ddd;font-size:13px;line-height:1.7;box-shadow:0 10px 40px rgba(0,0,0,.6)}
 #lobby h2{font-size:18px;margin-bottom:12px;color:#4af;text-align:center}
 #lobby input{background:#0e0f16;border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:5px;padding:6px 8px;font-size:13px;width:160px}
 #lobby button{background:#2a4a7a;border:1px solid rgba(120,180,255,.4);color:#fff;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;margin:2px}
@@ -48,9 +48,10 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #lb-players span{display:inline-block;margin:2px 8px 2px 0}
 #lb-code{color:#ffd700;letter-spacing:2px;font-size:16px}
 @media(max-width:760px){
+  #lobby{align-items:flex-start}
+  #lobby .lb{margin-top:7vh}
   #topbar{overflow-x:auto;white-space:nowrap;font-size:10px;padding:0 6px;gap:6px}
   #topbar .info{display:none}
-  #minimap{top:44px;bottom:auto;right:6px;height:96px;width:auto}
   #bottom{right:0}
   .ptabs{flex-wrap:nowrap}
   .ptab{white-space:nowrap;padding:6px 12px;font-size:12px}
@@ -60,8 +61,12 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   #hint{display:none}
 }
 #btToggle{margin-left:auto;padding:5px 12px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:13px;color:#8f8;cursor:pointer;user-select:none}
+#panelBtn{display:none;position:fixed;left:6px;bottom:6px;z-index:12;padding:8px 14px;background:rgba(20,20,35,.95);border:1px solid rgba(68,170,255,.45);border-radius:8px;color:#4af;font-size:13px;cursor:pointer;user-select:none}
+@media(max-width:760px){#bottom.mobhide{display:none}#panelBtn{display:block}}
+@media(max-height:520px){#bottom.mobhide{display:none}#panelBtn{display:block}}
 #bottom.collapsed .pbody{display:none!important}
 @media(max-height:520px){
+  #bottom{right:auto;width:392px;max-width:calc(100vw - 8px)}
   .pbody{max-height:88px;min-height:0;padding:4px}
   .ptab{padding:3px 9px;font-size:11px}
   #btToggle{padding:3px 10px;font-size:12px}
@@ -100,10 +105,12 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="pbody on" id="pb"></div>
   <div class="pbody" id="pu"></div>
 </div>
+<div id="panelBtn" onclick="toggleMobPanel()">🏗️ 建造</div>
 <div id="hint">左键选择 | 右键移动攻击 | 中键拖动 | 滚轮缩放</div>
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1012-2</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1873,8 +1880,35 @@ function togglePanel(){
   var on=b.classList.toggle('collapsed');
   t.textContent=on?'▴':'▾';
   try{localStorage.setItem('ra_panel',on?'1':'0')}catch(e){}
+  syncMiniPos();
 }
 (function(){try{if(localStorage.getItem('ra_panel')==='1'){document.getElementById('bottom').classList.add('collapsed');document.getElementById('btToggle').textContent='▴';}}catch(e){}})();
+function isMobileUI(){try{return matchMedia('(max-width:760px),(max-height:520px)').matches;}catch(e){return window.innerWidth<=760||window.innerHeight<=520;}}
+function syncMiniPos(){
+  var mm=document.getElementById('minimap'),b=document.getElementById('bottom'),t=document.getElementById('panelBtn');
+  if(!mm||!b)return;
+  var open=isMobileUI()&&!b.classList.contains('mobhide');
+  mm.style.bottom=open?(b.offsetHeight+6)+'px':'';
+  if(t)t.style.bottom=open?(b.offsetHeight+6)+'px':'';
+}
+function toggleMobPanel(){
+  var b=document.getElementById('bottom'),t=document.getElementById('panelBtn');
+  var show=b.classList.contains('mobhide');
+  if(show)b.classList.remove('mobhide');else b.classList.add('mobhide');
+  t.textContent=show?'✕ 关闭':'🏗️ 建造';
+  syncMiniPos();
+}
+var _mobInit=false;
+function mobInit(){
+  if(_mobInit||!isMobileUI())return;
+  _mobInit=true;
+  var b=document.getElementById('bottom');
+  b.classList.add('mobhide');
+  document.getElementById('panelBtn').textContent='🏗️ 建造';
+  syncMiniPos();
+}
+window.addEventListener('resize',function(){mobInit();syncMiniPos();});
+mobInit();
 function showTab(t){
   document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:1)?' on':'');});
   document.getElementById('pb').className='pbody'+(t==='b'?' on':'');
@@ -2168,10 +2202,12 @@ function defaultServer(){
   return localStorage.getItem('ra_server')||'';
 }
 function openLobby(){
-  document.getElementById('lobby').classList.add('on');
-  var sv=document.getElementById('lb-server'); if(!sv.value)sv.value=defaultServer();
-  var nm=document.getElementById('lb-name'); if(!nm.value)nm.value=localStorage.getItem('ra_name')||('指挥官'+(100+~~(Math.random()*900)));
-  lbMsg('');
+  try{
+    document.getElementById('lobby').classList.add('on');
+    var sv=document.getElementById('lb-server'); if(!sv.value)sv.value=defaultServer();
+    var nm=document.getElementById('lb-name'); if(!nm.value)nm.value=localStorage.getItem('ra_name')||('指挥官'+(100+~~(Math.random()*900)));
+    lbMsg('');
+  }catch(e){alert('打开联机界面失败:'+e.message);}
 }
 function closeLobby(){document.getElementById('lobby').classList.remove('on');}
 function showRoomView(){
