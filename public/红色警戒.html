@@ -9,7 +9,7 @@ canvas{display:block;touch-action:none}
 #topbar .res{display:flex;gap:10px}#topbar .res b{color:#ffd700}
 #topbar .info{flex:1;text-align:center;color:#aaa}
 select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:2px 6px;font-size:11px}
-#minimap{position:fixed;bottom:8px;right:8px;width:160px;height:120px;background:#000;border:1px solid rgba(255,255,255,.15);z-index:20;border-radius:4px;cursor:pointer}
+#minimap{position:fixed;bottom:8px;right:8px;width:160px;height:120px;background:#000;border:1px solid rgba(255,255,255,.15);z-index:20;border-radius:4px;cursor:move;touch-action:none}
 #bottom{position:fixed;bottom:0;left:0;right:180px;z-index:10}
 .ptabs{display:flex;gap:2px;padding:0 4px}
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1012-2</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1013</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1888,7 +1888,7 @@ function syncMiniPos(){
   var mm=document.getElementById('minimap'),b=document.getElementById('bottom'),t=document.getElementById('panelBtn');
   if(!mm||!b)return;
   var open=isMobileUI()&&!b.classList.contains('mobhide');
-  mm.style.bottom=open?(b.offsetHeight+6)+'px':'';
+  if(!mm.style.left)mm.style.bottom=open?(b.offsetHeight+6)+'px':'';
   if(t)t.style.bottom=open?(b.offsetHeight+6)+'px':'';
 }
 function toggleMobPanel(){
@@ -1907,8 +1907,69 @@ function mobInit(){
   document.getElementById('panelBtn').textContent='🏗️ 建造';
   syncMiniPos();
 }
-window.addEventListener('resize',function(){mobInit();syncMiniPos();});
+window.addEventListener('resize',function(){mobInit();syncMiniPos();clampMini();});
 mobInit();
+var mmDrag=null;
+function setMiniPos(l,t){
+  var w=mcp.offsetWidth||160,h=mcp.offsetHeight||120;
+  l=Math.max(0,Math.min(window.innerWidth-w,l));
+  t=Math.max(38,Math.min(window.innerHeight-h,t));
+  mcp.style.left=l+'px';mcp.style.top=t+'px';
+}
+function saveMiniPos(){try{localStorage.setItem('ra_mmpos',mcp.style.left+'|'+mcp.style.top);}catch(e){}}
+function clampMini(){if(mcp.style.left){var l=parseFloat(mcp.style.left),t=parseFloat(mcp.style.top);if(!isNaN(l)&&!isNaN(t))setMiniPos(l,t);}}
+function restoreMiniPos(){
+  try{
+    var v=localStorage.getItem('ra_mmpos');if(!v)return;
+    var pp=v.split('|'),l=parseFloat(pp[0]),t=parseFloat(pp[1]);
+    if(isNaN(l)||isNaN(t))return;
+    mcp.style.right='auto';mcp.style.bottom='auto';
+    setMiniPos(l,t);
+  }catch(e){}
+}
+function miniJumpAt(cx2,cy2){
+  var r=mcp.getBoundingClientRect();
+  var wpt=miniToWorld(((cx2-r.left)/r.width)*mcp.width,((cy2-r.top)/r.height)*mcp.height);
+  camX=wpt.x;camY=wpt.y;
+}
+mcp.onmousedown=function(e){
+  e.preventDefault();
+  var r=mcp.getBoundingClientRect();
+  mmDrag={x:e.clientX,y:e.clientY,moved:false,l:r.left,t:r.top};
+};
+window.addEventListener('mousemove',function(e){
+  if(!mmDrag)return;
+  var dx=e.clientX-mmDrag.x,dy=e.clientY-mmDrag.y;
+  if(!mmDrag.moved&&Math.hypot(dx,dy)>5){
+    mmDrag.moved=true;mcp.style.right='auto';mcp.style.bottom='auto';
+  }
+  if(mmDrag.moved)setMiniPos(mmDrag.l+dx,mmDrag.t+dy);
+});
+window.addEventListener('mouseup',function(e){
+  if(!mmDrag)return;
+  if(!mmDrag.moved)miniJumpAt(e.clientX,e.clientY);
+  else saveMiniPos();
+  mmDrag=null;
+});
+mcp.ontouchstart=function(e){
+  e.preventDefault();
+  var t=e.touches[0],r=mcp.getBoundingClientRect();
+  mmDrag={x:t.clientX,y:t.clientY,moved:false,l:r.left,t:r.top};
+};
+mcp.ontouchmove=function(e){
+  if(!mmDrag)return;e.preventDefault();
+  var t=e.touches[0],dx=t.clientX-mmDrag.x,dy=t.clientY-mmDrag.y;
+  if(!mmDrag.moved&&Math.hypot(dx,dy)>5){mmDrag.moved=true;mcp.style.right='auto';mcp.style.bottom='auto';}
+  if(mmDrag.moved)setMiniPos(mmDrag.l+dx,mmDrag.t+dy);
+};
+mcp.ontouchend=function(e){
+  if(!mmDrag)return;
+  var t=e.changedTouches[0];
+  if(!mmDrag.moved)miniJumpAt(t.clientX,t.clientY);
+  else saveMiniPos();
+  mmDrag=null;
+};
+restoreMiniPos();
 function showTab(t){
   document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:1)?' on':'');});
   document.getElementById('pb').className='pbody'+(t==='b'?' on':'');
