@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1015</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1016</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -976,17 +976,20 @@ function updateUnits(){
         if(d2<repairBest){repairBest=d2;repairTarget=b;}
       }
       if(repairTarget){
-        var reach=repairTarget.sz*T/2+36;
+        var reach=repairTarget.sz*T/2+130;
         if(repairBest<=reach){
           repairTarget.hp=Math.min(repairTarget.mhp,repairTarget.hp+8);
           u.cooldown=15;
           if(gt%8===0)parts.push({x:repairTarget.x,y:repairTarget.y-reach*0.4,vx:(Math.random()-0.5)*2,vy:-1,life:20,col:'#0f0',sz:3});
         }else{
           var angR=Math.atan2(u.y-repairTarget.y,u.x-repairTarget.x);
-          var ax=repairTarget.x+Math.cos(angR)*reach;
-          var ay=repairTarget.y+Math.sin(angR)*reach;
+          var angR2=angR+(u._stR||0);
+          var ax=repairTarget.x+Math.cos(angR2)*reach;
+          var ay=repairTarget.y+Math.sin(angR2)*reach;
           if(!passable(ax,ay)){ax=repairTarget.x;ay=repairTarget.y;}
           moveTow(u,ax,ay,u.spd);
+          u._st=(u._st||0)+1;
+          if(u._st>60){u._stR=((u._stR||0)+2.0944)%6.2832;u._st=0;}
         }
         return;
       }
@@ -1115,7 +1118,7 @@ function aiBoardApcs(myArmy){
     for(var si3=0;si3<myArmy.length&&ap3.cargo.length<(ap3.cap||4);si3++){
       var sd3=myArmy[si3];
       if(sd3===ap3||sd3.type==='apc'||sd3.riding||sd3.loadTo!==undefined||sd3.hp<=0)continue;
-      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='engineer'||sd3.type==='tesla'||sd3.type==='hero'){
+      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='tesla'||sd3.type==='hero'){
         if(dist(sd3,ap3)<220){ap3.cargo.push(sd3);sd3.riding=ap3;sd3.ord=null;sd3.tx=undefined;sd3.ty=undefined;sd3.tgt=null;}
       }
     }
@@ -1188,9 +1191,9 @@ function runAI(side){
     var armyCount=units.filter(function(u){return u.side===side&&u.hp>0;}).length;
     var maxUnits=strat==='turtle'?30:strat==='armor'?45:55;
     if(armyCount<maxUnits){
-      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.6&&b.type!=='wall';}).length;
+      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.85&&b.type!=='wall';}).length;
       var engCnt=units.filter(function(u){return u.side===side&&u.hp>0&&!u.riding&&u.type==='engineer';}).length;
-      if(dmgOwn>0&&engCnt<Math.min(3,dmgOwn)&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('engineer',0,0,side);}
+      if(dmgOwn>0&&engCnt<Math.min(4,dmgOwn)&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('engineer',0,0,side);}
       if(strat==='armor'){
         if(labOk&&hasFac&&sideGold[side]>=2500){sideGold[side]-=2500;spawnUnit('hero',0,0,side);}
         else if(labOk&&hasFac&&sideGold[side]>=900){sideGold[side]-=900;spawnUnit('heavy',0,0,side);}
