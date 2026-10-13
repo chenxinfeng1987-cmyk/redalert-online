@@ -9,7 +9,7 @@ canvas{display:block;touch-action:none}
 #topbar .res{display:flex;gap:10px}#topbar .res b{color:#ffd700}
 #topbar .info{flex:1;text-align:center;color:#aaa}
 select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:2px 6px;font-size:11px}
-#minimap{position:fixed;bottom:8px;right:8px;width:160px;height:120px;background:#000;border:1px solid rgba(255,255,255,.15);z-index:20;border-radius:4px;cursor:move;touch-action:none}
+#minimap{position:fixed;bottom:8px;right:8px;width:160px;height:120px;background:#000;border:1px solid rgba(255,255,255,.15);z-index:20;border-radius:4px;cursor:crosshair;touch-action:none}
 #bottom{position:fixed;bottom:0;left:0;right:180px;z-index:10}
 .ptabs{display:flex;gap:2px;padding:0 4px}
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1014</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1015</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1861,15 +1861,7 @@ cv.ontouchend=function(e){
 cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDrag=false;mptrIn=false;};
 document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;selU=[];selB=null;buildPanels();updateSelInfo();}};
 
-var mmDrag=false;
-mm.onmousedown=function(e){mmDrag=true;var r=mm.getBoundingClientRect();var wpt=miniToWorld(((e.clientX-r.left)/r.width)*mm.width,((e.clientY-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;};
-mm.onmousemove=function(e){if(!mmDrag)return;var r=mm.getBoundingClientRect();var wpt=miniToWorld(((e.clientX-r.left)/r.width)*mm.width,((e.clientY-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;};
-mm.onmouseup=function(){mmDrag=false;};
-function miniJump(e){var r=mm.getBoundingClientRect();var p=getPos(e);var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;}
-mm.ontouchstart=function(e){e.preventDefault();mmDrag=true;miniJump(e);};
-mm.ontouchmove=function(e){e.preventDefault();if(mmDrag)miniJump(e);};
-mm.ontouchend=function(e){e.preventDefault();mmDrag=false;};
-mm.ontouchcancel=function(){mmDrag=false;};
+// 小地图事件见文件末 mmDrag/mcp 处理（可拖动+点击跳转）
 
 function changeMap(v){
   if(v==='custom'){
