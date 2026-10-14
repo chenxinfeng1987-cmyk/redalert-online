@@ -1052,8 +1052,10 @@ function updateUnits(){
       if(repairTarget){
         var reach=repairTarget.sz*T/2+130;
         if(repairBest<=reach){
-          repairTarget.hp=Math.min(repairTarget.mhp,repairTarget.hp+8);
-          u.cooldown=15;
+          if(u.cooldown<=0){
+            repairTarget.hp=Math.min(repairTarget.mhp,repairTarget.hp+3);
+            u.cooldown=20;
+          }
           if(gt%8===0)parts.push({x:repairTarget.x,y:repairTarget.y-reach*0.4,vx:(Math.random()-0.5)*2,vy:-1,life:20,col:'#0f0',sz:3});
         }else{
           var angR=Math.atan2(u.y-repairTarget.y,u.x-repairTarget.x);
@@ -1276,9 +1278,9 @@ function runAI(side){
     var armyCount=units.filter(function(u){return u.side===side&&u.hp>0;}).length;
     var maxUnits=strat==='turtle'?30:strat==='armor'?45:55;
     if(armyCount<maxUnits){
-      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.85&&b.type!=='wall';}).length;
+      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.6&&b.type!=='wall';}).length;
       var engCnt=units.filter(function(u){return u.side===side&&u.hp>0&&!u.riding&&u.type==='engineer';}).length;
-      if(dmgOwn>0&&engCnt<Math.min(4,dmgOwn)&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('engineer',0,0,side);}
+      if(dmgOwn>0&&engCnt<Math.min(2,dmgOwn)&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('engineer',0,0,side);}
       var enemySpy=units.some(function(u2){return u2.side!==side&&u2.type==='spy'&&u2.hp>0;});
       var dogCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='dog';}).length;
       var spyCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='spy';}).length;
