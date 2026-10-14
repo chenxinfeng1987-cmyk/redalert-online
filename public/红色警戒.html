@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1033</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1034</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1643,12 +1643,12 @@ function draw(){
     if(o.a<=0)return;
     var sp=worldToScr(o.x,o.y),a=o.a/o.m;
     cx.fillStyle='rgba(255,215,0,'+(0.2+a*0.4)+')';
-    cx.beginPath();cx.arc(sp.x,sp.y,(3+a*2)*camZ,0,PI*2);cx.fill();
+    cx.beginPath();cx.arc(sp.x,sp.y,(2+a*1.5)*camZ,0,PI*2);cx.fill();
   });
   blds.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   blds.forEach(function(b){
     if(b.hp<=0)return;
-    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/3;
+    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/4.5;
     var col=sideColor(b.side),dk=sideDk(b.side),lt=sideLt(b.side);
     if(!b.ready){
       var prog=1-b.bt/120;
@@ -1770,7 +1770,7 @@ function draw(){
   miners.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   miners.forEach(function(m){
     if(m.hp<=0)return;
-    var sp=worldToScr(m.x,m.y),sz=9*camZ;
+    var sp=worldToScr(m.x,m.y),sz=6*camZ;
     var col=sideColor(m.side);
     cx.fillStyle='#333';cx.fillRect(sp.x-sz,sp.y-sz*0.5,sz*2,sz);
     cx.fillStyle=col;cx.fillRect(sp.x-sz+2*camZ,sp.y-sz*0.4,sz*2-4*camZ,sz*0.8);
@@ -1781,7 +1781,7 @@ function draw(){
   units.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   units.forEach(function(u){
     if(u.hp<=0||u.riding||u._tin)return;
-    var sp=worldToScr(u.x,u.y),sz=8*camZ;
+    var sp=worldToScr(u.x,u.y),sz=5*camZ;
     var mvx=u.x-(u._px===undefined?u.x:u._px),mvy=u.y-(u._py===undefined?u.y:u._py);
     u._px=u.x;u._py=u.y;
     var mv=Math.hypot(mvx,mvy);
@@ -1789,7 +1789,7 @@ function draw(){
     var face=u._face||1,bobW=mv>0.03?1:0;
     var col=sideColor(u.side),dk=sideDk(u.side);
     var isSel=selU.indexOf(u)>=0;
-    if(isSel){cx.strokeStyle='#0f0';cx.lineWidth=1.5;cx.beginPath();cx.arc(sp.x,sp.y,sz+5*camZ,0,PI*2);cx.stroke();}
+    if(isSel){cx.strokeStyle='#0f0';cx.lineWidth=1.5;cx.beginPath();cx.arc(sp.x,sp.y,sz+3*camZ,0,PI*2);cx.stroke();}
     if(u._born!==undefined&&gt-u._born<360&&((gt-u._born)%30)<15){cx.strokeStyle='rgba(0,255,0,0.6)';cx.lineWidth=1.5;cx.beginPath();cx.arc(sp.x,sp.y,sz+3*camZ,0,PI*2);cx.stroke();}
     var isAir=u.ar==='air';
     if(isAir||u.fly){cx.fillStyle='rgba(0,0,0,0.12)';cx.beginPath();cx.ellipse(sp.x,sp.y+8*camZ,sz,sz*0.3,0,0,PI*2);cx.fill();}
