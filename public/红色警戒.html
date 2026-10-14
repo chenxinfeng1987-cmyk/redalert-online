@@ -110,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1021</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1022</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -949,6 +949,41 @@ function updateUnits(){
       }
     }
 
+    // ===== 磁爆兵：范围内敌方单位/建筑持续5秒即消灭（基地HQ无效） =====
+    if(u.type==='tesla'&&!u.riding&&u.hp>0){
+      if(!u._mList)u._mList={};
+      var _nl={};
+      for(var mi=0;mi<units.length;mi++){
+        var mu=units[mi];
+        if(mu===u||mu.side===u.side||mu.hp<=0||mu.riding||mu.fly)continue;
+        if(dist(u,mu)<=u.rng){
+          var mid=mu.id;
+          _nl['u'+mid]=1;
+          u._mList['u'+mid]=(u._mList['u'+mid]||0)+1;
+          if(u._mList['u'+mid]>=300){
+            mu.hp=0;
+            parts.push({x:mu.x,y:mu.y,vx:0,vy:0,life:45,col:'#4df',sz:18});
+            if(isHumanSide(mu.side)){atkAlert.push({x:mu.x,y:mu.y,ox:u.x,oy:u.y,t:100});if(atkAlert.length>20)atkAlert.shift();}
+          }
+        }
+      }
+      for(var bi=0;bi<blds.length;bi++){
+        var tb=blds[bi];
+        if(tb.side===u.side||tb.hp<=0||tb.type==='hq')continue;
+        var bsz=tb.sz*T/2;
+        if(Math.abs(tb.x-u.x)<=u.rng+bsz&&Math.abs(tb.y-u.y)<=u.rng+bsz){
+          var bid=tb.id;
+          _nl['b'+bid]=1;
+          u._mList['b'+bid]=(u._mList['b'+bid]||0)+1;
+          if(u._mList['b'+bid]>=300){
+            tb.hp=0;
+            parts.push({x:tb.x,y:tb.y,vx:0,vy:0,life:50,col:'#4df',sz:24});
+            if(isHumanSide(tb.side)){atkAlert.push({x:tb.x,y:tb.y,ox:u.x,oy:u.y,t:100});if(atkAlert.length>20)atkAlert.shift();}
+          }
+        }
+      }
+      u._mList=_nl;
+    }
     // ===== 警犬：侦测附近敌方间谍 =====
     if(u.type==='dog'&&!u.riding){
       for(var i=0;i<units.length;i++){var e=units[i];
