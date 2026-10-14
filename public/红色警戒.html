@@ -88,6 +88,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
     <option value="fortress">🏰 据点争夺</option>
     <option value="custom">📷 自定义地图</option>
   </select>
+  <button id="paraBtn" style="background:rgba(30,30,50,.9);color:#ffd700;border:1px solid rgba(255,215,0,.3);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px" onclick="togglePara()">🪂 伞兵</button>
   <label style="cursor:pointer;color:#ffd700;font-size:11px;border:1px solid rgba(255,215,0,.3);padding:2px 8px;border-radius:4px">📤 上传图片<input type="file" id="mapUpload" accept="image/*" style="display:none" onchange="handleMapUpload(event)"></label>
   <div class="res" id="eRes"></div>
   <div style="color:#8f8;font-size:12px" id="timer">0:00</div>
@@ -110,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1022</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1023</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -149,15 +150,13 @@ var BD={
   warfactory:{n:'战车工厂',g:800,hp:800,ic:'🏭',sz:3,rq:'barracks',gn:0,us:40},
   turret:{n:'机枪塔',g:300,hp:500,ic:'🔫',sz:1,rq:'barracks',gn:0,us:10},
   missile:{n:'导弹塔',g:500,hp:700,ic:'🚀',sz:1,rq:'warfactory',gn:0,us:20},
-  wall:{n:'围墙',g:50,hp:200,ic:'🧱',sz:1,rq:'hq',gn:0,us:0},
   lab:{n:'实验室',g:600,hp:500,ic:'🔬',sz:2,rq:'power',gn:0,us:30},
-  bridge:{n:'桥梁',g:400,hp:800,ic:'🌉',sz:2,rq:'refinery',gn:0,us:0},
-  tunnel:{n:'地道入口',g:500,hp:600,ic:'🕳️',sz:2,rq:'refinery',gn:0,us:0},
+  tunnel:{n:'地道',g:500,hp:600,ic:'🕳️',sz:2,rq:'refinery',gn:0,us:0},
   nukesilo:{n:'核弹发射井',g:3000,hp:1500,ic:'☢️',sz:3,rq:'lab',gn:0,us:80},
 };
 var UD={
   rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:1.4,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
-  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.1,rng:150,rt:60,ar:'lt',rq:'barracks',ex:0,mx:100},
+  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.1,rng:150,rt:60,ar:'air',rq:'barracks',ex:0,mx:100},
   engineer:{n:'工程师',g:300,hp:50,atk:0,spd:1.2,rng:30,rt:0,ar:'lt',rq:'barracks',ex:0,mx:100},
   spy:{n:'间谍',g:600,hp:100,atk:0,spd:1.5,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
   dog:{n:'警犬',g:300,hp:80,atk:30,spd:2.0,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
@@ -228,7 +227,7 @@ var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[];
-var selU=[],selB=null,bldMode=null,bldX=0,bldY=0;
+var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0;
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
@@ -449,9 +448,20 @@ function addB(type,x,y,side){
   var b={id:_eid++,type:type,x:x,y:y,side:side,hp:d.hp,mhp:d.hp,ready:1,bt:0,sz:d.sz,atk:0,art:0};
   if(type==='turret'){b.atk=20;b.art=160;}
   if(type==='missile'){b.atk=60;b.art=250;}
+  if(type==='tunnel'){
+    var best=null,bd=1e9;
+    for(var i=0;i<blds.length;i++){
+      var o=blds[i];
+      if(o.type!=='tunnel'||o.side!==side||o.hp<=0||o._pair)continue;
+      var dd=dist(b,o);
+      if(dd<bd&&dd>100){bd=dd;best=o;}
+    }
+    if(best){b._pair=best.id;best._pair=b.id;b._tn='out';best._tn='in';}
+  }
   blds.push(b);upPwr();return b;
 }
 function upPwr(){
+  if(paraCd>0){paraCd--;var pb=document.getElementById('paraBtn');if(pb)pb.textContent='🪂 伞兵 '+(~~(paraCd/60))+'s';}
   pwr=0;pwrU=0;
   blds.forEach(function(b){if(!b.ready||b.side!==mySide)return;pwr+=BD[b.type].gn;pwrU+=BD[b.type].us;});
 }
@@ -463,12 +473,8 @@ function tileAt(wx,wy){
 }
 function passable(wx,wy){
   var t=tileAt(wx,wy);
-  if(t===3||t===4){
-    var tx=~~(wx/T),ty=~~(wy/T);
-    var onBridge=blds.some(function(b){return b.type==='bridge'&&b.hp>0&&Math.abs(b.x-(tx*T+T/2))<b.sz*T&&Math.abs(b.y-(ty*T+T/2))<b.sz*T;});
-    if(!onBridge)return false;
-  }
-  for(var i=0;i<blds.length;i++){var b=blds[i],bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
+  if(t===3||t===4)return false;
+  for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;var bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
   return true;
 }
 function tSpd(wx,wy){var t=tileAt(wx,wy);var s=t===2?0.7:t===5?1.4:t===1?0.9:1;if(weather==='rain')s*=0.5;return s;}
@@ -479,7 +485,7 @@ function tileBlockedByBld(gx,gy,allowGoal,tgx,tgy){
   var wx=gx*T+T/2,wy=gy*T+T/2;
   for(var i=0;i<blds.length;i++){
     var b=blds[i];
-    if(b.hp<=0||b.type==='bridge')continue;
+    if(b.hp<=0)continue;
     var bs=b.sz*T/2+4;
     if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return true;
   }
@@ -519,19 +525,12 @@ function findPath(sx,sy,tx,ty){
       var nx=cu.x+dirs[d].dx,ny=cu.y+dirs[d].dy,nk=nx+','+ny;
       if(cl[nk])continue;
       if(ny<0||ny>=mData.length||nx<0||nx>=mData[0].length)continue;
-      var t=mData[ny][nx];if(t===3||t===4){
-        var bx=nx*T+T/2,by=ny*T+T/2;
-        var bridgeOk=blds.some(function(bb){return bb.type==='bridge'&&bb.hp>0&&Math.abs(bb.x-bx)<bb.sz*T&&Math.abs(bb.y-by)<bb.sz*T;});
-        if(!bridgeOk)continue;
-      }
+      var t=mData[ny][nx];if(t===3||t===4)continue;
       if(tileBlockedByBld(nx,ny,nx===tgx&&ny===tgy,tgx,tgy))continue;
       if(dirs[d].dx&&dirs[d].dy){
         var a=mData[cu.y]?mData[cu.y][cu.x+dirs[d].dx]:4;
         var b=mData[cu.y+dirs[d].dy]?mData[cu.y+dirs[d].dy][cu.x]:4;
-        if(a===3||a===4||b===3||b===4){
-          var okDiag=blds.some(function(bb){return bb.type==='bridge'&&bb.hp>0&&Math.abs(bb.x-bx)<bb.sz*T&&Math.abs(bb.y-by)<bb.sz*T;});
-          if(!okDiag)continue;
-        }
+        if(a===3||a===4||b===3||b===4)continue;
         if(tileBlockedByBld(cu.x+dirs[d].dx,cu.y,false,tgx,tgy)||tileBlockedByBld(cu.x,cu.y+dirs[d].dy,false,tgx,tgy))continue;
       }
       var ng=(gs[ck]||0)+(dirs[d].dx&&dirs[d].dy?1.41:1);
@@ -639,9 +638,11 @@ function moveTow(o,tx,ty,spd){
 
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function spyVis(e){return e.type==='spy'&&e._rev!==undefined&&gt-e._rev<180;}
+function canHitAir(u){return u.type==='rocket'||u.type==='heli'||u.type==='turret'||u.type==='missile';}
 function findTgt(u,rng){
   var best=null,bd=rng;
-  var all=units.filter(function(e){return e.side!==u.side&&e.hp>0&&!e.riding&&!(e.type==='spy'&&!spyVis(e));})
+  var _ha=canHitAir(u);
+  var all=units.filter(function(e){return e.side!==u.side&&e.hp>0&&!e.riding&&!e._tin&&!(e.type==='spy'&&!spyVis(e))&&(_ha||!(e.ar==='air'||e.fly));})
     .concat(miners.filter(function(e){return e.side!==u.side&&e.hp>0;}))
     .concat(blds.filter(function(e){return e.side!==u.side&&e.hp>0;}));
   if(u.wSide!==undefined){
@@ -910,6 +911,28 @@ function updateUnits(){
   units.forEach(function(u){
     if(u.hp<=0)return;
     u.cooldown=u.cooldown?u.cooldown-1:0;if(u._chute>0)u._chute--;
+    if(u._tin){
+      var tin=u._tin;
+      var fromB=null,toB=null;
+      for(var ti=0;ti<blds.length;ti++){
+        if(blds[ti].id===tin.fid)fromB=blds[ti];
+        if(blds[ti].id===tin.tid)toB=blds[ti];
+      }
+      if(!toB||toB.hp<=0){
+        if(fromB&&fromB.hp>0){u.x=fromB.x;u.y=fromB.y;}
+        u._tin=null;u._chute=30;
+      }else{
+        tin.p+=0.025;
+        if(tin.p>=1){
+          u.x=toB.x;u.y=toB.y;u._tin=null;u._chute=30;
+          parts.push({x:u.x,y:u.y,vx:0,vy:-1,life:20,col:'#0f0',sz:6});
+        }else{
+          u.x=tin.sx+(toB.x-tin.sx)*tin.p;
+          u.y=tin.sy+(toB.y-tin.sy)*tin.p;
+        }
+      }
+      return;
+    }
     if(u.type==='apc'||u.type==='heli'){
       var b0=u.batk!==undefined?u.batk:u.atk;var bonus=0;u.tsla=0;
       if(u.cargo)for(var ci=0;ci<u.cargo.length;ci++){
@@ -933,10 +956,11 @@ function updateUnits(){
     if(isHumanSide(u.side)&&u.ord==='m'){
       if(u.tx===undefined){u.ord=null;}
       else{
-        var fireT=null,fd=u.rng;
+        var fireT=null,fd=u.rng;var _ha2=canHitAir(u);
         for(var i=0;i<units.length;i++){
           var e=units[i];
           if(e.side===u.side||e.hp<=0||(e.type==='spy'&&!spyVis(e)))continue;
+          if(!_ha2&&(e.ar==='air'||e.fly))continue;
           var dd=dist(u,e);
           if(dd<fd){fd=dd;fireT=e;}
         }
@@ -1018,11 +1042,11 @@ function updateUnits(){
       }
       if(!eU||eD>90)u._svT=0;
       var sT=null;
-      if(u.tgt&&u.tgt.hp>0&&blds.indexOf(u.tgt)>=0&&u.tgt.side!==u.side&&u.tgt.type!=='hq'&&u.tgt.type!=='bridge')sT=u.tgt;
+      if(u.tgt&&u.tgt.hp>0&&blds.indexOf(u.tgt)>=0&&u.tgt.side!==u.side&&u.tgt.type!=='hq')sT=u.tgt;
       if(!sT){
         var sb=null,sd=1e9;
         for(var i=0;i<blds.length;i++){var b=blds[i];
-          if(b.side===u.side||b.hp<=0||b.type==='hq'||b.type==='bridge'||!b.ready)continue;
+          if(b.side===u.side||b.hp<=0||b.type==='hq'||!b.ready)continue;
           var d2=dist(u,b);if(d2<sd){sd=d2;sb=b;}}
         sT=sb;u.tgt=sT;
       }
@@ -1058,6 +1082,8 @@ function updateUnits(){
       var at=u.tgt;
       if(!at||at.hp<=0||(at.side!==undefined&&at.side===u.side)){
         u.ord=null;u.tgt=null;
+      }else if(!canHitAir(u)&&(at.ar==='air'||at.fly)){
+        u.ord=null;u.tgt=null;
       }else{
         var ad=dist(u,at);
         if(ad<=u.rng){
@@ -1080,7 +1106,7 @@ function updateUnits(){
       var repairTarget=null,repairBest=1e9;
       for(var i=0;i<blds.length;i++){
         var b=blds[i];
-        if(b.side!==u.side||b.hp<=0||b.hp>=b.mhp-1||b.type==='wall')continue;
+        if(b.side!==u.side||b.hp<=0||b.hp>=b.mhp-1)continue;
         var d2=dist(u,b);
         if(d2<repairBest){repairBest=d2;repairTarget=b;}
       }
@@ -1148,7 +1174,7 @@ function updateBullets(){
     if(d<8){
       var hitT=null;
       if(b.t){
-        if(b.t.hp>0&&b.t.side!==b.side&&!b.t.riding){dealDmg(b.t,b.dmg);hitT=b.t;}
+        if(b.t.hp>0&&b.t.side!==b.side&&!b.t.riding&&!b.t._tin){dealDmg(b.t,b.dmg);hitT=b.t;}
       }else{
         var targets=units.concat(miners).concat(blds);
         for(var j=0;j<targets.length;j++){
@@ -1325,7 +1351,7 @@ function runAI(side){
     var armyCount=units.filter(function(u){return u.side===side&&u.hp>0;}).length;
     var maxUnits=strat==='turtle'?30:strat==='armor'?45:55;
     if(armyCount<maxUnits){
-      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.6&&b.type!=='wall';}).length;
+      var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.6;}).length;
       var engCnt=units.filter(function(u){return u.side===side&&u.hp>0&&!u.riding&&u.type==='engineer';}).length;
       if(dmgOwn>0&&engCnt<Math.min(2,dmgOwn)&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('engineer',0,0,side);}
       var enemySpy=units.some(function(u2){return u2.side!==side&&u2.type==='spy'&&u2.hp>0;});
@@ -1628,18 +1654,12 @@ function draw(){
       cx.beginPath();cx.arc(sp.x,sp.y-sz*0.15,sz*0.3,0,PI*1.5);cx.stroke();
       cx.fillStyle='#0f0';cx.beginPath();cx.arc(sp.x+sz*0.3,sp.y-sz*0.4,3*camZ,0,PI*2);cx.fill();
       cx.lineWidth=1;
-    }else if(b.type==='bridge'){
-      cx.fillStyle='#8a7040';cx.fillRect(sp.x-sz,sp.y-sz*0.8,sz*2,sz*1.6);
-      cx.fillStyle='#a08850';cx.fillRect(sp.x-sz,sp.y-sz*0.5,sz*2,sz);
-      cx.strokeStyle='#6a5030';cx.lineWidth=2*camZ;
-      cx.beginPath();cx.moveTo(sp.x-sz,sp.y-sz*0.5);cx.lineTo(sp.x+sz,sp.y-sz*0.5);cx.stroke();
-      cx.beginPath();cx.moveTo(sp.x-sz,sp.y+sz*0.5);cx.lineTo(sp.x+sz,sp.y+sz*0.5);cx.stroke();
-      cx.lineWidth=1;
     }else if(b.type==='tunnel'){
-      cx.fillStyle='#333';cx.fillRect(sp.x-sz,sp.y-sz,sz*2,sz*2);
-      cx.fillStyle='#111';cx.beginPath();cx.arc(sp.x,sp.y,sz*0.7,0,PI,true);cx.fill();
-      cx.fillStyle='#222';cx.fillRect(sp.x-sz*0.7,sp.y,sz*1.4,sz*0.5);
+      cx.fillStyle='#555';cx.fillRect(sp.x-sz,sz*0.5+sp.y-sz,sz*2,sz*1.5);
+      cx.fillStyle='#222';cx.beginPath();cx.arc(sp.x,sp.y,sz*0.6,0,PI,true);cx.fill();
       cx.fillStyle=col;cx.fillRect(sp.x-sz*0.9,sp.y-sz*0.9,sz*0.35,sz*0.35);
+      if(b._tn==='in'){cx.fillStyle='#0f0';cx.font='bold '+(8*camZ)+'px sans-serif';cx.textAlign='center';cx.fillText('入',sp.x,sp.y-sz*0.5);}
+      else if(b._tn==='out'){cx.fillStyle='#ff0';cx.font='bold '+(8*camZ)+'px sans-serif';cx.textAlign='center';cx.fillText('出',sp.x,sp.y-sz*0.5);}
     }else if(b.type==='nukesilo'){
       cx.fillStyle='#444';cx.fillRect(sp.x-sz*0.9,sp.y-sz*0.9,sz*1.8,sz*1.8);
       cx.fillStyle='#333';cx.beginPath();cx.arc(sp.x,sp.y,sz*0.7,0,PI*2);cx.fill();
@@ -1652,8 +1672,6 @@ function draw(){
       }
       cx.fillStyle='#ff0';cx.font='bold '+(14*camZ)+'px sans-serif';cx.textAlign='center';
       cx.fillText('☢️',sp.x,sp.y+5*camZ);
-    }else if(b.type==='wall'){
-      cx.fillStyle='#777';cx.fillRect(sp.x-sz,sp.y-sz,sz*2,sz*2);
     }
     if(b.hp<b.mhp){
       cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(sp.x-sz,sp.y-sz-8*camZ,sz*2,5*camZ);
@@ -1673,7 +1691,7 @@ function draw(){
     if(m.hp<m.mhp){cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*0.9,sz*2*(m.hp/m.mhp),3*camZ);}
   });
   units.forEach(function(u){
-    if(u.hp<=0||u.riding)return;
+    if(u.hp<=0||u.riding||u._tin)return;
     var sp=worldToScr(u.x,u.y),sz=10*camZ;
     var mvx=u.x-(u._px===undefined?u.x:u._px),mvy=u.y-(u._py===undefined?u.y:u._py);
     u._px=u.x;u._py=u.y;
@@ -1891,6 +1909,14 @@ function draw(){
       cx.beginPath();cx.ellipse(fx,fy,200,60,0,0,PI*2);cx.fill();
     }
   }
+  if(paraMode){
+    var _ps=worldToScr(bldX,bldY);
+    cx.strokeStyle='rgba(0,255,0,0.6)';cx.lineWidth=2;
+    cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.stroke();
+    cx.fillStyle='rgba(0,255,0,0.15)';cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.fill();
+    cx.fillStyle='#0f0';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
+    cx.fillText('🪂 点击投放伞兵',_ps.x,_ps.y-70*camZ);
+  }
   if(bldMode){
     var sp=worldToScr(bldX,bldY),sz=BD[bldMode].sz*T*camZ/2;
     var ok=canBuild(bldMode,bldX,bldY);
@@ -1982,6 +2008,19 @@ function onDown(e){
     upSkip=true;return;
   }
   if(p.y>uiBottomTop()){upSkip=true;return;}
+  if(paraMode){
+    var _pp=scrToWorld(p.x,p.y);
+    doParaDrop(_pp.x,_pp.y);
+    upSkip=true;return;
+  }
+  if(paraMode){
+    var _ps=worldToScr(bldX,bldY);
+    cx.strokeStyle='rgba(0,255,0,0.6)';cx.lineWidth=2;
+    cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.stroke();
+    cx.fillStyle='rgba(0,255,0,0.15)';cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.fill();
+    cx.fillStyle='#0f0';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
+    cx.fillText('🪂 点击投放伞兵',_ps.x,_ps.y-70*camZ);
+  }
   if(bldMode){
     var _bp=scrToWorld(p.x,p.y);bldX=_bp.x;bldY=_bp.y;
     if(canBuild(bldMode,bldX,bldY)){
@@ -2005,7 +2044,15 @@ function onMove(e){
   if(e)e.preventDefault();
   var p=getPos(e);
   if(!(e&&e.touches)){mpx=p.x;mpy=p.y;mptrIn=true;}
-  if(bldMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
+  if(paraMode){
+    var _ps=worldToScr(bldX,bldY);
+    cx.strokeStyle='rgba(0,255,0,0.6)';cx.lineWidth=2;
+    cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.stroke();
+    cx.fillStyle='rgba(0,255,0,0.15)';cx.beginPath();cx.arc(_ps.x,_ps.y,60*camZ,0,PI*2);cx.fill();
+    cx.fillStyle='#0f0';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
+    cx.fillText('🪂 点击投放伞兵',_ps.x,_ps.y-70*camZ);
+  }
+  if(bldMode||paraMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
 }
 function onUp(e){
@@ -2092,10 +2139,35 @@ cv.ontouchend=function(e){
   onUp(e);
 };
 cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDrag=false;mptrIn=false;};
-document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;selU=[];selB=null;buildPanels();updateSelInfo();}};
+document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;paraMode=false;selU=[];selB=null;buildPanels();updateSelInfo();var pb=document.getElementById('paraBtn');if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}}};
 
 // 小地图事件见文件末 mmDrag/mcp 处理（可拖动+点击跳转）
 
+function togglePara(){
+  if(paraCd>0)return;
+  if(gold<500){alert('金币不足，伞兵需要500金');return;}
+  paraMode=!paraMode;
+  bldMode=null;
+  var pb=document.getElementById('paraBtn');
+  if(pb){pb.style.borderColor=paraMode?'#0f0':'rgba(255,215,0,.3)';pb.style.color=paraMode?'#0f0':'#ffd700';}
+}
+function doParaDrop(wx,wy){
+  if(paraCd>0||gold<500)return false;
+  gold-=500;sideGold[mySide]=gold;
+  paraCd=3600;
+  for(var i=0;i<10;i++){
+    var ang=i/10*PI*2,r=30+Math.random()*40;
+    var px=wx+Math.cos(ang)*r,py=wy+Math.sin(ang)*r;
+    px=Math.max(50,Math.min(MW-50,px));py=Math.max(50,Math.min(MH-50,py));
+    var u=spawnUnit('rifle',px,py,mySide);
+    if(u){u._chute=80;u._born=gt;}
+  }
+  parts.push({x:wx,y:wy,vx:0,vy:0,life:50,col:'#0f0',sz:20});
+  paraMode=false;
+  var pb=document.getElementById('paraBtn');
+  if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}
+  return true;
+}
 function changeMap(v){
   if(v==='custom'){
     document.getElementById('mapUpload').click();return;
@@ -2254,13 +2326,8 @@ function canBuild(type,x,y,side){
     var tx=~~(x/T)+dx,ty=~~(y/T)+dy;
     if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length)return false;
     var t=mData[ty][tx];
-    if(type==='bridge'){
-      if(t!==3)return false;
-    }else{
-      if(t===3||t===4)return false;
-    }
+    if(t===3||t===4)return false;
   }
-  if(type==='tunnel'&&mData[~~(y/T)][~~(x/T)]!==4)return false;
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;if(Math.abs(b.x-x)<(b.sz*T/2+sz)&&Math.abs(b.y-y)<(b.sz*T/2+sz))return false;}
   return true;
 }
@@ -2672,6 +2739,25 @@ function applyUnload(a){
 }
 function unloadApc(a){if(!a)return;if(NET.mode==='guest'){netCmd({k:'unload',a:a.id});return;}applyUnload(a);}
 function orderMove(us,x,y){
+  var _tnear=null;
+  blds.forEach(function(b){if(b.type==='tunnel'&&b._tn==='in'&&b.hp>0&&b.ready&&b.side===us[0].side&&Math.hypot(b.x-x,b.y-y)<b.sz*T/2+40)_tnear=b;});
+  if(_tnear){
+    var _tout=null;
+    for(var ti=0;ti<blds.length;ti++)if(blds[ti].id===_tnear._pair&&blds[ti].hp>0)_tout=blds[ti];
+    if(_tout){
+      us.forEach(function(u){
+        if(u.hp<=0||u.riding||u._tin)return;
+        if(Math.hypot(u.x-_tnear.x,u.y-_tnear.y)<250){
+          u._tin={fid:_tnear.id,tid:_tout.id,sx:_tnear.x,sy:_tnear.y,p:0};
+          u._path=null;u.tx=undefined;u.ty=undefined;u.tgt=null;u.ord=null;
+        }else{
+          u.tx=_tnear.x;u.ty=_tnear.y;u._path=null;u.tgt=null;u.ord=null;
+        }
+      });
+      parts.push({x:_tnear.x,y:_tnear.y,vx:0,vy:0,life:30,col:'#0f0',sz:10});
+      return;
+    }
+  }
   if(NET.mode==='guest'){
     netCmd({k:'move',u:idsOf(us),x:x,y:y});
     for(var i=0;i<us.length;i++){us[i]._ptx=x;us[i]._pty=y;us[i]._pred=true;}
