@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1024</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1025</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1708,7 +1708,25 @@ function draw(){
     cx.fillStyle='rgba(0,0,0,0.25)';cx.beginPath();cx.arc(sp.x,sp.y+1,sz*0.75,0,PI*2);cx.fill();
     if(u._chute>0){cx.fillStyle='rgba(245,245,240,0.92)';cx.beginPath();cx.arc(sp.x,sp.y+oy-sz*1.4,sz*1.3,PI,0);cx.fill();cx.strokeStyle='#bbb';cx.beginPath();cx.moveTo(sp.x-sz*1.3,sp.y+oy-sz*1.4);cx.lineTo(sp.x,sp.y+oy);cx.lineTo(sp.x+sz*1.3,sp.y+oy-sz*1.4);cx.stroke();}
     var oy=isAir?-8*camZ:(u.fly?-5*camZ:0);
-    if(u.type==='rifle'||u.type==='rocket'){
+    if(u.type==='rocket'){
+      var bobR=Math.sin(gt*0.18+u.id)*2*camZ;
+      cx.fillStyle='#555';
+      cx.fillRect(sp.x-sz*0.15,sp.y-sz*0.4+oy+bobR,sz*0.3,sz*0.9);
+      var flame=0.4+Math.sin(gt*0.4+u.id)*0.2;
+      cx.fillStyle='rgba(255,160,40,'+flame+')';
+      cx.beginPath();cx.ellipse(sp.x,sp.y+sz*0.6+oy+bobR,sz*0.15,sz*0.35,0,0,PI*2);cx.fill();
+      cx.fillStyle='rgba(255,220,80,'+(flame*0.7)+')';
+      cx.beginPath();cx.ellipse(sp.x,sp.y+sz*0.5+oy+bobR,sz*0.08,sz*0.2,0,0,PI*2);cx.fill();
+      cx.fillStyle=col;cx.beginPath();cx.arc(sp.x,sp.y-sz*0.2+oy+bobR,sz*0.6,0,PI*2);cx.fill();
+      cx.fillStyle='#dba';cx.beginPath();cx.arc(sp.x,sp.y-sz*0.8+oy+bobR,sz*0.32,0,PI*2);cx.fill();
+      cx.save();cx.translate(sp.x,sp.y-sz*0.1+oy+bobR);cx.scale(face,1);cx.rotate(-0.55);
+      cx.fillStyle='#555';cx.fillRect(-sz*0.2,-sz*1.2,sz*1.7,sz*0.5);
+      cx.fillStyle='#f33';cx.fillRect(sz*1.2,-sz*1.25,sz*0.55,sz*0.6);
+      cx.restore();
+      cx.fillStyle='#3a2a1a';
+      cx.fillRect(sp.x-sz*0.22*face,sp.y+sz*0.35+oy+bobR,sz*0.18,sz*0.35);
+      cx.fillRect(sp.x+sz*0.1*face,sp.y+sz*0.35+oy+bobR,sz*0.18,sz*0.35);
+    }else if(u.type==='rifle'){
       var bob1=bobW*Math.sin(u._ph)*1.5*camZ;
       var legA=bobW*Math.sin(u._ph)*sz*0.45,legB=-legA;
       cx.fillStyle='#3a2a1a';
@@ -1717,12 +1735,8 @@ function draw(){
       cx.fillStyle='#222';cx.fillRect(sp.x-sz*0.3,sp.y+sz*0.05+oy+bob1,sz*0.6,sz*0.55);
       cx.fillStyle=col;cx.beginPath();cx.arc(sp.x,sp.y-sz*0.25+oy+bob1,sz*0.65,0,PI*2);cx.fill();
       cx.fillStyle='#dba';cx.beginPath();cx.arc(sp.x,sp.y-sz*0.9+oy+bob1,sz*0.35,0,PI*2);cx.fill();
-      if(u.type==='rocket'){
-        cx.save();cx.translate(sp.x,sp.y-sz*0.1+oy+bob1);cx.scale(face,1);cx.rotate(-0.55);
-        cx.fillStyle='#555';cx.fillRect(-sz*0.2,-sz*1.25,sz*1.7,sz*0.5);
-        cx.fillStyle='#f33';cx.fillRect(sz*1.2,-sz*1.3,sz*0.55,sz*0.6);
-        cx.restore();
-      }else{
+      cx.fillStyle='#555';cx.fillRect(0,-sz*0.1,sz*0.95,2*camZ);
+      {
         cx.save();cx.translate(sp.x,sp.y-sz*0.3+oy+bob1);cx.scale(face,1);
         cx.fillStyle='#555';cx.fillRect(0,-sz*0.1,sz*0.95,2*camZ);
         cx.restore();
