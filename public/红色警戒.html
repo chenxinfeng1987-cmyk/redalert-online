@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1029</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1030</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -227,7 +227,7 @@ var camX=0,camY=0,camZ=0.7;
 var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
-var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[];
+var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0;
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
@@ -306,7 +306,7 @@ function colorToTerrain(r,g,b){
 
 function genMap(){
   var isCustom=mType==='custom'&&mData.length>0;
-  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];
+  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
@@ -325,6 +325,12 @@ function genMap(){
     else genFort(cols,rows);
   }
   placeOres();placeBases();
+  for(var _wi=0;_wi<6;_wi++){
+    var _wx=Math.random()*MW,_wy=Math.random()*MH;
+    if(tileAt(_wx,_wy)===3||tileAt(_wx+60,_wy)===3||tileAt(_wx-60,_wy)===3||tileAt(_wx,_wy+60)===3||tileAt(_wx,_wy-60)===3){
+      whales.push({x:_wx,y:_wy,dir:Math.random()*Math.PI*2,t:Math.random()*200,sz:14+Math.random()*10});
+    }
+  }
   var _h=cornerOf(mySide);focusOnBase(mySide);
   if(mType!=='custom')document.getElementById('mapname').textContent={symmetric:'对称竞技',lanes:'战术三路',open:'开阔战场',fortress:'据点争夺'}[mType];
   buildPanels();
@@ -472,9 +478,10 @@ function tileAt(wx,wy){
   if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length)return 3;
   return mData[ty][tx];
 }
-function passable(wx,wy){
+function passable(wx,wy,unit){
   var t=tileAt(wx,wy);
-  if(t===3||t===4)return false;
+  if(unit&&unit.water){if(t!==3)return false;}
+  else if(t===3||t===4)return false;
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;var bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
   return true;
 }
@@ -577,11 +584,11 @@ function moveTow(o,tx,ty,spd){
   var dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
   if(d<3)return true;
   if(o.fly||o.water){var fspd=spd*(weather==='rain'?0.7:1);o.x+=dx/d*fspd;o.y+=dy/d*fspd;return false;}
-  if(!passable(o.x,o.y)){
+  if(!passable(o.x,o.y,o)){
     var ang=Math.random()*PI*2;
     for(var a=0;a<8;a++){
       var ta=ang+a*PI/4,tx2=o.x+Math.cos(ta)*T*0.7,ty2=o.y+Math.sin(ta)*T*0.7;
-      if(passable(tx2,ty2)){o.x=tx2;o.y=ty2;o._path=null;return false;}
+      if(passable(tx2,ty2,o)){o.x=tx2;o.y=ty2;o._path=null;return false;}
     }
     return false;
   }
@@ -1461,7 +1468,8 @@ function spawnUnit(type,x,y,side){
   for(var attempt=0;attempt<16;attempt++){
     var blocked=false;
     for(var i=0;i<blds.length;i++){var b=blds[i],bs=b.sz*T/2+8;if(Math.abs(b.x-x)<bs&&Math.abs(b.y-y)<bs){blocked=true;break;}}
-    if(!blocked&&passable(x,y))break;
+    var _pw=d.water?{water:1}:null;
+    if(!blocked&&passable(x,y,_pw))break;
     var ang=Math.random()*PI*2;var step=28+attempt*6;
     x+=Math.cos(ang)*step;y+=Math.sin(ang)*step;
     x=Math.max(50,Math.min(MW-50,x));y=Math.max(50,Math.min(MH-50,y));
@@ -1534,8 +1542,34 @@ function drawFlag(x,y,w,h,side){
   cx.restore();
 }
 
+function updateWhales(){
+  for(var i=0;i<whales.length;i++){
+    var w=whales[i];
+    w.t+=0.016;
+    if(w.t>150+Math.random()*100){w.t=0;w.dir+=(Math.random()-0.5)*1.2;}
+    var nx=w.x+Math.cos(w.dir)*0.4,ny=w.y+Math.sin(w.dir)*0.4;
+    if(nx<50||nx>MW-50||ny<50||ny>MH-50||tileAt(nx,ny)!==3){w.dir+=PI*0.5;continue;}
+    w.x=nx;w.y=ny;
+  }
+}
+function drawWhales(cx){
+  for(var i=0;i<whales.length;i++){
+    var w=whales[i],sp=worldToScr(w.x,w.y),sz=w.sz*camZ*0.6;
+    if(sp.x<-100||sp.x>W+100||sp.y<-100||sp.y>H+100)continue;
+    var bob=Math.sin(w.t*2)*sz*0.08;
+    cx.save();cx.translate(sp.x,sp.y+bob);
+    cx.rotate(w.dir+PI/4);
+    cx.fillStyle='#3a5a6a';
+    cx.beginPath();cx.moveTo(sz,0);cx.quadraticCurveTo(sz*0.3,-sz*0.45,-sz*0.7,-sz*0.18);cx.quadraticCurveTo(-sz*0.9,0,-sz*0.7,sz*0.18);cx.quadraticCurveTo(sz*0.3,sz*0.45,sz,0);cx.fill();
+    cx.fillStyle='#2a4a5a';
+    cx.beginPath();cx.moveTo(-sz*0.7,-sz*0.18);cx.lineTo(-sz*1.15,-sz*0.5);cx.lineTo(-sz*0.85,0);cx.lineTo(-sz*1.15,sz*0.5);cx.lineTo(-sz*0.7,sz*0.18);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.25)';
+    cx.beginPath();cx.arc(sz*0.55,-sz*0.08,sz*0.07,0,PI*2);cx.fill();
+    cx.restore();
+  }
+}
 function draw(){
-  cx.fillStyle='#0a0a0a';cx.fillRect(0,0,W,H);
+  cx.fillStyle='#0a2a4a';cx.fillRect(0,0,W,H);
   var esc=8/camZ;
   if(mptrIn){
     var mvx=0,mvy=0;
@@ -1573,6 +1607,7 @@ function draw(){
       isoTile(tx,ty);
     }
   }
+  drawWhales(cx);
   ores.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   ores.forEach(function(o){
     if(o.a<=0)return;
@@ -2361,7 +2396,17 @@ function buildPanels(){
       if(NET.mode==='guest'){netCmd({k:'train',type:uid});return;}
       var dd=UD[uid],c=unitCost(dd);
       var src=blds.filter(function(b){return b.type===dd.rq&&b.side===mySide&&b.hp>0;})[0];
-      if(src&&gold>=c){gold-=c;sideGold[mySide]=gold;var ang=Math.random()*PI*2;var _nu=spawnUnit(uid,src.x+Math.cos(ang)*120,src.y+Math.sin(ang)*120,mySide);if(_nu){_nu._born=gt;}}
+      if(src&&gold>=c){gold-=c;sideGold[mySide]=gold;var ang=Math.random()*PI*2;var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
+      if(UD[uid].water){
+        var _found=false;
+        for(var _a=0;_a<24;_a++){
+          var _ar=_a/24*PI*2,_rad=150+_a*15;
+          var _tx=src.x+Math.cos(_ar)*_rad,_ty=src.y+Math.sin(_ar)*_rad;
+          if(_tx>20&&_tx<MW-20&&_ty>20&&_ty<MH-20&&tileAt(_tx,_ty)===3){_sx=_tx;_sy=_ty;_found=true;break;}
+        }
+        if(!_found){gold+=c;sideGold[mySide]=gold;alert('附近没有水域，无法建造战舰');return;}
+      }
+      var _nu=spawnUnit(uid,_sx,_sy,mySide);if(_nu){_nu._born=gt;}}
     };
     pu.appendChild(card);
   });
@@ -2586,6 +2631,7 @@ function tick(){
       guestFrame();
     }else{
     gt++;
+    updateWhales();
     var m=~~(gt/3600),s=~~((gt%3600)/60);
     document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
     gold=sideGold[mySide];
@@ -2854,7 +2900,16 @@ function tryHostTrain(side,type){
   var src=blds.filter(function(b){return b.type===dd.rq&&b.side===side&&b.hp>0&&b.ready;})[0];
   if(!src||sideGold[side]<c)return;
   sideGold[side]-=c;if(side===mySide)gold=sideGold[side];
-  var ang=Math.random()*PI*2;spawnUnit(type,src.x+Math.cos(ang)*120,src.y+Math.sin(ang)*120,side);
+  var ang=Math.random()*PI*2;
+  var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
+  if(d.water){
+    for(var _a=0;_a<24;_a++){
+      var _ar=_a/24*PI*2,_rad=150+_a*15;
+      var _tx=src.x+Math.cos(_ar)*_rad,_ty=src.y+Math.sin(_ar)*_rad;
+      if(_tx>20&&_tx<MW-20&&_ty>20&&_ty<MH-20&&tileAt(_tx,_ty)===3){_sx=_tx;_sy=_ty;break;}
+    }
+  }
+  spawnUnit(type,_sx,_sy,side);
 }
 
 // ---- 快照（房主→客人）----
