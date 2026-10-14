@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1027</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1028</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1476,11 +1476,21 @@ function spawnUnit(type,x,y,side){
 
 var tileCols=['#3a7a2a','#b0a070','#2a5a2a','#2a5a9a','#888','#666'];
 function viewRotK(){var k=[0,2,1,3][mySide&3];return (k===undefined)?0:k;}
-function viewExt(){var hw=(W/2)/camZ,hh=(H/2)/(camZ*0.5);var k=viewRotK();return{ex:(k%2===0?hw:hh),ey:(k%2===0?hh:hw)};}
+function viewExt(){var hw=(W/2)/(camZ*0.5),hh=(H/2)/(camZ*0.25);var k=viewRotK();return{ex:(k%2===0?hw:hh),ey:(k%2===0?hh:hw)};}
 function rotToScreen(dx,dy,k){if(k===1)return{x:dy,y:-dx};if(k===2)return{x:-dx,y:-dy};if(k===3)return{x:-dy,y:dx};return{x:dx,y:dy};}
 function rotToWorld(sxr,syr,k){if(k===1)return{x:-syr,y:sxr};if(k===2)return{x:-sxr,y:-syr};if(k===3)return{x:syr,y:-sxr};return{x:sxr,y:syr};}
-function worldToScr(wx,wy){var r=rotToScreen(wx-camX,wy-camY,viewRotK());return{x:W/2+r.x*camZ,y:H/2+r.y*camZ*0.5};}
-function scrToWorld(sx,sy){var r=rotToWorld((sx-W/2)/camZ,(sy-H/2)/(camZ*0.5),viewRotK());return{x:camX+r.x,y:camY+r.y};}
+function worldToScr(wx,wy){
+  var dx=wx-camX,dy=wy-camY;
+  var r=rotToScreen(dx,dy,viewRotK());
+  var k=camZ*0.5;
+  return{x:W/2+(r.x-r.y)*k,y:H/2+(r.x+r.y)*k*0.5};
+}
+function scrToWorld(sx,sy){
+  var ix=(sx-W/2)/(camZ*0.5),iy=(sy-H/2)/(camZ*0.25);
+  var dx=(ix+iy)*0.5,dy=(iy-ix)*0.5;
+  var r=rotToWorld(dx,dy,viewRotK());
+  return{x:camX+r.x,y:camY+r.y};
+}
 function miniScale(){return 160/MW;}
 function miniSize(){return (viewRotK()%2===0)?{w:160,h:120}:{w:120,h:160};}
 function worldToMini(wx,wy){var s=miniScale(),r=rotToScreen(wx-MW/2,wy-MH/2,viewRotK()),z=miniSize();return{x:z.w/2+r.x*s,y:z.h/2+r.y*s};}
@@ -1541,25 +1551,25 @@ function draw(){
   var etx=Math.min(cols,Math.ceil((camX+ve.ex)/T)+1);
   var ety=Math.min(rows,Math.ceil((camY+ve.ey)/T)+1);
   var sc=T*camZ;
-  var isoH=sc*0.5;
-  var diamondW=sc*1.6,diamondH=isoH*1.6;
-  function drawDiamond(cx2,cy2,cw,ch,fill){
-    cx.fillStyle=fill;cx.beginPath();
-    cx.moveTo(cx2,cy2-ch/2);cx.lineTo(cx2+cw/2,cy2);cx.lineTo(cx2,cy2+ch/2);cx.lineTo(cx2-cw/2,cy2);
+  function isoTile(tx,ty){
+    var x0=tx*T,y0=ty*T,x1=x0+T,y1=y0+T;
+    var p0=worldToScr(x0,y0),p1=worldToScr(x1,y0),p2=worldToScr(x1,y1),p3=worldToScr(x0,y1);
+    cx.beginPath();
+    cx.moveTo(p0.x,p0.y);cx.lineTo(p1.x,p1.y);cx.lineTo(p2.x,p2.y);cx.lineTo(p3.x,p3.y);
     cx.closePath();cx.fill();
   }
   for(var ty=sty;ty<ety;ty++){
     for(var tx=stx;tx<etx;tx++){
       if(ty>=mData.length||tx>=mData[ty].length)continue;
-      var t=mData[ty][tx],sp=worldToScr(tx*T,ty*T);
-      var dcx=sp.x+sc/2,dcy=sp.y+isoH/2;
+      var t=mData[ty][tx];
       var seed=(tx*7+ty*13)%5;
-      if(t===0){drawDiamond(dcx,dcy,diamondW,diamondH,seed<2?'#357a28':'#3e8a30');}
-      else if(t===1){drawDiamond(dcx,dcy,diamondW,diamondH,'#c4b880');}
-      else if(t===2){drawDiamond(dcx,dcy,diamondW,diamondH,'#1a5a1a');}
-      else if(t===3){var wv=Math.sin((tx+ty)*1.5+gt*0.03)*0.15;drawDiamond(dcx,dcy,diamondW,diamondH,'rgba(30,80,180,'+(0.7+wv)+')');}
-      else if(t===4){drawDiamond(dcx,dcy,diamondW,diamondH,'#5a6a7a');}
-      else{drawDiamond(dcx,dcy,diamondW,diamondH,'#6a6a5a');}
+      if(t===0){cx.fillStyle=seed<2?'#357a28':'#3e8a30';}
+      else if(t===1){cx.fillStyle='#c4b880';}
+      else if(t===2){cx.fillStyle='#1a5a1a';}
+      else if(t===3){var wv=Math.sin((tx+ty)*1.5+gt*0.03)*0.15;cx.fillStyle='rgba(30,80,180,'+(0.7+wv)+')';}
+      else if(t===4){cx.fillStyle='#5a6a7a';}
+      else{cx.fillStyle='#6a6a5a';}
+      isoTile(tx,ty);
     }
   }
   ores.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
