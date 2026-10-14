@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1026</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1027</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1542,6 +1542,7 @@ function draw(){
   var ety=Math.min(rows,Math.ceil((camY+ve.ey)/T)+1);
   var sc=T*camZ;
   var isoH=sc*0.5;
+  var diamondW=sc*1.6,diamondH=isoH*1.6;
   function drawDiamond(cx2,cy2,cw,ch,fill){
     cx.fillStyle=fill;cx.beginPath();
     cx.moveTo(cx2,cy2-ch/2);cx.lineTo(cx2+cw/2,cy2);cx.lineTo(cx2,cy2+ch/2);cx.lineTo(cx2-cw/2,cy2);
@@ -1553,12 +1554,12 @@ function draw(){
       var t=mData[ty][tx],sp=worldToScr(tx*T,ty*T);
       var dcx=sp.x+sc/2,dcy=sp.y+isoH/2;
       var seed=(tx*7+ty*13)%5;
-      if(t===0){drawDiamond(dcx,dcy,sc+1,isoH+1,seed<2?'#357a28':'#3e8a30');}
-      else if(t===1){drawDiamond(dcx,dcy,sc+1,isoH+1,'#c4b880');}
-      else if(t===2){drawDiamond(dcx,dcy,sc+1,isoH+1,'#1a5a1a');}
-      else if(t===3){var wv=Math.sin((tx+ty)*1.5+gt*0.03)*0.15;drawDiamond(dcx,dcy,sc+1,isoH+1,'rgba(30,80,180,'+(0.7+wv)+')');}
-      else if(t===4){drawDiamond(dcx,dcy,sc+1,isoH+1,'#5a6a7a');}
-      else{drawDiamond(dcx,dcy,sc+1,isoH+1,'#6a6a5a');}
+      if(t===0){drawDiamond(dcx,dcy,diamondW,diamondH,seed<2?'#357a28':'#3e8a30');}
+      else if(t===1){drawDiamond(dcx,dcy,diamondW,diamondH,'#c4b880');}
+      else if(t===2){drawDiamond(dcx,dcy,diamondW,diamondH,'#1a5a1a');}
+      else if(t===3){var wv=Math.sin((tx+ty)*1.5+gt*0.03)*0.15;drawDiamond(dcx,dcy,diamondW,diamondH,'rgba(30,80,180,'+(0.7+wv)+')');}
+      else if(t===4){drawDiamond(dcx,dcy,diamondW,diamondH,'#5a6a7a');}
+      else{drawDiamond(dcx,dcy,diamondW,diamondH,'#6a6a5a');}
     }
   }
   ores.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
