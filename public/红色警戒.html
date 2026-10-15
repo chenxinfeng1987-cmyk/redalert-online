@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1040</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1041</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -182,7 +182,7 @@ function techUnlocked(id,side){
   return true;
 }
 var unitImgs={},corpses=[];
-var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d']];
+var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s']];
 function loadUnitImgs(){
   Object.keys(UD).forEach(function(k){
     UI_ST.forEach(function(st){
@@ -225,11 +225,18 @@ function uiDraw(img,sp,sz,face,oy,fr,col){
   cx.restore();
   return true;
 }
+function uStateF(u){
+  if(!u.mhp||u.hp>=u.mhp)return 0;
+  var r=u.hp/u.mhp;
+  return r>=0.75?0:(r>=0.5?1:(r>=0.25?2:3));
+}
 function uiFrame(u,mv){
   var a=uiGet(u.type,'_a');
   if(a&&u._atkT!==undefined&&gt-u._atkT<26)return {i:a,f:Math.min(3,~~((gt-u._atkT)/7))};
   var m=uiGet(u.type,'_m');
   if(m&&mv>0.03)return {i:m,f:(~~(gt/6))%4};
+  var st=uiGet(u.type,'_s');
+  if(st)return {i:st,f:uStateF(u)};
   var id=uiGet(u.type,'_i');
   if(id)return {i:id,f:(~~(gt/12))%4};
   if(m)return {i:m,f:0};
