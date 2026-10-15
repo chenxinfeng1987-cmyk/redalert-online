@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1035</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1036</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -180,6 +180,60 @@ function techUnlocked(id,side){
   if(id==='nukesilo')
     return blds.some(function(b){return b.type==='lab'&&b.side===side&&b.hp>0;});
   return true;
+}
+var unitImgs={},corpses=[];
+var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d']];
+function loadUnitImgs(){
+  Object.keys(UD).forEach(function(k){
+    UI_ST.forEach(function(st){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+        img._ok=1;img._cols=Math.max(1,Math.round(w/h));
+      };
+      img.onerror=function(){img._ok=0;};
+      img.src='assets/units/'+k+st[1]+'.png?'+Date.now();
+      unitImgs[k+st[0]]=img;
+    });
+  });
+}
+function uiGet(type,sfx){var i=unitImgs[type+sfx];return (i&&i._ok)?i:null;}
+function uiTint(img,col){
+  if(!uiTint._c)uiTint._c={};
+  var key=img.src+'|'+col,cc=uiTint._c[key];
+  if(cc&&cc.width>0)return cc;
+  var ow=img.naturalWidth||img.width,oh=img.naturalHeight||img.height;
+  var oc=document.createElement('canvas');oc.width=ow;oc.height=oh;
+  var ox=oc.getContext('2d');
+  ox.drawImage(img,0,0);
+  ox.globalCompositeOperation='source-atop';
+  ox.globalAlpha=0.34;ox.fillStyle=col;ox.fillRect(0,0,ow,oh);
+  ox.globalAlpha=1;
+  uiTint._c[key]=oc;return oc;
+}
+function uiDraw(img,sp,sz,face,oy,fr,col){
+  if(!img||!img._ok)return false;
+  var cols=img._cols||1;
+  if(fr>=cols)fr=cols-1;
+  var cw=(img.naturalWidth||img.width)/cols,ch=img.naturalHeight||img.height;
+  var dh=sz*2.4,dw=dh*(cw/ch);
+  var src=uiTint(img,col);
+  cx.save();
+  cx.translate(sp.x,sp.y+sz*0.95+oy);
+  if(face<0)cx.scale(-1,1);
+  try{cx.drawImage(src,fr*cw,0,cw,ch,-dw/2,-dh,dw,dh);}catch(e){}
+  cx.restore();
+  return true;
+}
+function uiFrame(u,mv){
+  var a=uiGet(u.type,'_a');
+  if(a&&u._atkT!==undefined&&gt-u._atkT<26)return {i:a,f:Math.min(3,~~((gt-u._atkT)/7))};
+  var m=uiGet(u.type,'_m');
+  if(m&&mv>0.03)return {i:m,f:(~~(gt/6))%4};
+  var id=uiGet(u.type,'_i');
+  if(id)return {i:id,f:(~~(gt/12))%4};
+  if(m)return {i:m,f:0};
+  return null;
 }
 var bldImgs={};
 function loadBldImgs(){
@@ -942,6 +996,7 @@ function updateMiners(){
 }
 
 function fireUnit(u,t){
+  u._atkT=gt;
   var tesla=(u.type==='tesla')||(u.type==='apc'&&u.tsla);
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y});
 }
@@ -1796,7 +1851,9 @@ function draw(){
     cx.fillStyle='rgba(0,0,0,0.25)';cx.beginPath();cx.arc(sp.x,sp.y+1,sz*0.75,0,PI*2);cx.fill();
     if(u._chute>0){cx.fillStyle='rgba(245,245,240,0.92)';cx.beginPath();cx.arc(sp.x,sp.y+oy-sz*1.4,sz*1.3,PI,0);cx.fill();cx.strokeStyle='#bbb';cx.beginPath();cx.moveTo(sp.x-sz*1.3,sp.y+oy-sz*1.4);cx.lineTo(sp.x,sp.y+oy);cx.lineTo(sp.x+sz*1.3,sp.y+oy-sz*1.4);cx.stroke();}
     var oy=isAir?-8*camZ:(u.fly?-5*camZ:0);
-    if(u.type==='rocket'){
+    var _uf=uiFrame(u,mv);
+    if(_uf){uiDraw(_uf.i,sp,sz,face,oy,_uf.f,col);}
+    else if(u.type==='rocket'){
       var bobR=Math.sin(gt*0.18+u.id)*2*camZ;
       cx.fillStyle='#555';
       cx.fillRect(sp.x-sz*0.15,sp.y-sz*0.4+oy+bobR,sz*0.3,sz*0.9);
@@ -1958,6 +2015,11 @@ function draw(){
     }
     if(u.lv){cx.fillStyle='#ff0';cx.font='bold '+(8*camZ)+'px sans-serif';cx.textAlign='left';cx.fillText('Lv'+u.lv,sp.x+sz+2,sp.y-sz+oy);}
     if(u.hp<u.mhp){cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*1.2+oy,sz*2*(u.hp/u.mhp),3*camZ);}
+  });
+  corpses.forEach(function(c){
+    var img=uiGet(c.type,'_d');if(!img)return;
+    var sp=worldToScr(c.x,c.y),sz=5*camZ;
+    uiDraw(img,sp,sz,1,0,Math.min(3,Math.floor(c.t/10)),sideColor(c.side));
   });
   bullets.forEach(function(b){
     var sp=worldToScr(b.x,b.y);
@@ -2662,6 +2724,7 @@ function tick(){
     }else{
     gt++;
     updateWhales();
+    for(var ci=corpses.length-1;ci>=0;ci--){corpses[ci].t++;if(corpses[ci].t>=40)corpses.splice(ci,1);}
     var m=~~(gt/3600),s=~~((gt%3600)/60);
     document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
     gold=sideGold[mySide];
@@ -2673,6 +2736,7 @@ function tick(){
     upPwr();
     buildPanels_update();updateSelInfo();updateResUI();checkWin();
     var _ns=document.getElementById('netstat');if(_ns)_ns.textContent=(NET.mode==='off')?'':('延迟 '+NET.ping+'ms');
+    units.forEach(function(u){if(u.hp<=0&&!u._dm){u._dm=1;if(uiGet(u.type,'_d'))corpses.push({x:u.x,y:u.y,type:u.type,side:u.side,t:0});}});
     units=units.filter(function(u){return u.hp>0;});
     miners=miners.filter(function(m){return m.hp>0;});
     blds=blds.filter(function(b){return b.hp>0;});
@@ -3051,6 +3115,7 @@ document.getElementById('lb-close').onclick=function(){if(!NET.started)closeLobb
 
 genMap();
 loadBldImgs();
+loadUnitImgs();
 tick();
 
 if(location.search.indexOf('test=touch')>=0){
