@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1039</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1040</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -293,6 +293,7 @@ var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0;
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
+var mapCX=0,mapCY=0,mapR=0;
 var ais=[null,null,null,null];
 var mType='symmetric';
 var mySide=0;
@@ -393,8 +394,9 @@ function genMap(){
     }
   }
   // ==== 地图四周扩成水域 ====
-  var BORDER=16;
   var _oldCols=mData[0].length,_oldRows=mData.length;
+  var _hd=Math.sqrt(Math.pow(_oldCols*T/2,2)+Math.pow(_oldRows*T/2,2));
+  var BORDER=Math.max(16,Math.ceil((_hd*1.05-Math.min(_oldCols,_oldRows)*T/2)/T)+1);
   var _newRows=_oldRows+BORDER*2,_newCols=_oldCols+BORDER*2;
   var _newData=[];
   for(var _y=0;_y<_newRows;_y++){
@@ -405,6 +407,15 @@ function genMap(){
       }else{
         _newData[_y][_x]=mData[_y-BORDER][_x-BORDER];
       }
+    }
+  }
+  var _ccx=_newCols*T/2,_ccy=_newRows*T/2;
+  mapCX=_ccx;mapCY=_ccy;
+  mapR=Math.min(_newCols,_newRows)*T/2-T;
+  for(var _yy=0;_yy<_newRows;_yy++){
+    for(var _xx=0;_xx<_newCols;_xx++){
+      var _ddx=(_xx+0.5)*T-_ccx,_ddy=(_yy+0.5)*T-_ccy;
+      if(_ddx*_ddx+_ddy*_ddy>mapR*mapR)_newData[_yy][_xx]=9;
     }
   }
   mData=_newData;
@@ -571,6 +582,7 @@ function tileAt(wx,wy){
 }
 function passable(wx,wy,unit){
   var t=tileAt(wx,wy);
+  if(t===9)return false;
   if(unit&&unit.water){if(t!==3)return false;}
   else if(t===3||t===4)return false;
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;var bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
@@ -1701,6 +1713,10 @@ function draw(){
   var ve=viewExt();
   camX=Math.max(0,Math.min(MW,camX));
   camY=Math.max(0,Math.min(MH,camY));
+  if(mapR>0){
+    var _cdx=camX-mapCX,_cdy=camY-mapCY,_cd=Math.sqrt(_cdx*_cdx+_cdy*_cdy),_clim=mapR-150;
+    if(_cd>1&&_cd>_clim){camX=mapCX+_cdx/_cd*_clim;camY=mapCY+_cdy/_cd*_clim;}
+  }
   var cols=Math.ceil(MW/T),rows=Math.ceil(MH/T);
   var stx=Math.max(0,~~((camX-ve.ex)/T)-1),sty=Math.max(0,~~((camY-ve.ey)/T)-1);
   var etx=Math.min(cols,Math.ceil((camX+ve.ex)/T)+1);
@@ -1718,6 +1734,7 @@ function draw(){
     for(var tx=stx;tx<etx;tx++){
       var _ty=Math.max(0,Math.min(_rows-1,ty)),_tx=Math.max(0,Math.min(_cols-1,tx));
       var t=mData[_ty][_tx];
+      if(t===9)continue;
       var seed=(_tx*7+_ty*13)%5;
       if(t===0){cx.fillStyle=seed<2?'#357a28':'#3e8a30';}
       else if(t===1){cx.fillStyle='#c4b880';}
@@ -2050,7 +2067,7 @@ function draw(){
       if(u.skillCd<=0){cx.strokeStyle='#0f0';cx.lineWidth=1.5*camZ;cx.beginPath();cx.arc(sp.x,sp.y+oy,sz*1.5,0,PI*2);cx.stroke();cx.lineWidth=1;}
     }
     if(u.lv){cx.fillStyle='#ff0';cx.font='bold '+(8*camZ)+'px sans-serif';cx.textAlign='left';cx.fillText('Lv'+u.lv,sp.x+sz+2,sp.y-sz+oy);}
-    if(u.hp<u.mhp){cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*1.2+oy,sz*2*(u.hp/u.mhp),3*camZ);}
+    if(u.hp<u.mhp){cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*2.0+oy,sz*2*(u.hp/u.mhp),3*camZ);}
   });
   corpses.forEach(function(c){
     var img=uiGet(c.type,'_d');if(!img)return;
@@ -2166,11 +2183,12 @@ function draw(){
 function drawMinimap(){
   setMiniCanvas();
   var z=miniSize();
-  mx2.fillStyle='#111';mx2.fillRect(0,0,z.w,z.h);
+  mx2.fillStyle='#0a2a4a';mx2.fillRect(0,0,z.w,z.h);
   var cols=Math.ceil(MW/T),rows=Math.ceil(MH/T);
   var ts=Math.max(1,T*miniScale()+1);
   for(var y=0;y<rows;y++){for(var x=0;x<cols;x++){
     if(y>=mData.length||x>=mData[y].length)continue;
+    if(mData[y][x]===9)continue;
     var mp=worldToMini(x*T+T/2,y*T+T/2);
     mx2.fillStyle=tileCols[mData[y][x]]||'#3a7a2a';
     mx2.fillRect(mp.x-ts/2,mp.y-ts/2,ts,ts);
@@ -2627,7 +2645,7 @@ function updateSupplies(){
     supplyTimer=2400+~~(Math.random()*1200);
     for(var a=0;a<3;a++){
       var sx,sy,tries=0;
-      do{sx=200+Math.random()*(MW-400);sy=200+Math.random()*(MH-400);tries++;}while(tileAt(sx,sy)===3&&tries<50);
+      do{sx=200+Math.random()*(MW-400);sy=200+Math.random()*(MH-400);tries++;}while((tileAt(sx,sy)===3||tileAt(sx,sy)===9)&&tries<50);
       supplies.push({x:sx,y:sy,val:500+~~(Math.random()*1500),life:3600});
     }
     document.getElementById('timer').style.color='#ffd700';
