@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1050</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1051</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -332,7 +332,7 @@ function drawBldImg(img,b,sp,sz,col){
 var cv=document.getElementById('c'),cx=cv.getContext('2d');
 var mm=document.getElementById('minimap'),mx2=mm.getContext('2d');
 var W,H;
-var camX=0,camY=0,camZ=0.9;
+var camX=0,camY=0,camZ=0.9,camFollowId=0;
 var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
@@ -631,7 +631,7 @@ function tileAt(wx,wy){
 function passable(wx,wy,unit){
   var t=tileAt(wx,wy);
   if(t===9)return false;
-  if(unit&&unit.water){if(t!==3)return false;}
+  if(unit&&unit.water){if(wx<30||wy<30||wx>MW-30||wy>MH-30)return false;if(t!==3)return false;}
   else if(t===3||t===4)return false;
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;var bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
   return true;
@@ -739,7 +739,25 @@ function wallFollow(o,tx,ty,spd){
 function moveTow(o,tx,ty,spd){
   var dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
   if(d<3)return true;
-  if(o.fly||o.water){var fspd=spd*(weather==='rain'?0.7:1);o.x+=dx/d*fspd;o.y+=dy/d*fspd;return false;}
+  if(o.fly||o.water){
+    var fspd=spd*(weather==='rain'?0.7:1);
+    if(!o.fly){
+      var _ang=Math.atan2(dy,dx);
+      if(o._wsT!==undefined&&gt<o._wsT)_ang+=o._wsH;
+      var _cand=[_ang,_ang+PI/2,_ang-PI/2,_ang+PI*0.75,_ang-PI*0.75];
+      var _ox2=o.x,_oy2=o.y;
+      for(var wi=0;wi<_cand.length;wi++){
+        var _nx=o.x+Math.cos(_cand[wi])*fspd,_ny=o.y+Math.sin(_cand[wi])*fspd;
+        if(passable(_nx,_ny,o)){o.x=_nx;o.y=_ny;break;}
+      }
+      if(Math.hypot(o.x-_ox2,o.y-_oy2)<0.1){
+        o._wsS=(o._wsS||0)+1;
+        if(o._wsS>45){o._wsS=0;o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+120;}
+      }else o._wsS=0;
+      return false;
+    }
+    o.x+=dx/d*fspd;o.y+=dy/d*fspd;return false;
+  }
   if(!passable(o.x,o.y,o)){
     var ang=Math.random()*PI*2;
     for(var a=0;a<8;a++){
@@ -1369,7 +1387,7 @@ function updateBullets(){
       parts.push({x:b.x,y:b.y,vx:0,vy:0,life:15,col:SIDES[b.side]?SIDES[b.side].c:'#888'});
       bullets.splice(i,1);continue;
     }
-    b.x+=dx/d*b.spd;b.y+=dy/d*b.spd;b.life--;
+    var _st=Math.min(b.spd,d);b.x+=dx/d*_st;b.y+=dy/d*_st;b.life--;
     if(b.life<=0)bullets.splice(i,1);
   }
 }
@@ -1769,6 +1787,12 @@ function draw(){
     if(mpx<W*0.05)mvx-=1;else if(mpx>W*0.95)mvx+=1;
     if(mpy<50)mvy-=1;else if(mpy>H-180)mvy+=1;
     if(mvx||mvy){var wd=rotToWorld(mvx*esc,mvy*esc,viewRotK());camX+=wd.x;camY+=wd.y;}
+  }
+  if(camFollowId){
+    var _fu=null;
+    for(var fi=0;fi<units.length;fi++)if(units[fi].id===camFollowId&&units[fi].hp>0&&!units[fi].riding){_fu=units[fi];break;}
+    if(!_fu)camFollowId=0;
+    else{camX+=(_fu.x-camX)*0.15;camY+=(_fu.y-camY)*0.15;}
   }
   var ve=viewExt();
   camX=Math.max(0,Math.min(MW,camX));
@@ -2331,7 +2355,7 @@ function onDown(e){
   upSkip=false;
   if(gOver){upSkip=true;genMap();return;}
   var p=getPos(e);
-  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camX=wpt.x;camY=wpt.y;upSkip=true;return;}
+  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camFollowId=0;camX=wpt.x;camY=wpt.y;upSkip=true;return;}
   if(p.y<uiTop()){upSkip=true;return;}
   if(e.button===2){
     var wp=scrToWorld(p.x,p.y);
@@ -2476,7 +2500,7 @@ cv.ontouchmove=function(e){
     var cx=(a.clientX+b.clientX)/2,cy=(a.clientY+b.clientY)/2;
     camZ=Math.max(0.5,Math.min(4,camZ*(d/pinch.d)));
     var w=rotToWorld((cx-pinch.cx)/camZ,(cy-pinch.cy)/camZ,viewRotK());
-    camX-=w.x;camY-=w.y;
+    camFollowId=0;camX-=w.x;camY-=w.y;
     pinch.d=d;pinch.cx=cx;pinch.cy=cy;
     return;
   }
@@ -2580,7 +2604,7 @@ function restoreMiniPos(){
 function miniJumpAt(cx2,cy2){
   var r=mcp.getBoundingClientRect();
   var wpt=miniToWorld(((cx2-r.left)/r.width)*mcp.width,((cy2-r.top)/r.height)*mcp.height);
-  camX=wpt.x;camY=wpt.y;
+  camFollowId=0;camX=wpt.x;camY=wpt.y;
 }
 mcp.onmousedown=function(e){
   e.preventDefault();
@@ -3088,8 +3112,9 @@ function applyMove(us,x,y){
     if(boarded)return;
   }
   us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;});
+  camFollowId=(us.length===1&&us[0].side===mySide)?us[0].id:0;
 }
-function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});}
+function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});camFollowId=(us.length===1&&us[0].side===mySide)?us[0].id:0;}
 function applyUnload(a){
   if(!a||a.hp<=0||!a.cargo||!a.cargo.length)return;
   var n=a.cargo.length;
