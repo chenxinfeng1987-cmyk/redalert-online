@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1052</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1053</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -2719,13 +2719,9 @@ function buildPanels(){
       var src=blds.filter(function(b){return b.type===dd.rq&&b.side===mySide&&b.hp>0;})[0];
       if(src&&gold>=c){gold-=c;sideGold[mySide]=gold;var ang=Math.random()*PI*2;var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
       if(UD[uid].water){
-        var _found=false;
-        for(var _a=0;_a<24;_a++){
-          var _ar=_a/24*PI*2,_rad=150+_a*15;
-          var _tx=src.x+Math.cos(_ar)*_rad,_ty=src.y+Math.sin(_ar)*_rad;
-          if(_tx>20&&_tx<MW-20&&_ty>20&&_ty<MH-20&&tileAt(_tx,_ty)===3){_sx=_tx;_sy=_ty;_found=true;break;}
-        }
-        if(!_found){gold+=c;sideGold[mySide]=gold;alert('附近没有水域，无法建造战舰');return;}
+        var _sp=seaSpot(src.x,src.y);
+        if(!_sp){gold+=c;sideGold[mySide]=gold;alert('附近没有水域，无法建造战舰');return;}
+        _sx=_sp.x;_sy=_sp.y;
       }
       var _nu=spawnUnit(uid,_sx,_sy,mySide);if(_nu){_nu._born=gt;}}
     };
@@ -3218,6 +3214,25 @@ function tryHostBuild(side,type,x,y){
   var nb=addB(type,x,y,side);nb.ready=0;nb.bt=120;
   if(type==='tunnel'){var tx2=~~(x/T),ty2=~~(y/T);for(var dx2=-1;dx2<=1;dx2++)for(var dy2=-1;dy2<=1;dy2++){if(ty2+dy2>=0&&ty2+dy2<mData.length&&tx2+dx2>=0&&tx2+dx2<mData[0].length)mData[ty2+dy2][tx2+dx2]=0;}}
 }
+function seaSpot(x0,y0){
+  var _ow=function(x,y){
+    if(x<70||y<70||x>MW-70||y>MH-70||tileAt(x,y)!==3)return false;
+    var _n=0;
+    for(var q=0;q<8;q++)if(tileAt(x+Math.cos(q/8*PI*2)*34,y+Math.sin(q/8*PI*2)*34)===3)_n++;
+    return _n>=6;
+  };
+  for(var _a=0;_a<24;_a++){
+    var _ar=_a/24*PI*2,_rad=150+_a*15;
+    var _tx=x0+Math.cos(_ar)*_rad,_ty=y0+Math.sin(_ar)*_rad;
+    if(_ow(_tx,_ty))return{x:_tx,y:_ty};
+  }
+  for(var _gy=70;_gy<MH-70;_gy+=100){
+    for(var _gx=70;_gx<MW-70;_gx+=100){
+      if(_ow(_gx,_gy))return{x:_gx,y:_gy};
+    }
+  }
+  return null;
+}
 function tryHostTrain(side,type){
   var dd=UD[type];if(!dd)return;
   var c=unitCost(dd,side);
@@ -3227,25 +3242,8 @@ function tryHostTrain(side,type){
   var ang=Math.random()*PI*2;
   var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
   if(d.water){
-    var _ow=function(x,y){
-      if(x<70||y<70||x>MW-70||y>MH-70||tileAt(x,y)!==3)return false;
-      var _n=0;
-      for(var q=0;q<8;q++)if(tileAt(x+Math.cos(q/8*PI*2)*34,y+Math.sin(q/8*PI*2)*34)===3)_n++;
-      return _n>=6;
-    };
-    var _found=false;
-    for(var _a=0;_a<24;_a++){
-      var _ar=_a/24*PI*2,_rad=150+_a*15;
-      var _tx=src.x+Math.cos(_ar)*_rad,_ty=src.y+Math.sin(_ar)*_rad;
-      if(_ow(_tx,_ty)){_sx=_tx;_sy=_ty;_found=true;break;}
-    }
-    if(!_found){
-      for(var _gy=70;_gy<MH-70&&!_found;_gy+=100){
-        for(var _gx=70;_gx<MW-70&&!_found;_gx+=100){
-          if(_ow(_gx,_gy)){_sx=_gx;_sy=_gy;_found=true;}
-        }
-      }
-    }
+    var _sp=seaSpot(src.x,src.y);
+    if(_sp){_sx=_sp.x;_sy=_sp.y;}
   }
   spawnUnit(type,_sx,_sy,side);
 }
