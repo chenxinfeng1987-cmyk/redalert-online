@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1046</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1047</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -183,9 +183,10 @@ function techUnlocked(id,side){
 }
 var unitImgs={},corpses=[];
 var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s']];
-var AV='1046';
+var AV='1047';
+var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner'];
 function loadUnitImgs(){
-  Object.keys(UD).forEach(function(k){
+  ART_U.forEach(function(k){
     UI_ST.forEach(function(st){
       var img=new Image();
       img.onload=function(){
@@ -282,8 +283,9 @@ function unitDeco(u,sp,sz,face,oy){
   }
 }
 var bldImgs={};
+var ART_B=['hq','power','refinery','barracks','warfactory','turret','missile','lab'];
 function loadBldImgs(){
-  Object.keys(BD).forEach(function(k){
+  ART_B.forEach(function(k){
     var img=new Image();
     img.onload=function(){img._ok=1;img._cols=(img.naturalHeight>0)?Math.max(1,Math.round(img.naturalWidth/img.naturalHeight)):1;};
     img.onerror=function(){img._ok=0;};
@@ -1935,12 +1937,24 @@ function draw(){
   miners.forEach(function(m){
     if(m.hp<=0)return;
     var sp=worldToScr(m.x,m.y),sz=6*camZ;
-    var col=sideColor(m.side);
-    cx.fillStyle='#333';cx.fillRect(sp.x-sz,sp.y-sz*0.5,sz*2,sz);
-    cx.fillStyle=col;cx.fillRect(sp.x-sz+2*camZ,sp.y-sz*0.4,sz*2-4*camZ,sz*0.8);
-    cx.fillStyle='#555';cx.fillRect(sp.x-sz*0.3,sp.y-sz*0.6,sz*0.6,sz*0.5);
-    if(m.carry>0){cx.fillStyle='#fc0';cx.fillRect(sp.x-sz*0.2,sp.y-sz*0.8,sz*0.4,sz*0.3);}
-    if(m.hp<m.mhp){cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*0.9,sz*2*(m.hp/m.mhp),3*camZ);}
+    var mvx=m.x-(m._px===undefined?m.x:m._px),mvy=m.y-(m._py===undefined?m.y:m._py);
+    m._px=m.x;m._py=m.y;
+    var mv=Math.hypot(mvx,mvy),col=sideColor(m.side);
+    cx.fillStyle='rgba(0,0,0,0.25)';cx.beginPath();cx.arc(sp.x,sp.y+1,sz*0.75,0,PI*2);cx.fill();
+    var _mi=null,_mf=0;
+    if(mv>0.03){_mi=uiGet('miner','_m');_mf=(~~(gt/6))%4;}
+    if(!_mi){_mi=uiGet('miner','_s');_mf=uStateF(m);}
+    if(!_mi){_mi=uiGet('miner','_m');_mf=0;}
+    if(!uiDraw(_mi,sp,sz,1,0,_mf,col)){
+      cx.fillStyle='#333';cx.fillRect(sp.x-sz,sp.y-sz*0.5,sz*2,sz);
+      cx.fillStyle=col;cx.fillRect(sp.x-sz+2*camZ,sp.y-sz*0.4,sz*2-4*camZ,sz*0.8);
+      cx.fillStyle='#555';cx.fillRect(sp.x-sz*0.3,sp.y-sz*0.6,sz*0.6,sz*0.5);
+    }
+    if(m.carry>0){cx.fillStyle='#fc0';cx.beginPath();cx.arc(sp.x,sp.y-sz*0.95,3.2*camZ,0,PI*2);cx.fill();}
+    if(m.hp<m.mhp){
+      cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(sp.x-sz,sp.y-sz*1.15,sz*2,4*camZ);
+      cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*1.15,sz*2*(m.hp/m.mhp),4*camZ);
+    }
   });
   units.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   units.forEach(function(u){
