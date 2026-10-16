@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1048</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1049</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -355,7 +355,7 @@ var supplyTimer=2400;
 var nukeStates={0:null,1:null,2:null,3:null};
 var nukes=[];
 var nukeFx=[];
-var atkAlert=[];
+var atkAlert=[],bolts=[];
 var screenFlash=0;
 
 function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();}
@@ -1376,6 +1376,7 @@ function updateBullets(){
 function updateParticles(){
   for(var i=parts.length-1;i>=0;i--){var p=parts[i];p.life--;p.x+=p.vx;p.y+=p.vy;if(p.life<=0)parts.splice(i,1);}
   for(var i2=atkAlert.length-1;i2>=0;i2--){atkAlert[i2].t--;if(atkAlert[i2].t<=0)atkAlert.splice(i2,1);}
+  for(var i3=bolts.length-1;i3>=0;i3--){bolts[i3].t++;if(bolts[i3].t>=bolts[i3].dur)bolts.splice(i3,1);}
 }
 
 function updateTurrets(){
@@ -1394,7 +1395,10 @@ function updateTurrets(){
       if(d<rng)targets.push(scan[i]);
     }
     targets.forEach(function(t){
-      if(b.type==='missile')bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:26,dmg:b.atk,side:b.side,life:30,laser:1,t:t,ox:b.x,oy:b.y});
+      if(b.type==='missile'){
+        bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:26,dmg:b.atk,side:b.side,life:30,laser:1,t:t,ox:b.x,oy:b.y});
+        bolts.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,t:0,dur:14,seed:Math.random()*100});
+      }
       else bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:5,dmg:b.atk,side:b.side,life:50,t:t,ox:b.x,oy:b.y});
     });
     if(targets.length>0)b._cd=b.type==='missile'?26:30;
@@ -2148,17 +2152,33 @@ function draw(){
     var sp=worldToScr(c.x,c.y),sz=6*camZ;
     uiDraw(img,sp,sz,1,0,Math.min(3,Math.floor(c.t/10)),sideColor(c.side));
   });
-  bullets.forEach(function(b){
-    var sp=worldToScr(b.x,b.y);
-    if(b.laser){
-      var so=worldToScr(b.ox!==undefined?b.ox:b.x,b.oy!==undefined?b.oy:b.y);
-      cx.strokeStyle='rgba(255,255,255,0.3)';cx.lineWidth=4*camZ;
-      cx.beginPath();cx.moveTo(so.x,so.y);cx.lineTo(sp.x,sp.y);cx.stroke();
-      cx.strokeStyle='#fff';cx.lineWidth=1.4*camZ;
-      cx.beginPath();cx.moveTo(so.x,so.y);cx.lineTo(sp.x,sp.y);cx.stroke();
-      cx.fillStyle='#fff';cx.beginPath();cx.arc(sp.x,sp.y,2*camZ,0,PI*2);cx.fill();
-      return;
+  for(var bi=0;bi<bolts.length;bi++){
+    var bo=bolts[bi],pr=bo.t/bo.dur;
+    if(pr>=1)continue;
+    var so=worldToScr(bo.x,bo.y),to=worldToScr(bo.tx,bo.ty);
+    var bdx=to.x-so.x,bdy=to.y-so.y,bl=Math.sqrt(bdx*bdx+bdy*bdy);
+    if(bl<2)continue;
+    var bux=-bdy/bl,buy=bdx/bl;
+    var seg=Math.max(5,Math.min(16,~~(bl/18)));
+    var amp=Math.min(15,4+bl*0.05);
+    cx.save();
+    cx.globalAlpha=(1-pr)*(0.55+0.45*Math.sin(gt*1.9+bo.seed*3.7));
+    cx.lineJoin='round';cx.lineCap='round';
+    cx.beginPath();cx.moveTo(so.x,so.y);
+    for(var k=1;k<seg;k++){
+      var t2=k/seg;
+      var off=(Math.sin(t2*11.3+bo.seed*2.9)+Math.sin(t2*27.7+bo.seed*6.1)*0.6)*amp;
+      cx.lineTo(so.x+bdx*t2+bux*off,so.y+bdy*t2+buy*off);
     }
+    cx.lineTo(to.x,to.y);
+    cx.strokeStyle='rgba(185,220,255,0.7)';cx.lineWidth=4.5*camZ;cx.stroke();
+    cx.strokeStyle='#fff';cx.lineWidth=1.5*camZ;cx.stroke();
+    cx.fillStyle='#fff';cx.beginPath();cx.arc(to.x,to.y,(2+2*(1-pr))*camZ,0,PI*2);cx.fill();
+    cx.restore();
+  }
+  bullets.forEach(function(b){
+    if(b.laser)return;
+    var sp=worldToScr(b.x,b.y);
     cx.fillStyle=sideColor(b.side);cx.shadowColor=cx.fillStyle;cx.shadowBlur=3;
     cx.beginPath();cx.arc(sp.x,sp.y,1.8*camZ,0,PI*2);cx.fill();cx.shadowBlur=0;
   });
