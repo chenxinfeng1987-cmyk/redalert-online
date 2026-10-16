@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1053</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1054</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -332,7 +332,7 @@ function drawBldImg(img,b,sp,sz,col){
 var cv=document.getElementById('c'),cx=cv.getContext('2d');
 var mm=document.getElementById('minimap'),mx2=mm.getContext('2d');
 var W,H;
-var camX=0,camY=0,camZ=0.9,camFollowId=0;
+var camX=0,camY=0,camZ=0.9,camFollowId=0,camFollowG=null;
 var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
@@ -1826,11 +1826,22 @@ function draw(){
     if(mpy<50)mvy-=1;else if(mpy>H-180)mvy+=1;
     if(mvx||mvy){var wd=rotToWorld(mvx*esc,mvy*esc,viewRotK());camX+=wd.x;camY+=wd.y;}
   }
-  if(camFollowId){
-    var _fu=null;
-    for(var fi=0;fi<units.length;fi++)if(units[fi].id===camFollowId&&units[fi].hp>0&&!units[fi].riding){_fu=units[fi];break;}
-    if(!_fu)camFollowId=0;
-    else{camX+=(_fu.x-camX)*0.15;camY+=(_fu.y-camY)*0.15;}
+  if(camFollowId||camFollowG){
+    var _fx=0,_fy=0,_fn=0;
+    if(camFollowId){
+      for(var fi=0;fi<units.length;fi++)if(units[fi].id===camFollowId&&units[fi].hp>0&&!units[fi].riding){_fx=units[fi].x;_fy=units[fi].y;_fn=1;break;}
+      if(!_fn)camFollowId=0;
+    }
+    if(camFollowG){
+      var _gset={};
+      for(var gi=0;gi<camFollowG.length;gi++)_gset[camFollowG[gi]]=1;
+      for(var fj=0;fj<units.length;fj++){
+        var _gu=units[fj];
+        if(_gset[_gu.id]&&_gu.hp>0&&!_gu.riding){_fx+=_gu.x;_fy+=_gu.y;_fn++;}
+      }
+      if(!_fn)camFollowG=null;
+    }
+    if(_fn){camX+=(_fx/_fn-camX)*0.15;camY+=(_fy/_fn-camY)*0.15;}
   }
   var ve=viewExt();
   camX=Math.max(0,Math.min(MW,camX));
@@ -1881,7 +1892,7 @@ function draw(){
   blds.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   blds.forEach(function(b){
     if(b.hp<=0)return;
-    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/4.5;
+    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/3.6;
     var col=sideColor(b.side),dk=sideDk(b.side),lt=sideLt(b.side);
     if(!b.ready){
       var prog=1-b.bt/120;
@@ -2393,7 +2404,7 @@ function onDown(e){
   upSkip=false;
   if(gOver){upSkip=true;genMap();return;}
   var p=getPos(e);
-  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camFollowId=0;camX=wpt.x;camY=wpt.y;upSkip=true;return;}
+  if(e.target===mcp){var r=mm.getBoundingClientRect();var wpt=miniToWorld(((p.x-r.left)/r.width)*mm.width,((p.y-r.top)/r.height)*mm.height);camFollowId=0;camFollowG=null;camX=wpt.x;camY=wpt.y;upSkip=true;return;}
   if(p.y<uiTop()){upSkip=true;return;}
   if(e.button===2){
     var wp=scrToWorld(p.x,p.y);
@@ -2538,7 +2549,7 @@ cv.ontouchmove=function(e){
     var cx=(a.clientX+b.clientX)/2,cy=(a.clientY+b.clientY)/2;
     camZ=Math.max(0.5,Math.min(4,camZ*(d/pinch.d)));
     var w=rotToWorld((cx-pinch.cx)/camZ,(cy-pinch.cy)/camZ,viewRotK());
-    camFollowId=0;camX-=w.x;camY-=w.y;
+    camFollowId=0;camFollowG=null;camX-=w.x;camY-=w.y;
     pinch.d=d;pinch.cx=cx;pinch.cy=cy;
     return;
   }
@@ -2642,7 +2653,7 @@ function restoreMiniPos(){
 function miniJumpAt(cx2,cy2){
   var r=mcp.getBoundingClientRect();
   var wpt=miniToWorld(((cx2-r.left)/r.width)*mcp.width,((cy2-r.top)/r.height)*mcp.height);
-  camFollowId=0;camX=wpt.x;camY=wpt.y;
+  camFollowId=0;camFollowG=null;camX=wpt.x;camY=wpt.y;
 }
 mcp.onmousedown=function(e){
   e.preventDefault();
@@ -3131,6 +3142,12 @@ function onNetMsg(m){
 function idsOf(us){var a=[];for(var i=0;i<us.length;i++)a.push(us[i].id);return a;}
 function netCmd(o){if(NET.mode==='guest'){o.t='cmd';netSend(o);}}
 function apcAt(side,x,y){for(var i=0;i<units.length;i++){var u=units[i];if(u.hp>0&&!u.riding&&u.side===side&&((u.type==='apc'&&Math.abs(u.x-x)<55&&Math.abs(u.y-y)<55)||(u.type==='heli'&&Math.abs(u.x-x)<75&&Math.abs(u.y-y)<75)||(u.water&&Math.abs(u.x-x)<80&&Math.abs(u.y-y)<80)))return u;}return null;}
+function setCamFollow(us){
+  camFollowId=0;camFollowG=null;
+  if(!us||!us.length||us[0].side!==mySide)return;
+  if(us.length===1)camFollowId=us[0].id;
+  else{var _ids=[];for(var _i=0;_i<us.length;_i++)_ids.push(us[_i].id);camFollowG=_ids;}
+}
 function applyMove(us,x,y){
   var ap=us.length?apcAt(us[0].side,x,y):null;
   if(ap&&ap.cargo){
@@ -3146,9 +3163,9 @@ function applyMove(us,x,y){
     if(boarded)return;
   }
   us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;});
-  camFollowId=(us.length===1&&us[0].side===mySide)?us[0].id:0;
+  setCamFollow(us);
 }
-function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});camFollowId=(us.length===1&&us[0].side===mySide)?us[0].id:0;}
+function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});setCamFollow(us);}
 function applyUnload(a){
   if(!a||a.hp<=0||!a.cargo||!a.cargo.length)return;
   var n=a.cargo.length;
