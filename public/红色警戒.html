@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1043</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1045</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -651,7 +651,7 @@ function findPath(sx,sy,tx,ty){
   var sgx=~~(sx/T),sgy=~~(sy/T),tgx=~~(tx/T),tgy=~~(ty/T);
   if(sgx===tgx&&sgy===tgy)return null;
   if(tgy<0||tgy>=mData.length||tgx<0||tgx>=mData[0].length)return null;
-  if(tileBlockedByBld(tgx,tgy,true,tgx,tgy)){
+  if(tileBlockedByBld(tgx,tgy,false,tgx,tgy)){
     var found=false;
     for(var rad=1;rad<=3&&!found;rad++){
       for(var dy=-rad;dy<=rad&&!found;dy++)for(var dx=-rad;dx<=rad&&!found;dx++){
@@ -671,7 +671,7 @@ function findPath(sx,sy,tx,ty){
   gs[sgx+','+sgy]=0;
   var dirs=[{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1},{dx:1,dy:1},{dx:-1,dy:1},{dx:1,dy:-1},{dx:-1,dy:-1}];
   var fd=false,it=0;
-  while(op.length>0&&it<600){
+  while(op.length>0&&it<1500){
     it++;var bi=0;
     for(var i=1;i<op.length;i++)if(op[i].f<op[bi].f)bi=i;
     var cu=op.splice(bi,1)[0],ck=cu.x+','+cu.y;
@@ -692,7 +692,7 @@ function findPath(sx,sy,tx,ty){
       var ng=(gs[ck]||0)+(dirs[d].dx&&dirs[d].dy?1.41:1);
       if(gs[nk]===undefined||ng<gs[nk]){
         gs[nk]=ng;fr[nk]=ck;
-        var h=Math.abs(tgx-nx)+Math.abs(tgy-ny);
+        var _hx=Math.abs(tgx-nx),_hy=Math.abs(tgy-ny),h=_hx>_hy?_hx:_hy;
         var ex=false;for(var j=0;j<op.length;j++){if(op[j].x===nx&&op[j].y===ny){ex=true;break;}}
         if(!ex)op.push({x:nx,y:ny,g:ng,f:ng+h});
       }
@@ -701,7 +701,12 @@ function findPath(sx,sy,tx,ty){
   if(!fd){_pc[tk]={p:null,t:gt+45};return null;}
   var path=[],ck=tgx+','+tgy;
   while(fr[ck]){var pp=ck.split(',');path.unshift({x:(~~pp[0]+0.5)*T,y:(~~pp[1]+0.5)*T});ck=fr[ck];}
-  path.push({x:tx,y:ty});
+  var _gok=true;
+  for(var gi=0;gi<blds.length;gi++){
+    var gb=blds[gi];if(gb.hp<=0)continue;var gbs=gb.sz*T/2+6;
+    if(Math.abs(gb.x-tx)<gbs&&Math.abs(gb.y-ty)<gbs){_gok=false;break;}
+  }
+  if(_gok)path.push({x:tx,y:ty});
   _pc[tk]={p:path,t:gt+90};return path;
 }
 function wallFollow(o,tx,ty,spd){
@@ -715,7 +720,7 @@ function wallFollow(o,tx,ty,spd){
   ];
   var sp=spd*tSpd(o.x,o.y);
   for(var i=0;i<cand.length;i++){
-    var nx=o.x+Math.cos(cand[i])*sp*1.4,ny=o.y+Math.sin(cand[i])*sp*1.4;
+    var nx=o.x+Math.cos(cand[i])*sp*2.5,ny=o.y+Math.sin(cand[i])*sp*2.5;
     if(passable(nx,ny)){o.x=nx;o.y=ny;o._path=null;o._pi=0;return true;}
   }
   if((o._wfCount=(o._wfCount||0)+1)>20){
@@ -774,7 +779,6 @@ function moveTow(o,tx,ty,spd){
     if(nd>2){
       var sp=spd*tSpd(o.x,o.y),nx=o.x+ndx/nd*sp,ny=o.y+ndy/nd*sp;
       if(passable(nx,ny)){o.x=nx;o.y=ny;moved=true;}
-      else if(passable(nx,o.y)&&passable(o.x,ny)){o.x=nx;o.y=ny;moved=true;}
       else if(passable(nx,o.y)){o.x=nx;moved=true;}
       else if(passable(o.x,ny)){o.y=ny;moved=true;}
       else{wallFollow(o,tx,ty,spd);moved=true;}
@@ -782,13 +786,16 @@ function moveTow(o,tx,ty,spd){
   }else{
     var sp2=spd*tSpd(o.x,o.y),nx2=o.x+dx/d*sp2,ny2=o.y+dy/d*sp2;
     if(passable(nx2,ny2)){o.x=nx2;o.y=ny2;moved=true;}
-    else if(passable(nx2,o.y)&&passable(o.x,ny2)){o.x=nx2;o.y=ny2;moved=true;}
     else if(passable(nx2,o.y)){o.x=nx2;moved=true;}
     else if(passable(o.x,ny2)){o.y=ny2;moved=true;}
     else{wallFollow(o,tx,ty,spd);moved=true;}
   }
   if(!moved)wallFollow(o,tx,ty,spd);
   if(moved&&Math.hypot(tx-o.x,ty-o.y)<12){o._stuckN=0;o._wfCount=0;}
+  if(o._gx!==tx||o._gy!==ty){o._gx=tx;o._gy=ty;o._bd=undefined;o._bn=0;}
+  var _nd=Math.hypot(tx-o.x,ty-o.y);
+  if(_nd<(o._bd===undefined?1e9:o._bd)-0.5){o._bd=_nd;o._bn=0;}else{o._bn=(o._bn||0)+1;}
+  if(o._bn>45){o._bd=undefined;o._bn=0;o._path=null;o._stuckN=0;o._wfCount=0;return true;}
   return false;
 }
 
