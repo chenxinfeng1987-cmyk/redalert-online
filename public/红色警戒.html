@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1054</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1055</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -136,6 +136,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="gameover"><h2 id="got"></h2><p id="gom" style="color:#aaa"></p><button class="rb" onclick="location.reload()">再来一局</button></div>
 <script>
 var MW=4000,MH=3000,T=40,PI=Math.PI;
+var MW0=4000,MH0=3000,_mBase=null;
 var SIDES=[
   {n:'🇨🇳中国',fl:'🇨🇳',c:'#ff2222',dk:'#6a1a1a',lt:'#ff8866',wh:'#ffddcc'},
   {n:'🇺🇸美国',fl:'🇺🇸',c:'#2266cc',dk:'#1a3a6a',lt:'#66aaff',wh:'#ddeeff'},
@@ -378,7 +379,7 @@ function handleMapUpload(e){
         mType='custom';
         document.getElementById('map-sel').value='custom';
         document.getElementById('mapname').textContent='📷 '+file.name;
-        mData=[];
+        MW=MW0;MH=MH0;_mBase=null;mData=[];
         for(var y=0;y<rows;y++){mData[y]=[];for(var x=0;x<cols;x++){
           var i=(y*cols+x)*4;
           var r=px.data[i],g=px.data[i+1],b=px.data[i+2];
@@ -416,6 +417,7 @@ function colorToTerrain(r,g,b){
 
 function genMap(){
   var isCustom=mType==='custom'&&mData.length>0;
+  if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
   if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
@@ -434,6 +436,7 @@ function genMap(){
     else if(mType==='open')genOpen(cols,rows);
     else genFort(cols,rows);
   }
+  _mBase=mData.map(function(r){return r.slice();});
   placeOres();placeBases();
   for(var _wi=0;_wi<6;_wi++){
     var _wx=Math.random()*MW,_wy=Math.random()*MH;
@@ -445,6 +448,11 @@ function genMap(){
   var _oldCols=mData[0].length,_oldRows=mData.length;
   var _hd=Math.sqrt(Math.pow(_oldCols*T/2,2)+Math.pow(_oldRows*T/2,2));
   var BORDER=Math.max(16,Math.ceil((_hd*1.05-Math.min(_oldCols,_oldRows)*T/2)/T)+1);
+  var _Aold=_oldCols*_oldRows*T*T;
+  var _R0=Math.min(_oldCols+BORDER*2,_oldRows+BORDER*2)*T/2-T;
+  var _R1=Math.sqrt(Math.max(_R0*_R0,2*_R0*_R0-_Aold/Math.PI));
+  var _B1=Math.ceil(((_R1+T)*2/T-Math.min(_oldCols,_oldRows))/2);
+  BORDER=Math.max(BORDER,_B1);
   var _newRows=_oldRows+BORDER*2,_newCols=_oldCols+BORDER*2;
   var _newData=[];
   for(var _y=0;_y<_newRows;_y++){
@@ -661,7 +669,7 @@ function findPath(sx,sy,tx,ty){
         if(Math.abs(dx)!==rad&&Math.abs(dy)!==rad)continue;
         var cxg=tgx+dx,cyg=tgy+dy;
         if(cyg<0||cyg>=mData.length||cxg<0||cxg>=mData[0].length)continue;
-        if(!tileBlockedByBld(cxg,cyg,false,tgx,tgy)&&mData[cyg][cxg]!==3&&mData[cyg][cxg]!==4){
+        if(!tileBlockedByBld(cxg,cyg,false,tgx,tgy)&&mData[cyg][cxg]!==3&&mData[cyg][cxg]!==4&&mData[cyg][cxg]!==9){
           tgx=cxg;tgy=cyg;found=true;
         }
       }
@@ -684,12 +692,12 @@ function findPath(sx,sy,tx,ty){
       var nx=cu.x+dirs[d].dx,ny=cu.y+dirs[d].dy,nk=nx+','+ny;
       if(cl[nk])continue;
       if(ny<0||ny>=mData.length||nx<0||nx>=mData[0].length)continue;
-      var t=mData[ny][nx];if(t===3||t===4)continue;
+      var t=mData[ny][nx];if(t===3||t===4||t===9)continue;
       if(tileBlockedByBld(nx,ny,nx===tgx&&ny===tgy,tgx,tgy))continue;
       if(dirs[d].dx&&dirs[d].dy){
         var a=mData[cu.y]?mData[cu.y][cu.x+dirs[d].dx]:4;
         var b=mData[cu.y+dirs[d].dy]?mData[cu.y+dirs[d].dy][cu.x]:4;
-        if(a===3||a===4||b===3||b===4)continue;
+        if(a===3||a===4||b===3||b===4||a===9||b===9)continue;
         if(tileBlockedByBld(cu.x+dirs[d].dx,cu.y,false,tgx,tgy)||tileBlockedByBld(cu.x,cu.y+dirs[d].dy,false,tgx,tgy))continue;
       }
       var ng=(gs[ck]||0)+(dirs[d].dx&&dirs[d].dy?1.41:1);
@@ -1126,6 +1134,7 @@ function updateUnits(){
   units.forEach(function(u){
     if(u.hp<=0)return;
     u.cooldown=u.cooldown?u.cooldown-1:0;if(u._chute>0)u._chute--;
+    if(u._fz>gt)return;
     if(u._tin){
       var tin=u._tin;
       var fromB=null,toB=null;
@@ -1198,6 +1207,7 @@ function updateUnits(){
         if(dist(u,mu)<=u.rng){
           var mid=mu.id;
           _nl['u'+mid]=1;
+          mu._fz=gt+3;
           u._mList['u'+mid]=(u._mList['u'+mid]||0)+1;
           if(u._mList['u'+mid]>=300){
             mu.hp=0;
@@ -1551,7 +1561,7 @@ function runAI(side){
           var ok=true;var sz=BD[id].sz*T/2;
           for(var dy=-2;dy<=2;dy++)for(var dx=-2;dx<=2;dx++){
             var tx=~~(bx/T)+dx,ty=~~(by/T)+dy;
-            if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length||mData[ty][tx]===3||mData[ty][tx]===4)ok=false;
+            if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length||mData[ty][tx]===3||mData[ty][tx]===4||mData[ty][tx]===9)ok=false;
           }
           if(ok){for(var j=0;j<blds.length;j++){var ob=blds[j];if(ob.hp<=0)continue;if(Math.abs(ob.x-bx)<(ob.sz*T/2+sz)&&Math.abs(ob.y-by)<(ob.sz*T/2+sz))ok=false;}}
           if(ok){sideGold[side]-=BD[id].g;addB(id,bx,by,side);bCount[id]=(bCount[id]||0)+1;built++;}
@@ -1686,11 +1696,20 @@ function spawnUnit(type,x,y,side){
     x+=Math.cos(ang)*step;y+=Math.sin(ang)*step;
     x=Math.max(50,Math.min(MW-50,x));y=Math.max(50,Math.min(MH-50,y));
   }
-  if(d.water&&tileAt(x,y)!==3){
-    var _pw2={water:1},_fw=null,_wmr=~~(Math.max(MW,MH)/T/2)+3;
+  var _pw2=d.water?{water:1}:null,_fw=null;
+  var _okSp=function(px,py){
+    if(!passable(px,py,_pw2))return false;
+    for(var i2=0;i2<blds.length;i2++){
+      var b2=blds[i2];if(b2.hp<=0)continue;
+      var bs2=b2.sz*T/2+8;if(Math.abs(b2.x-px)<bs2&&Math.abs(b2.y-py)<bs2)return false;
+    }
+    return true;
+  };
+  if(!_okSp(x,y)){
+    var _wmr=~~(Math.max(MW,MH)/T/2)+3;
     for(var r1=1;r1<=_wmr&&!_fw;r1++)for(var q1=0;q1<16&&!_fw;q1++){
       var a1=q1/16*PI*2,x1=x+Math.cos(a1)*r1*T,y1=y+Math.sin(a1)*r1*T;
-      if(tileAt(x1,y1)===3&&passable(x1,y1,_pw2))_fw={x:x1,y:y1};
+      if(_okSp(x1,y1))_fw={x:x1,y:y1};
     }
     if(_fw){x=_fw.x;y=_fw.y;}
   }
@@ -2050,12 +2069,26 @@ function draw(){
     var isAir=u.ar==='air';
     if(isAir||u.fly){cx.fillStyle='rgba(0,0,0,0.12)';cx.beginPath();cx.ellipse(sp.x,sp.y+8*camZ,sz,sz*0.3,0,0,PI*2);cx.fill();}
     cx.fillStyle='rgba(0,0,0,0.25)';cx.beginPath();cx.arc(sp.x,sp.y+1,sz*0.75,0,PI*2);cx.fill();
+    if(u._fz>gt){
+      cx.fillStyle='rgba(90,200,255,0.18)';cx.beginPath();cx.arc(sp.x,sp.y,sz*1.5,0,PI*2);cx.fill();
+      cx.strokeStyle='rgba(120,235,255,'+(0.55+0.3*Math.sin(gt*0.5+u.id))+')';
+      cx.lineWidth=2.5;cx.beginPath();cx.arc(sp.x,sp.y,sz+4*camZ,0,PI*2);cx.stroke();
+    }
     if(u._chute>0){cx.fillStyle='rgba(245,245,240,0.92)';cx.beginPath();cx.arc(sp.x,sp.y+oy-sz*1.4,sz*1.3,PI,0);cx.fill();cx.strokeStyle='#bbb';cx.beginPath();cx.moveTo(sp.x-sz*1.3,sp.y+oy-sz*1.4);cx.lineTo(sp.x,sp.y+oy);cx.lineTo(sp.x+sz*1.3,sp.y+oy-sz*1.4);cx.stroke();}
     var oy=isAir?-8*camZ:(u.fly?-5*camZ:0);
     var _uf=uiFrame(u,mv);
     if(_uf){
       uiDraw(_uf.i,sp,sz,face,oy,_uf.f,col);
       unitDeco(u,sp,sz,face,oy);
+      if(u.type==='rocket'){
+        var _ff=0.55+Math.sin(gt*0.6+u.id*2.1)*0.2;
+        cx.fillStyle='rgba(255,140,30,'+_ff+')';
+        cx.beginPath();cx.ellipse(sp.x-sz*0.34,sp.y+sz*0.78+oy,sz*0.17,sz*0.3,0,0,PI*2);cx.fill();
+        cx.beginPath();cx.ellipse(sp.x+sz*0.34,sp.y+sz*0.78+oy,sz*0.17,sz*0.3,0,0,PI*2);cx.fill();
+        cx.fillStyle='rgba(255,230,120,'+(_ff*0.75)+')';
+        cx.beginPath();cx.ellipse(sp.x-sz*0.34,sp.y+sz*0.68+oy,sz*0.08,sz*0.15,0,0,PI*2);cx.fill();
+        cx.beginPath();cx.ellipse(sp.x+sz*0.34,sp.y+sz*0.68+oy,sz*0.08,sz*0.15,0,0,PI*2);cx.fill();
+      }
     }
     else if(u.type==='rocket'){
       var bobR=Math.sin(gt*0.18+u.id)*2*camZ;
@@ -2756,7 +2789,7 @@ function canBuild(type,x,y,side){
     var tx=~~(x/T)+dx,ty=~~(y/T)+dy;
     if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length)return false;
     var t=mData[ty][tx];
-    if(t===3||t===4)return false;
+    if(t===3||t===4||t===9)return false;
   }
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;if(Math.abs(b.x-x)<(b.sz*T/2+sz)&&Math.abs(b.y-y)<(b.sz*T/2+sz))return false;}
   return true;
@@ -3349,7 +3382,7 @@ function guestFrame(){
 function guestStart(m){
   humanSide=(m.human||[true,false,false,false]).slice();
   mySide=(m.sides&&m.sides[NET.cid]!==undefined)?m.sides[NET.cid]:0;
-  mData=m.map;mType=m.mType||'symmetric';
+  _mBase=null;mData=m.map;mType=m.mType||'symmetric';
   sideGold=(m.gold||[5000,5000,5000,5000]).slice();gold=sideGold[mySide];
   gt=m.gt||0;gOver=0;gOn=1;weather=m.weather||'clear';
   ores=[];for(var i=0;i<m.ores.length;i++)ores.push({x:m.ores[i][0],y:m.ores[i][1],a:m.ores[i][2]});
