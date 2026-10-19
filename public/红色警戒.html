@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1059</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1060</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1600,9 +1600,10 @@ function runAI(side){
       var spyCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='spy';}).length;
       if(enemySpy&&dogCnt<3&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
       else if(labOk&&ai.atkOn&&spyCnt<2&&hasBarr&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('spy',0,0,side);}
-      var _yard=blds.some(function(b){return b.type==='shipyard'&&b.side===side&&b.hp>0&&b.ready;});
-      var _shCnt=_yard?units.filter(function(u){return u.side===side&&u.hp>0&&u.water;}).length:0;
-      var _shSp=(_yard&&_shCnt<8)?seaSpot(hx,hy):null;
+      var _yb=null;
+      for(var _yi=0;_yi<blds.length;_yi++){var _yb2=blds[_yi];if(_yb2.type==='shipyard'&&_yb2.side===side&&_yb2.hp>0&&_yb2.ready){_yb=_yb2;break;}}
+      var _shCnt=_yb?units.filter(function(u){return u.side===side&&u.hp>0&&u.water;}).length:0;
+      var _shSp=(_yb&&_shCnt<8)?seaSpot(_yb.x,_yb.y):null;
       if(_shSp&&sideGold[side]>=2500&&Math.random()<0.35){sideGold[side]-=unitCost(UD.carrier,side);spawnUnit('carrier',_shSp.x,_shSp.y,side);}
       else if(_shSp&&sideGold[side]>=1500){sideGold[side]-=unitCost(UD.ship,side);spawnUnit('ship',_shSp.x,_shSp.y,side);}
       if(strat==='armor'){
@@ -1715,6 +1716,7 @@ function spawnUnit(type,x,y,side){
   var _pw2=d.water?{water:1}:null,_fw=null;
   var _okSp=function(px,py){
     if(!passable(px,py,_pw2))return false;
+    if(d.water&&(tileAt(px-34,py)!==3||tileAt(px+34,py)!==3||tileAt(px,py-34)!==3||tileAt(px,py+34)!==3))return false;
     for(var i2=0;i2<blds.length;i2++){
       var b2=blds[i2];if(b2.hp<=0)continue;
       var bs2=b2.sz*T/2+8;if(Math.abs(b2.x-px)<bs2&&Math.abs(b2.y-py)<bs2)return false;
@@ -3318,7 +3320,10 @@ function seaSpot(x0,y0){
     if(!passable(x,y,{water:1}))return false;
     var _n=0;
     for(var q=0;q<8;q++)if(tileAt(x+Math.cos(q/8*PI*2)*34,y+Math.sin(q/8*PI*2)*34)===3)_n++;
-    return _n>=6;
+    if(_n<8)return false;
+    var _n2=0;
+    for(var q2=0;q2<8;q2++)if(tileAt(x+Math.cos(q2/8*PI*2)*68,y+Math.sin(q2/8*PI*2)*68)===3)_n2++;
+    return _n2>=7;
   };
   for(var _a=0;_a<60;_a++){
     var _ar=_a*2.399,_rad=130+Math.sqrt(_a)*72;
