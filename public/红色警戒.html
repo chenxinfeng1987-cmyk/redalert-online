@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1056</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1057</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -184,7 +184,7 @@ function techUnlocked(id,side){
 }
 var unitImgs={},corpses=[];
 var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s']];
-var AV='1047';
+var AV='1058';
 var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner'];
 function loadUnitImgs(){
   ART_U.forEach(function(k){
@@ -1912,7 +1912,7 @@ function draw(){
   blds.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   blds.forEach(function(b){
     if(b.hp<=0)return;
-    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/3.6;
+    var sp=worldToScr(b.x,b.y),sc=T*camZ,sz=b.sz*sc/2.8;
     var col=sideColor(b.side),dk=sideDk(b.side),lt=sideLt(b.side);
     if(!b.ready){
       var prog=1-b.bt/120;
