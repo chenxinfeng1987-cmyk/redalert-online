@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1061</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1062</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -166,7 +166,7 @@ var UD={
   heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.5,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
   artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.05,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
   heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:4.8,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
-  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.0,rng:200,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
+  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.0,rng:300,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
   hero:{n:'英雄指挥官',g:2500,hp:2500,atk:80,spd:2.25,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
   tesla:{n:'磁爆兵',g:400,hp:90,atk:30,spd:1.5,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
   apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.55,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
@@ -750,6 +750,20 @@ function moveTow(o,tx,ty,spd){
   var dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
   if(d<3)return true;
   if(o.fly||o.water){
+    if(o.water){
+      if(o._wsRest&&gt<o._wsRest)return false;
+      if(o._wsRest&&gt>=o._wsRest)o._wsRest=0;
+      if(gt%30===0){
+        if(o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20){
+          o._wsN=(o._wsN||0)+1;
+          o._wsRest=gt+(o._wsN>=3?1e9:240);
+          o.tx=undefined;o.ty=undefined;
+          if(o.ord==='m')o.ord=null;
+        }
+        o._wsAx=o.x;o._wsAy=o.y;
+      }
+    }
+
     var fspd=spd*(weather==='rain'?0.7:1);
     if(!o.fly){
       if(tileAt(o.x,o.y)!==3&&(o._wsCd===undefined||gt>=o._wsCd)){
@@ -1525,6 +1539,18 @@ function aiBoardApcs(myArmy){
     }
   }
 }
+function navyPush(u,side,tside){
+  if(u.tgt&&u.tgt.hp>0&&u.ord==='a'){u.wSide=tside;return;}
+  var _t1=null,_t2=null,_d1=1e9,_d2=1e9;
+  for(var ni=0;ni<blds.length;ni++){
+    var nb=blds[ni];if(nb.side===side||nb.hp<=0)continue;
+    var nd=dist(u,nb);
+    if(nb.type==='shipyard'&&nd<_d1){_d1=nd;_t1=nb;}
+    if(nd<_d2){_d2=nd;_t2=nb;}
+  }
+  var nt=_t1||_t2;
+  if(nt){if(u.tgt!==nt){u._wsRest=0;u._wsN=0;}u.tgt=nt;u.ord='a';u.tx=undefined;u.ty=undefined;u._path=null;u.wSide=tside;}
+}
 function runAI(side){
   var ai=ais[side];if(!ai)return;
   ai.timer--;ai.bt--;ai.ut--;
@@ -1639,6 +1665,8 @@ function runAI(side){
   // ===== ATTACK: pick weakest enemy, keep pushing =====
   ai.timer--;
   var myArmy=units.filter(function(u){return u.side===side&&u.hp>0;});
+  var _navy2=myArmy.filter(function(u){return u.water===1;});
+  for(var nvi=0;nvi<_navy2.length;nvi++)navyPush(_navy2[nvi],side,ai.atkSide===null||ai.atkSide===undefined?1+(nvi%3):ai.atkSide);
   if(ai.atkOn){
     ai.loadCd=(ai.loadCd===undefined?90:ai.loadCd)-1;
     if(ai.loadCd<=0){ai.loadCd=150;aiBoardApcs(myArmy);}
@@ -1648,6 +1676,7 @@ function runAI(side){
       for(var ui=0;ui<myArmy.length;ui++){
         var au=myArmy[ui];
         if(au.type==='engineer')continue;
+        if(au.water===1){navyPush(au,side,ai.atkSide);continue;}
         var engaged=au.tgt&&au.tgt.hp>0&&dist(au,au.tgt)<au.rng*2.5;
         if(!engaged&&au.tx===undefined){
           var wa=ui*2.4;
@@ -1674,6 +1703,7 @@ function runAI(side){
           for(var ui2=0;ui2<myArmy.length;ui2++){
             var au2=myArmy[ui2];
             if(au2.type==='engineer')continue;
+            if(au2.water===1){navyPush(au2,side,tSide);continue;}
             au2.tx=eHQ2.x+Math.cos(ui2*2.4)*300;
             au2.ty=eHQ2.y+Math.sin(ui2*2.4)*300;
             au2.tgt=null;au2._path=null;au2._stuckN=0;au2.wSide=tSide;
@@ -3249,10 +3279,10 @@ function applyMove(us,x,y){
     }
     if(boarded)return;
   }
-  us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;});
+  us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;u._wsRest=0;});
   setCamFollow(us);
 }
-function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;});setCamFollow(us);}
+function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;s._wsRest=0;});setCamFollow(us);}
 function applyUnload(a){
   if(!a||a.hp<=0||!a.cargo||!a.cargo.length)return;
   var n=a.cargo.length;
