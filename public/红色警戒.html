@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1055</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1056</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1126,8 +1126,9 @@ function updateMiners(){
 }
 
 function fireUnit(u,t){
+  if(u.type==='tesla')return;
   u._atkT=gt;
-  var tesla=(u.type==='tesla')||(u.type==='apc'&&u.tsla);
+  var tesla=(u.type==='apc'&&u.tsla);
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y});
 }
 function updateUnits(){
@@ -3483,14 +3484,15 @@ if(location.search.indexOf('test=v2')>=0){
       res.rocketMoved=Math.hypot(rk.x-startX,rk.y-startY)>150;
       var ix0=units.indexOf(rk);if(ix0>=0)units.splice(ix0,1);rk.hp=0;
     }
-    // ---- 磁爆兵链式闪电 ----
+    // ---- 磁爆兵：锁定冻结，5 秒后消灭；不再发射链状子弹 ----
     var tx0=hq.x+400,ty0=hq.y+400;
     var t1=spawnUnit('tesla',tx0,ty0,mySide);
     var e1=spawnUnit('rifle',tx0+60,ty0,foeman);var e2=spawnUnit('rifle',tx0+90,ty0,foeman);var e3=spawnUnit('rifle',tx0+500,ty0,foeman);
     e1.mhp=e1.hp=200;e2.mhp=e2.hp=200;e3.mhp=e3.hp=200;
-    applyAttack([t1],e1);
-    for(var f2=0;f2<250;f2++){t1.cooldown=0;updateUnits();updateBullets();if(e1.hp<200&&e2.hp<200)break;}
-    res.teslaChain=(e1.hp<200)&&(e2.hp<200);
+    var _tb=0;
+    for(var f2=0;f2<340;f2++){updateUnits();updateBullets();for(var bb=0;bb<bullets.length;bb++)if(bullets[bb].tesla)_tb++;}
+    res.teslaChain=(e1.hp<=0)&&(e2.hp<=0);
+    res.teslaNoShoot=(_tb===0);
     res.teslaFarUntouched=(e3.hp===200);
     [t1,e1,e2,e3].forEach(function(u){var ix=units.indexOf(u);if(ix>=0)units.splice(ix,1);u.hp=0;});
     // ---- 运兵车：装载/火力叠加/磁爆标志/卸载 ----
