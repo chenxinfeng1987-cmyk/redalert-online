@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1064</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1065</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -753,12 +753,32 @@ function moveTow(o,tx,ty,spd){
     if(o.water){
       if(o._wsRest&&gt<o._wsRest)return false;
       if(o._wsRest&&gt>=o._wsRest)o._wsRest=0;
+      if(o._wsBc!==undefined&&gt<o._wsBc){
+        var _f0=spd*(weather==='rain'?0.7:1),_bp2x=o.x+Math.cos(o._wsBa)*_f0,_bp2y=o.y+Math.sin(o._wsBa)*_f0;
+        if(Math.hypot(o._wsBx-o.x,o._wsBy-o.y)<18||!passable(_bp2x,_bp2y,o))o._wsBc=0;
+        else{o.x=_bp2x;o.y=_bp2y;return false;}
+      }
       if(gt%30===0){
-        if(o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20){
-          o._wsN=(o._wsN||0)+1;
-          o._wsRest=gt+(o._wsN>=3?1e9:240);
-          o.tx=undefined;o.ty=undefined;
-          if(o.ord==='m')o.ord=null;
+        var _trig=o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20;
+        if(_trig){
+          var _bw2=-999,_ba2=-1,_bx2=o.x,_by2=o.y,_bi2,_wj2;
+          for(_bi2=0;_bi2<8;_bi2++){
+            var _wa2=Math.round(gt/7)*0.3+_bi2*PI/4,_wc2=0,_ok2=true;
+            for(_wj2=1;_wj2<=3;_wj2++){
+              var _wr2=55*_wj2,_wx2=o.x+Math.cos(_wa2)*_wr2,_wy3=o.y+Math.sin(_wa2)*_wr2;
+              if(tileAt(_wx2,_wy3)!==3){_ok2=false;_wc2-=1;}
+              else _wc2+=_wj2*2;
+              if(!passable(_wx2,_wy3,o))_ok2=false;
+            }
+            if(_ok2&&tileAt(o.x+Math.cos(_wa2)*150,o.y+Math.sin(_wa2)*150)===3)_wc2+=3;
+            if(_wc2>_bw2){_bw2=_wc2;_ba2=_wa2;_bx2=o.x+Math.cos(_wa2)*130,_by2=o.y+Math.sin(_wa2)*130;}
+          }
+          if(_ba2>=0){
+            o._wsBc=gt+40;o._wsBa=_ba2;o._wsBx=_bx2;o._wsBy=_by2;
+            o._wsAx=o.x;o._wsAy=o.y;o._bcN=(o._bcN||0)+1;
+          }else{
+            o._wsRest=gt+90;
+          }
         }
         o._wsAx=o.x;o._wsAy=o.y;
       }
@@ -1540,7 +1560,7 @@ function aiBoardApcs(myArmy){
   }
 }
 function navyPush(u,side,tside){
-  if(u.tgt&&u.tgt.hp>0&&u.ord==='a'){u.wSide=tside;return;}
+  if(u.tgt&&u.tgt.hp>0&&u.ord==='a'&&(u._bcN||0)<3){u.wSide=tside;return;}
   var _t1=null,_t2=null,_d1=1e9,_d2=1e9;
   for(var ni=0;ni<blds.length;ni++){
     var nb=blds[ni];if(nb.side===side||nb.hp<=0)continue;
@@ -1548,8 +1568,8 @@ function navyPush(u,side,tside){
     if(nb.type==='shipyard'&&nd<_d1){_d1=nd;_t1=nb;}
     if(nd<_d2){_d2=nd;_t2=nb;}
   }
-  var nt=_t1||_t2;
-  if(nt){if(u.tgt!==nt){u._wsRest=0;u._wsN=0;}u.tgt=nt;u.ord='a';u.tx=undefined;u.ty=undefined;u._path=null;u.wSide=tside;}
+  var nt=(u._bcN||0)>=3?(_t2||_t1):(_t1||_t2);
+  if(nt){if(u.tgt!==nt){u._wsRest=0;u._bcN=0;}u.tgt=nt;u.ord='a';u.tx=undefined;u.ty=undefined;u._path=null;u.wSide=tside;}
 }
 function runAI(side){
   var ai=ais[side];if(!ai)return;
