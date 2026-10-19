@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1057</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1058</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -154,6 +154,7 @@ var BD={
   lab:{n:'实验室',g:600,hp:500,ic:'🔬',sz:2,rq:'power',gn:0,us:30},
   tunnel:{n:'地道',g:500,hp:600,ic:'🕳️',sz:2,rq:'refinery',gn:0,us:0},
   nukesilo:{n:'核弹发射井',g:3000,hp:1500,ic:'☢️',sz:3,rq:'lab',gn:0,us:80},
+  shipyard:{n:'船厂',g:800,hp:800,ic:'🚢',sz:3,rq:'refinery',gn:0,us:40,sea:1},
 };
 var UD={
   rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.1,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
@@ -165,10 +166,11 @@ var UD={
   heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.5,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
   artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.05,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
   heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:4.8,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
-  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.0,rng:200,rt:50,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:20,water:1},
+  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.0,rng:200,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
   hero:{n:'英雄指挥官',g:2500,hp:2500,atk:80,spd:2.25,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
   tesla:{n:'磁爆兵',g:400,hp:90,atk:30,spd:1.5,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
-  apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.55,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4}
+  apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.55,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
+  carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.0,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1}
 };
 function unitCost(d,side){
   side=(side===undefined)?mySide:side;
@@ -184,8 +186,8 @@ function techUnlocked(id,side){
 }
 var unitImgs={},corpses=[];
 var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s']];
-var AV='1058';
-var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner'];
+var AV='1059';
+var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner','ship','carrier'];
 function loadUnitImgs(){
   ART_U.forEach(function(k){
     UI_ST.forEach(function(st){
@@ -284,7 +286,7 @@ function unitDeco(u,sp,sz,face,oy){
   }
 }
 var bldImgs={};
-var ART_B=['hq','power','refinery','barracks','warfactory','turret','missile','lab'];
+var ART_B=['hq','power','refinery','barracks','warfactory','turret','missile','lab','tunnel','nukesilo','shipyard'];
 function loadBldImgs(){
   ART_B.forEach(function(k){
     var img=new Image();
@@ -1129,6 +1131,10 @@ function fireUnit(u,t){
   if(u.type==='tesla')return;
   u._atkT=gt;
   var tesla=(u.type==='apc'&&u.tsla);
+  if(u.type==='carrier'){
+    for(var _ci=0;_ci<3;_ci++)bullets.push({x:u.x,y:u.y-8,tx:t.x+(Math.random()-0.5)*36,ty:t.y+(Math.random()-0.5)*36,spd:8,dmg:u.atk,side:u.side,life:62,plane:1,t:t,ox:u.x,oy:u.y});
+    return;
+  }
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y});
 }
 function updateUnits(){
@@ -1571,6 +1577,10 @@ function runAI(side){
       }
       if(built>=2)break;
     }
+    if(!bCount.shipyard&&sideGold[side]>=900){
+      var _ysp=seaSpot(hx,hy);
+      if(_ysp){sideGold[side]-=900;addB('shipyard',_ysp.x,_ysp.y,side);}
+    }
   }
 
   // ===== TRAIN UNITS =====
@@ -1590,6 +1600,11 @@ function runAI(side){
       var spyCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='spy';}).length;
       if(enemySpy&&dogCnt<3&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
       else if(labOk&&ai.atkOn&&spyCnt<2&&hasBarr&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('spy',0,0,side);}
+      var _yard=blds.some(function(b){return b.type==='shipyard'&&b.side===side&&b.hp>0&&b.ready;});
+      var _shCnt=_yard?units.filter(function(u){return u.side===side&&u.hp>0&&u.water;}).length:0;
+      var _shSp=(_yard&&_shCnt<8)?seaSpot(hx,hy):null;
+      if(_shSp&&sideGold[side]>=2500&&Math.random()<0.35){sideGold[side]-=unitCost(UD.carrier,side);spawnUnit('carrier',_shSp.x,_shSp.y,side);}
+      else if(_shSp&&sideGold[side]>=1500){sideGold[side]-=unitCost(UD.ship,side);spawnUnit('ship',_shSp.x,_shSp.y,side);}
       if(strat==='armor'){
         if(labOk&&hasFac&&sideGold[side]>=2500){sideGold[side]-=2500;spawnUnit('hero',0,0,side);}
         else if(labOk&&hasFac&&sideGold[side]>=900){sideGold[side]-=900;spawnUnit('heavy',0,0,side);}
@@ -2286,6 +2301,15 @@ function draw(){
   bullets.forEach(function(b){
     if(b.laser)return;
     var sp=worldToScr(b.x,b.y);
+    if(b.plane){
+      var pa=Math.atan2(b.ty-b.y,b.tx-b.x);
+      cx.save();cx.translate(sp.x,sp.y);cx.rotate(pa);
+      cx.fillStyle=sideColor(b.side);
+      cx.beginPath();cx.moveTo(2.4*camZ,0);cx.lineTo(-camZ,camZ);cx.lineTo(-camZ*0.4,0);cx.lineTo(-camZ,-camZ);cx.closePath();cx.fill();
+      cx.fillStyle='#fff';cx.fillRect(-camZ*0.2,-camZ*0.2,camZ*0.6,camZ*0.4);
+      cx.restore();
+      return;
+    }
     cx.fillStyle=sideColor(b.side);cx.shadowColor=cx.fillStyle;cx.shadowBlur=3;
     cx.beginPath();cx.arc(sp.x,sp.y,1.8*camZ,0,PI*2);cx.fill();cx.shadowBlur=0;
   });
@@ -2754,7 +2778,7 @@ function buildPanels(){
     var canAfford=gold>=cost;
     var lk=!hasBld||!canAfford||!techOk;
     var card=document.createElement('div');card.className='ic'+(lk?' lk':'');
-    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+'</div><div class="p">'+cost+'</div>';
+    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+'</div><div class="p">'+cost+'</div>';
     card.setAttribute('data-id',id);
     card.onclick=function(e){
       e.stopPropagation();if(this.classList.contains('lk'))return;
@@ -2790,7 +2814,8 @@ function canBuild(type,x,y,side){
     var tx=~~(x/T)+dx,ty=~~(y/T)+dy;
     if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length)return false;
     var t=mData[ty][tx];
-    if(t===3||t===4||t===9)return false;
+    if(d.sea){if(t!==3)return false;}
+    else if(t===3||t===4||t===9)return false;
   }
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;if(Math.abs(b.x-x)<(b.sz*T/2+sz)&&Math.abs(b.y-y)<(b.sz*T/2+sz))return false;}
   return true;
@@ -3268,21 +3293,23 @@ function tryHostBuild(side,type,x,y){
 function seaSpot(x0,y0){
   var _ow=function(x,y){
     if(x<70||y<70||x>MW-70||y>MH-70||tileAt(x,y)!==3)return false;
+    if(!passable(x,y,{water:1}))return false;
     var _n=0;
     for(var q=0;q<8;q++)if(tileAt(x+Math.cos(q/8*PI*2)*34,y+Math.sin(q/8*PI*2)*34)===3)_n++;
     return _n>=6;
   };
-  for(var _a=0;_a<24;_a++){
-    var _ar=_a/24*PI*2,_rad=150+_a*15;
+  for(var _a=0;_a<60;_a++){
+    var _ar=_a*2.399,_rad=130+Math.sqrt(_a)*72;
     var _tx=x0+Math.cos(_ar)*_rad,_ty=y0+Math.sin(_ar)*_rad;
     if(_ow(_tx,_ty))return{x:_tx,y:_ty};
   }
-  for(var _gy=70;_gy<MH-70;_gy+=100){
-    for(var _gx=70;_gx<MW-70;_gx+=100){
-      if(_ow(_gx,_gy))return{x:_gx,y:_gy};
-    }
+  var _bn=null,_bd=1e9;
+  for(var _gy=70;_gy<MH-70;_gy+=50)for(var _gx=70;_gx<MW-70;_gx+=50){
+    if(!_ow(_gx,_gy))continue;
+    var _td=(_gx-x0)*(_gx-x0)+(_gy-y0)*(_gy-y0);
+    if(_td<_bd){_bd=_td;_bn={x:_gx,y:_gy};}
   }
-  return null;
+  return _bn;
 }
 function tryHostTrain(side,type){
   var dd=UD[type];if(!dd)return;
@@ -3292,9 +3319,10 @@ function tryHostTrain(side,type){
   sideGold[side]-=c;if(side===mySide)gold=sideGold[side];
   var ang=Math.random()*PI*2;
   var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
-  if(d.water){
+  if(dd.water){
     var _sp=seaSpot(src.x,src.y);
-    if(_sp){_sx=_sp.x;_sy=_sp.y;}
+    if(!_sp){sideGold[side]+=c;if(side===mySide)gold=sideGold[side];return;}
+    _sx=_sp.x;_sy=_sp.y;
   }
   spawnUnit(type,_sx,_sy,side);
 }
@@ -3469,6 +3497,36 @@ if(location.search.indexOf('test=v2')>=0){
     res.techTeslaAfterLab=techUnlocked('tesla',mySide);
     var _lix=blds.indexOf(_lab);if(_lix>=0)blds.splice(_lix,1);
     var foeman=(mySide+1)%4;
+    // ---- 海军：船厂铺设/水上生成/舰载机子弹 ----
+    var _w3=null;
+    for(var y3=2;y3<mData.length-2&&!_w3;y3++)for(var x3=2;x3<mData[0].length-2;x3++){
+      if(mData[y3][x3]===3&&mData[y3-1][x3]===3&&mData[y3+1][x3]===3&&mData[y3][x3-1]===3&&mData[y3][x3+1]===3
+        &&mData[y3-1][x3-1]===3&&mData[y3+1][x3+1]===3&&mData[y3-1][x3+1]===3&&mData[y3+1][x3-1]===3){
+        _w3={x:(x3+0.5)*T,y:(y3+0.5)*T};break;
+      }
+    }
+    if(_w3){
+      var yard=(canBuild('shipyard',_w3.x,_w3.y,mySide)&&sideGold[mySide]>=800)?(sideGold[mySide]-=800,addB('shipyard',_w3.x,_w3.y,mySide)):null;
+      res.navyPlaced=!!yard;
+      if(yard){
+        var p2=seaSpot(_w3.x,_w3.y);
+        res.navySeaSpot=!!(p2&&tileAt(p2.x,p2.y)===3);
+        if(p2){
+          var ws=spawnUnit('ship',p2.x,p2.y,mySide);
+          res.navyWaterSpawn=(ws.water===1&&tileAt(ws.x,ws.y)===3);
+          var ca=spawnUnit('carrier',p2.x,p2.y,mySide);
+          var foe=spawnUnit('rifle',0,0,(mySide+1)%4);
+          foe.x=ca.x+220;foe.y=ca.y;foe.mhp=foe.hp=200;
+          bullets.length=0;
+          fireUnit(ca,foe);
+          res.navyPlaneBullets=(bullets.filter(function(bl){return bl.plane;}).length===3);
+          for(var f6=0;f6<80;f6++)updateBullets();
+          res.navyPlaneDmg=(foe.hp<200);
+          [ws,ca,foe].forEach(function(u){for(var ixx=units.length-1;ixx>=0;ixx--)if(units[ixx]===u)units.splice(ixx,1);u.hp=0;});
+        }
+        for(var yp2=0;yp2<blds.length;yp2++)if(blds[yp2]===yard)blds.splice(yp2,1);
+      }
+    }
     // ---- 火箭兵飞行：放水上，直线飞向基地旁 ----
     var wspot=null;
     for(var yy=1;yy<mData.length-1&&!wspot;yy++)for(var xx=1;xx<mData[0].length-1;xx++){
@@ -3523,7 +3581,7 @@ if(location.search.indexOf('test=v2')>=0){
     dealDmg(ap2,9999);
     res.apcEject=(ap2.hp<=0)&&(!r3.riding)&&r3.hp>0&&units.indexOf(r3)>=0;
     [ap,r1,r2,rk2,ts,ap2,r3].forEach(function(u){var ix=units.indexOf(u);if(ix>=0)units.splice(ix,1);u.hp=0;});
-    res.ok=!!(res.hasTesla&&res.hasApc&&res.techTeslaLocked&&res.techTeslaAfterLab&&res.rocketFlyFlag&&res.rocketMoved&&res.teslaChain&&res.teslaFarUntouched&&res.apcLoaded&&res.unitsRidden&&res.atkStack&&res.tslaOff&&res.tslaFlag&&res.atkStack2&&res.apcUnloaded&&res.apcEject);
+    res.ok=!!(res.hasTesla&&res.hasApc&&res.techTeslaLocked&&res.techTeslaAfterLab&&res.rocketFlyFlag&&res.rocketMoved&&res.teslaChain&&res.teslaFarUntouched&&res.apcLoaded&&res.unitsRidden&&res.atkStack&&res.tslaOff&&res.tslaFlag&&res.atkStack2&&res.apcUnloaded&&res.apcEject&&(!_w3||(res.navyPlaced&&res.navySeaSpot===true&&res.navyWaterSpawn&&res.navyPlaneBullets&&res.navyPlaneDmg)));
     var d2=document.createElement('div');d2.id='testv2';
     d2.setAttribute('data-ok',res.ok?'1':'0');
     d2.textContent='TESTV2 '+JSON.stringify(res)+' OK='+(res.ok?'1':'0');
