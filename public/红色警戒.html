@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1060</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1061</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -765,9 +765,13 @@ function moveTow(o,tx,ty,spd){
       if(o._wsT!==undefined&&gt<o._wsT)_ang+=o._wsH;
       var _cand=[_ang];
       for(var _k=1;_k<=7;_k++){_cand.push(_ang+_k*PI/4);_cand.push(_ang-_k*PI/4);}
-      var _look=fspd*5,_got=-1;
+      var _look=Math.max(fspd*5,60),_got=-1,_gs2=-999;
       for(var wi=0;wi<_cand.length;wi++){
-        if(passable(o.x+Math.cos(_cand[wi])*_look,o.y+Math.sin(_cand[wi])*_look,o)){_got=wi;break;}
+        var _lx=o.x+Math.cos(_cand[wi])*_look,_ly=o.y+Math.sin(_cand[wi])*_look;
+        if(!passable(_lx,_ly,o))continue;
+        var _sc2=-wi*0.01;
+        for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=1;
+        if(_sc2>_gs2){_gs2=_sc2;_got=wi;}
       }
       var _ox2=o.x,_oy2=o.y;
       if(_got>=0){
