@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1065</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1066</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1992,10 +1992,29 @@ function draw(){
           cx.lineTo(_a2.x+(_ccx2-_a2.x)*0.72,_a2.y+(_ccy2-_a2.y)*0.72);
           cx.closePath();cx.fill();
         }
+        cx.fillStyle='#a8915f';
+        for(var _bq=0;_bq<_edges.length;_bq++){
+          var _a3=_edges[_bq][0],_b3=_edges[_bq][1];
+          cx.beginPath();
+          cx.moveTo(_a3.x+(_ccx2-_a3.x)*0.9,_a3.y+(_ccy2-_a3.y)*0.9);cx.lineTo(_b3.x+(_ccx2-_b3.x)*0.9,_b3.y+(_ccy2-_b3.y)*0.9);
+          cx.lineTo(_b3.x+(_ccx2-_b3.x)*0.78,_b3.y+(_ccy2-_b3.y)*0.78);cx.lineTo(_a3.x+(_ccx2-_a3.x)*0.78,_a3.y+(_ccy2-_a3.y)*0.78);
+          cx.closePath();cx.fill();
+        }
       }
       if(_vis){
         var _wx0=tx*T,_wy0=ty*T,_ti;
-        if(t===2){
+        if(t===3){
+          if(seed%3===0){
+            var _wob=Math.sin(gt*0.05+_tx*2.3+_ty*1.7);
+            if(_wob>0.45){
+              var _wgx=worldToScr(_wx0+T*0.25+_wob*T*0.4,_wy0+T*0.3+((seed*29+gt*0.013)%1)*T*0.4);
+              cx.strokeStyle='rgba(255,255,255,0.16)';cx.lineWidth=Math.max(1,sc*0.05);
+              cx.beginPath();cx.arc(_wgx.x,_wgx.y,sc*0.12,PI*1.1,PI*1.9);cx.stroke();
+              cx.fillStyle='rgba(255,255,255,0.22)';
+              cx.beginPath();cx.arc(_wgx.x+sc*0.16,_wgx.y-sc*0.05,Math.max(1,sc*0.04),0,PI*2);cx.fill();
+            }
+          }
+        }else if(t===2){
           var _tn=2+(seed%2);
           for(_ti=0;_ti<_tn;_ti++){
             var _rp=(seed*53+_ti*97+_tx*29+_ty*71)%53/53,_rq=(seed*31+_ti*57+_tx*43+_ty*17)%47/47;
@@ -2042,9 +2061,47 @@ function draw(){
   ores.forEach(function(o){
     if(o.a<=0)return;
     var sp=worldToScr(o.x,o.y),a=o.a/o.m;
-    cx.fillStyle='rgba(255,215,0,'+(0.2+a*0.4)+')';
-    cx.beginPath();cx.arc(sp.x,sp.y,(2+a*1.5)*camZ,0,PI*2);cx.fill();
+    var _orr=sc*0.5*(0.55+a*0.45);
+    cx.fillStyle='rgba(255,215,0,'+(0.12+a*0.2)+')';
+    cx.beginPath();cx.arc(sp.x,sp.y,_orr*1.6,0,PI*2);cx.fill();
+    cx.fillStyle='rgba(0,0,0,0.16)';
+    cx.beginPath();cx.ellipse(sp.x,sp.y+_orr*0.4,_orr,_orr*0.45,0,0,PI*2);cx.fill();
+    var _rpx=sp.x,_rpy=sp.y,_rrs=_orr*0.42;
+    for(var oi=0;oi<3;oi++){
+      var _ra=oi*2.4+((o.x*7+o.y*13)%3)*0.5;
+      _rpx=sp.x+Math.cos(_ra)*_orr*0.45;_rpy=sp.y+Math.sin(_ra)*_orr*0.25;
+      _rrs=_orr*(0.42-oi*0.07);
+      cx.fillStyle='#b8860b';
+      cx.beginPath();cx.arc(_rpx,_rpy,_rrs,0,PI*2);cx.fill();
+      cx.fillStyle='#ffd700';
+      cx.beginPath();cx.arc(_rpx-_rrs*0.3,_rpy-_rrs*0.3,_rrs*0.4,0,PI*2);cx.fill();
+    }
+    var _tws=0.5+Math.sin(gt*0.11+o.x*0.37+o.y*0.61)*0.5;
+    if(_tws>0.7){
+      cx.strokeStyle='rgba(255,255,255,'+((_tws-0.7)*2).toFixed(2)+')';cx.lineWidth=Math.max(1,camZ);
+      var _sp3=_rrs*1.6;
+      cx.beginPath();
+      cx.moveTo(sp.x+_rpx-sp.x,_rpy-_sp3);cx.lineTo(sp.x,_rpy-_sp3*0.3);
+      cx.moveTo(sp.x-_sp3*0.7,_rpy-_sp3*0.65);cx.lineTo(sp.x+_sp3*0.7,_rpy-_sp3*0.65);
+      cx.stroke();
+    }
   });
+  cx.fillStyle='rgba(0,0,0,0.2)';
+  units.forEach(function(u){
+    if(u.hp<=0||u.riding)return;
+    var sp=worldToScr(u.x,u.y);
+    var rs=sc*0.35;
+    cx.globalAlpha=u.fly?0.45:1;
+    if(u.fly)rs*=0.55;
+    cx.beginPath();cx.ellipse(sp.x,sp.y+(u.fly?sc*0.62:sc*0.22),rs,rs*0.45,0,0,PI*2);cx.fill();
+  });
+  blds.forEach(function(b){
+    if(b.hp<=0)return;
+    var sp=worldToScr(b.x,b.y),sz2=b.sz*sc/2.8;
+    cx.globalAlpha=1;
+    cx.beginPath();cx.ellipse(sp.x,sp.y+sc*0.18,sz2*1.02,sz2*0.5,0,0,PI*2);cx.fill();
+  });
+  cx.globalAlpha=1;
   blds.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   blds.forEach(function(b){
     if(b.hp<=0)return;
