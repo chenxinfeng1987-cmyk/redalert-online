@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1079</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1080</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -160,20 +160,20 @@ var BD={
   shipyard:{n:'船厂',g:800,hp:800,ic:'🚢',sz:3,rq:'refinery',gn:0,us:40,sea:1},
 };
 var UD={
-  rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.1,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
-  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.65,rng:150,rt:60,ar:'air',rq:'barracks',ex:0,mx:100},
-  engineer:{n:'工程师',g:300,hp:50,atk:0,spd:1.8,rng:30,rt:0,ar:'lt',rq:'barracks',ex:0,mx:100},
-  spy:{n:'间谍',g:600,hp:100,atk:0,spd:2.25,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
-  dog:{n:'警犬',g:300,hp:80,atk:30,spd:3.0,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
-  light:{n:'轻型坦克',g:500,hp:350,atk:20,spd:2.4,rng:130,rt:40,ar:'hv',rq:'warfactory',ex:0,mx:200},
-  heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.5,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
-  artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.05,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
-  heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:4.8,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
-  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.0,rng:300,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
-  hero:{n:'英雄指挥官',g:2500,hp:2500,atk:80,spd:2.25,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
-  tesla:{n:'磁暴兵',g:400,hp:90,atk:30,spd:1.5,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
-  apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.55,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
-  carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.0,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1}
+  rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.4,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
+  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.9,rng:150,rt:60,ar:'air',rq:'barracks',ex:0,mx:100},
+  engineer:{n:'工程师',g:300,hp:50,atk:0,spd:2.05,rng:30,rt:0,ar:'lt',rq:'barracks',ex:0,mx:100},
+  spy:{n:'间谍',g:600,hp:100,atk:0,spd:2.6,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
+  dog:{n:'警犬',g:300,hp:80,atk:30,spd:3.45,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
+  light:{n:'轻型坦克',g:500,hp:350,atk:20,spd:2.75,rng:130,rt:40,ar:'hv',rq:'warfactory',ex:0,mx:200},
+  heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.7,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
+  artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.2,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
+  heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:5.5,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
+  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.45,rng:300,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
+  hero:{n:'英雄指挥官',g:2500,hp:2500,atk:80,spd:2.6,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
+  tesla:{n:'磁暴兵',g:400,hp:90,atk:30,spd:1.7,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
+  apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.9,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
+  carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.3,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1}
 };
 function unitCost(d,side){
   side=(side===undefined)?mySide:side;
@@ -598,7 +598,7 @@ function placeBases(){
   ensureMiners();
 }
 function mkMiner(x,y,side){
-  return{id:_eid++,x:x,y:y,carry:0,home:null,tgt:null,st:'idle',hp:400,mhp:400,side:side,spd:1.6,_path:null,_pi:0};
+  return{id:_eid++,x:x,y:y,carry:0,home:null,tgt:null,st:'idle',hp:400,mhp:400,side:side,spd:1.85,_path:null,_pi:0};
 }
 function ensureMiners(){
   blds.forEach(function(b){
@@ -649,7 +649,7 @@ function passable(wx,wy,unit){
   for(var i=0;i<blds.length;i++){var b=blds[i];if(b.hp<=0)continue;var bs=b.sz*T/2;if(Math.abs(b.x-wx)<bs&&Math.abs(b.y-wy)<bs)return false;}
   return true;
 }
-function tSpd(wx,wy){var t=tileAt(wx,wy);var s=t===2?0.7:t===5?1.4:t===1?0.9:1;if(weather==='rain')s*=0.5;return s;}
+function tSpd(wx,wy){var t=tileAt(wx,wy);var s=t===2?0.7:t===5?1.4:t===1?0.9:1;return s;}
 
 var _pc={};
 function tileBlockedByBld(gx,gy,allowGoal,tgx,tgy){
@@ -810,7 +810,7 @@ function moveTow(o,tx,ty,spd){
   if(d<3)return true;
   if(o.fly||o.water){
     if(o.water&&!o.fly&&o._path&&o._path.length){
-      var _wps=spd*(weather==='rain'?0.7:1);
+      var _wps=spd;
       var _wpn=o._path[o._pi||0];
       if(_wpn&&Math.hypot(_wpn.x-o.x,_wpn.y-o.y)<20){o._pi=(o._pi||0)+1;_wpn=o._path[o._pi];}
       if(_wpn){
@@ -832,7 +832,7 @@ function moveTow(o,tx,ty,spd){
       if(o._wsCoo&&gt<o._wsCoo)return false;
       if(o._wsCoo&&gt>=o._wsCoo)o._wsCoo=0;
       if(o._wsBc!==undefined&&gt<o._wsBc){
-        var _f0=spd*(weather==='rain'?0.7:1),_bp2x=o.x+Math.cos(o._wsBa)*_f0,_bp2y=o.y+Math.sin(o._wsBa)*_f0;
+        var _f0=spd,_bp2x=o.x+Math.cos(o._wsBa)*_f0,_bp2y=o.y+Math.sin(o._wsBa)*_f0;
         if(Math.hypot(o._wsBx-o.x,o._wsBy-o.y)<18||!passable(_bp2x,_bp2y,o)){
           o._wsBc=0;o._wsCoo=gt+120;o._wsAx=undefined;
         }else{o.x=_bp2x;o.y=_bp2y;return false;}
@@ -840,7 +840,7 @@ function moveTow(o,tx,ty,spd){
       if(gt%30===0){
         var _trig=o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20;
         if(_trig){
-          var _f0g=spd*(weather==='rain'?0.7:1);
+          var _f0g=spd;
           var _bw2=-1,_ba2=-1,_bx2=o.x,_by2=o.y,_bi2,_wj2;
           for(_bi2=0;_bi2<8;_bi2++){
             var _wa2=Math.round(gt/7)*0.3+_bi2*PI/4,_br2=0;
@@ -862,7 +862,7 @@ function moveTow(o,tx,ty,spd){
       }
     }
 
-    var fspd=spd*(weather==='rain'?0.7:1);
+    var fspd=spd;
     if(!o.fly){
       if(tileAt(o.x,o.y)!==3&&(o._wsCd===undefined||gt>=o._wsCd)){
         o._wsCd=gt+60;
@@ -4000,6 +4000,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
