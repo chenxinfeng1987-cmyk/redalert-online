@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1083</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1084</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -594,6 +594,9 @@ function placeBases(){
     addB('power',c.x-100,c.y-50,c.side);
     var ref=addB('refinery',c.x+100,c.y,c.side);
     for(var i=0;i<2;i++){var m=mkMiner(c.x+180+i*60,c.y+40,c.side);m.home=ref;miners.push(m);}
+    spawnUnit('dog',c.x-150,c.y+80,c.side);
+    spawnUnit('dog',c.x-170,c.y+110,c.side);
+    spawnUnit('engineer',c.x-190,c.y+140,c.side);
   });
   ensureMiners();
 }
@@ -4009,6 +4012,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
