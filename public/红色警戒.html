@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1086</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1087</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -851,36 +851,14 @@ function moveTow(o,tx,ty,spd){
       }else{o._path=null;o._pi=0;}
     }
     if(o.water){
-      if(o._wsRest&&gt<o._wsRest)return false;
-      if(o._wsRest&&gt>=o._wsRest)o._wsRest=0;
-      if(o._wsCoo&&gt<o._wsCoo)return false;
-      if(o._wsCoo&&gt>=o._wsCoo)o._wsCoo=0;
-      if(o._wsBc!==undefined&&gt<o._wsBc){
-        var _f0=spd,_bp2x=o.x+Math.cos(o._wsBa)*_f0,_bp2y=o.y+Math.sin(o._wsBa)*_f0;
-        if(Math.hypot(o._wsBx-o.x,o._wsBy-o.y)<18||!passable(_bp2x,_bp2y,o)){
-          o._wsBc=0;o._wsCoo=gt+120;o._wsAx=undefined;
-        }else{o.x=_bp2x;o.y=_bp2y;return false;}
-      }
       if(gt%30===0){
         var _trig=o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20;
         if(_trig){
-          var _f0g=spd;
-          var _bw2=-1,_ba2=-1,_bx2=o.x,_by2=o.y,_bi2,_wj2;
-          for(_bi2=0;_bi2<8;_bi2++){
-            var _wa2=Math.round(gt/7)*0.3+_bi2*PI/4,_br2=0;
-            for(_wj2=1;_wj2<=7;_wj2++){
-              var _wr2=120*_wj2,_wx2=o.x+Math.cos(_wa2)*_wr2,_wy3=o.y+Math.sin(_wa2)*_wr2;
-              if(tileAt(_wx2,_wy3)!==3||!passable(_wx2,_wy3,o))break;
-              if(tileAt(_wx2-34,_wy3)===3&&tileAt(_wx2+34,_wy3)===3&&tileAt(_wx2,_wy3-34)===3&&tileAt(_wx2,_wy3+34)===3)_br2=Math.max(_br2,_wr2);
-            }
-            if(_br2>_bw2){_bw2=_br2;_ba2=_wa2;_bx2=o.x+Math.cos(_wa2)*_br2*0.92,_by2=o.y+Math.sin(_wa2)*_br2*0.92;}
+          for(var _bs2=0;_bs2<16;_bs2++){
+            var _ba3=_bs2/16*PI*2,_bx4=o.x+Math.cos(_ba3)*90,_by4=o.y+Math.sin(_ba3)*90;
+            if(passable(_bx4,_by4,o)){o.x+=Math.cos(_ba3)*40;o.y+=Math.sin(_ba3)*40;break;}
           }
-          if(_bw2>=240){
-            o._wsBc=gt+~~(_bw2/(_f0g||3))+50;o._wsBa=_ba2;o._wsBx=_bx2;o._wsBy=_by2;
-            o._wsAx=o.x;o._wsAy=o.y;o._bcN=(o._bcN||0)+1;
-          }else{
-            o._wsRest=gt+90;
-          }
+          o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+60;o._wsS=0;o._path=null;
         }
         o._wsAx=o.x;o._wsAy=o.y;
       }
@@ -907,7 +885,8 @@ function moveTow(o,tx,ty,spd){
         if(!passable(_lx,_ly,o))continue;
         var _sc2=-wi*0.01;
         if(o._lastA!==undefined)_sc2-=Math.abs(_cand[wi]-o._lastA)*0.3;
-        for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=1;
+        for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=0.6;
+        if(passable(_lx+Math.cos(_cand[wi])*_look,_ly+Math.sin(_cand[wi])*_look,o))_sc2+=0.55;else _sc2-=0.4;
         if(_sc2>_gs2){_gs2=_sc2;_got=wi;}
       }
       var _ox2=o.x,_oy2=o.y;
@@ -918,22 +897,7 @@ function moveTow(o,tx,ty,spd){
       if(Math.hypot(o.x-_ox2,o.y-_oy2)<0.1){
         o._wsS=(o._wsS||0)+1;
         if(o._wsS===46){o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+120;}
-        if(o._wsS>=150){
-          o._wsS=0;
-          if(o._wsO===undefined||gt>=o._wsO){
-            o._wsO=gt+240;
-            var _w1=null,_wmB=~~(Math.max(MW,MH)/T/2)+3;
-            for(var r2=1;r2<=_wmB&&!_w1;r2++)for(var q2=0;q2<16&&!_w1;q2++){
-              var a2=q2/16*PI*2,x2=o.x+Math.cos(a2)*r2*T,y2=o.y+Math.sin(a2)*r2*T;
-              if(tileAt(x2,y2)===3&&passable(x2,y2,o)){
-                var _n3=0;
-                for(var q3=0;q3<8;q3++)if(tileAt(x2+Math.cos(q3/8*PI*2)*34,y2+Math.sin(q3/8*PI*2)*34)===3)_n3++;
-                if(_n3>=6)_w1={x:x2,y:y2};
-              }
-            }
-            if(_w1){o.x=_w1.x;o.y=_w1.y;}
-          }
-        }
+        if(o._wsS>=150){o._wsS=0;o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+80;}
       }else o._wsS=0;
       return false;
     }
@@ -1007,9 +971,19 @@ function canHitAir(u){return u.type==='rocket'||u.type==='heli'||u.type==='turre
 function findTgt(u,rng){
   var best=null,bd=rng;
   var _ha=canHitAir(u);
-  var all=units.filter(function(e){return e.side!==u.side&&e.hp>0&&!e.riding&&!e._tin&&!(e.type==='spy'&&!spyVis(e))&&(_ha||!(e.ar==='air'||e.fly));})
+  var all=units.filter(function(e){return e.side!==u.side&&e.hp>0&&!e.riding&&!e._tin&&!(e.type==='spy'&&!spyVis(e))&&(_ha||(!e.fly&&e.type!=='heli'));})
     .concat(miners.filter(function(e){return e.side!==u.side&&e.hp>0;}))
     .concat(blds.filter(function(e){return e.side!==u.side&&e.hp>0;}));
+  if(u.water===1){
+    var bws=null,bwd=rng,bwc=9;
+    for(var i=0;i<all.length;i++){
+      var eW=all[i],dW=dist(u,eW);
+      if(dW>rng)continue;
+      var cW=(eW.type==='hq')?0:(eW.type==='shipyard')?1:(eW.bt!==undefined)?2:3;
+      if(cW<bwc||(cW===bwc&&dW<bwd)){bwc=cW;bwd=dW;bws=eW;}
+    }
+    if(bws)return bws;
+  }
   if(u.wSide!==undefined){
     for(var i=0;i<all.length;i++){
       if(all[i].side!==u.wSide)continue;
@@ -1344,7 +1318,7 @@ function updateUnits(){
         for(var i=0;i<units.length;i++){
           var e=units[i];
           if(e.side===u.side||e.hp<=0||(e.type==='spy'&&!spyVis(e)))continue;
-          if(!_ha2&&(e.ar==='air'||e.fly))continue;
+          if(!_ha2&&(e.fly||e.type==='heli'))continue;
           var dd=dist(u,e);
           if(dd<fd){fd=dd;fireT=e;}
         }
@@ -1467,7 +1441,7 @@ function updateUnits(){
       var at=u.tgt;
       if(!at||at.hp<=0||(at.side!==undefined&&at.side===u.side)){
         u.ord=null;u.tgt=null;
-      }else if(!canHitAir(u)&&(at.ar==='air'||at.fly)){
+      }else if(!canHitAir(u)&&(at.fly||at.type==='heli')){
         u.ord=null;u.tgt=null;
       }else{
         var ad=dist(u,at);
@@ -4033,6 +4007,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
