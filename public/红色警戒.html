@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1067</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1068</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1173,6 +1173,11 @@ function fireUnit(u,t){
     for(var _ci=0;_ci<3;_ci++)bullets.push({x:u.x,y:u.y-8,tx:t.x+(Math.random()-0.5)*36,ty:t.y+(Math.random()-0.5)*36,spd:8,dmg:u.atk,side:u.side,life:62,plane:1,t:t,ox:u.x,oy:u.y});
     return;
   }
+  if(u.type==='ship'){
+    var _sn=3+~~(Math.random()*3);
+    for(var _sj=0;_sj<_sn;_sj++)bullets.push({x:u.x,y:u.y,tx:t.x+(Math.random()-0.5)*40,ty:t.y+(Math.random()-0.5)*40,spd:6,dmg:u.atk,side:u.side,life:60,t:t,ox:u.x,oy:u.y});
+    return;
+  }
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y});
 }
 function updateUnits(){
@@ -2090,7 +2095,7 @@ function draw(){
   units.forEach(function(u){
     if(u.hp<=0||u.riding)return;
     var sp=worldToScr(u.x,u.y);
-    var rs=sc*(u.type==='ship'?1.0:(u.type==='carrier'?1.25:0.35));
+    var rs=sc*(u.type==='ship'?0.5:(u.type==='carrier'?0.65:0.35));
     cx.globalAlpha=u.fly?0.45:1;
     if(u.fly)rs*=0.55;
     cx.beginPath();cx.ellipse(sp.x,sp.y+(u.fly?sc*0.62:sc*0.22),rs,rs*0.45,0,0,PI*2);cx.fill();
@@ -2250,7 +2255,7 @@ function draw(){
   units.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
   units.forEach(function(u){
     if(u.hp<=0||u.riding||u._tin)return;
-    var sp=worldToScr(u.x,u.y),sz=(u.type==='ship'||u.type==='carrier')?30*camZ:7.5*camZ;
+    var sp=worldToScr(u.x,u.y),sz=(u.type==='ship'||u.type==='carrier')?15*camZ:7.5*camZ;
     var mvx=u.x-(u._px===undefined?u.x:u._px),mvy=u.y-(u._py===undefined?u.y:u._py);
     u._px=u.x;u._py=u.y;
     var mv=Math.hypot(mvx,mvy);
