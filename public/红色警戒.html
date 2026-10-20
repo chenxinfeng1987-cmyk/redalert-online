@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1085</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1086</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -420,7 +420,9 @@ function colorToTerrain(r,g,b){
   return 0;
 }
 
+var _mver=0;
 function genMap(){
+  _mver++;
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
   if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];
@@ -2851,7 +2853,7 @@ function drawMinimap(){
   setMiniCanvas();
   var z=miniSize();
   mx2.clearRect(0,0,z.w,z.h);
-  var _k=z.w+'|'+z.h+'|'+MW+'|'+MH+'|'+viewRotK()+'|'+mData.length+'|'+(mData[0]?mData[0].length:0);
+  var _k=z.w+'|'+z.h+'|'+MW+'|'+MH+'|'+viewRotK()+'|'+_mver+'|'+mData.length+'|'+(mData[0]?mData[0].length:0);
   if(!_mmc||_mmk!==_k){
     if(!_mmc)_mmc=document.createElement('canvas');
     _mmc.width=z.w;_mmc.height=z.h;
@@ -4031,6 +4033,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
