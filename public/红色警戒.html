@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1078</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1079</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -725,6 +725,62 @@ function findPath(sx,sy,tx,ty){
   if(_gok)path.push({x:tx,y:ty});
   _pc[tk]={p:path,t:gt+90};return path;
 }
+
+var _pcw={};
+function findPathWater(sx,sy,tx,ty){
+  var cols=mData[0].length,rows=mData.length;
+  var tgc=~~(tx/T),tgr=~~(ty/T),sgc=~~(sx/T),sgr=~~(sy/T);
+  var isW=function(cx,cy){return cx>=0&&cy>=0&&cx<cols&&cy<rows&&mData[cy][cx]===3;};
+  if(!isW(tgc,tgr)){
+    var bf=false;
+    for(var rad=1;rad<=8&&!bf;rad++)for(var da3=-rad;da3<=rad&&!bf;da3++)for(var db3=-rad;db3<=rad&&!bf;db3++){
+      if(Math.abs(da3)!==rad&&Math.abs(db3)!==rad)continue;
+      if(isW(tgc+db3,tgr+da3)){tgc+=db3;tgr+=da3;bf=true;}
+    }
+    if(!bf)return null;
+  }
+  if(!isW(sgc,sgr)){
+    var sf=false;
+    for(var rad2=1;rad2<=8&&!sf;rad2++)for(var dc3=-rad2;dc3<=rad2&&!sf;dc3++)for(var dd3=-rad2;dd3<=rad2&&!sf;dd3++){
+      if(Math.abs(dc3)!==rad2&&Math.abs(dd3)!==rad2)continue;
+      if(isW(sgc+dd3,sgr+dc3)){sgc+=dd3;sgr+=dc3;sf=true;}
+    }
+    if(!sf)return null;
+  }
+  if(sgc===tgc&&sgr===tgr)return null;
+  var tkw=sgc+','+sgr+'->'+tgc+','+tgr;
+  if(_pcw[tkw]&&_pcw[tkw].t>gt)return _pcw[tkw].p;
+  var op=[{x:sgc,y:sgr,g:0,f:0}],cl={},fr={},gs={};
+  gs[sgc+','+sgr]=0;
+  var dirs=[{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1},{dx:1,dy:1},{dx:-1,dy:1},{dx:1,dy:-1},{dx:-1,dy:-1}];
+  var fd=false,it=0;
+  while(op.length>0&&it<4000){
+    it++;var bi=0;
+    for(var i2=1;i2<op.length;i2++)if(op[i2].f<op[bi].f)bi=i2;
+    var cu=op.splice(bi,1)[0],ck=cu.x+','+cu.y;
+    if(cu.x===tgc&&cu.y===tgr){fd=true;break;}
+    if(cl[ck])continue;cl[ck]=1;
+    for(var d2=0;d2<8;d2++){
+      var nx=cu.x+dirs[d2].dx,ny=cu.y+dirs[d2].dy,nk=nx+','+ny;
+      if(cl[nk])continue;
+      if(!isW(nx,ny))continue;
+      if(dirs[d2].dx&&dirs[d2].dy&&!(isW(cu.x+dirs[d2].dx,cu.y)&&isW(cu.x,cu.y+dirs[d2].dy)))continue;
+      if(tileBlockedByBld(nx,ny,nx===tgc&&ny===tgr,tgc,tgr))continue;
+      var ng=(gs[ck]||0)+(dirs[d2].dx&&dirs[d2].dy?1.41:1);
+      if(gs[nk]===undefined||ng<gs[nk]){
+        gs[nk]=ng;fr[nk]=ck;
+        var _hx=Math.abs(tgc-nx),_hy=Math.abs(tgr-ny),h=_hx>_hy?_hx:_hy;
+        var ex=false;for(var j=0;j<op.length;j++){if(op[j].x===nx&&op[j].y===ny){ex=true;break;}}
+        if(!ex)op.push({x:nx,y:ny,g:ng,f:ng+h});
+      }
+    }
+  }
+  if(!fd){_pcw[tkw]={p:null,t:gt+90};return null;}
+  var path=[],ck2=tgc+','+tgr;
+  while(fr[ck2]){var pp=ck2.split(',');path.unshift({x:(~~pp[0]+0.5)*T,y:(~~pp[1]+0.5)*T});ck2=fr[ck2];}
+  path.push(isW(tgc,tgr)?{x:tx,y:ty}:{x:(tgc+0.5)*T,y:(tgr+0.5)*T});
+  _pcw[tkw]={p:path,t:gt+90};return path;
+}
 function wallFollow(o,tx,ty,spd){
   var toT=Math.atan2(ty-o.y,tx-o.x);
   var side=o._wfSide||1;
@@ -753,6 +809,23 @@ function moveTow(o,tx,ty,spd){
   var dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
   if(d<3)return true;
   if(o.fly||o.water){
+    if(o.water&&!o.fly&&o._path&&o._path.length){
+      var _wps=spd*(weather==='rain'?0.7:1);
+      var _wpn=o._path[o._pi||0];
+      if(_wpn&&Math.hypot(_wpn.x-o.x,_wpn.y-o.y)<20){o._pi=(o._pi||0)+1;_wpn=o._path[o._pi];}
+      if(_wpn){
+        var _wdx=_wpn.x-o.x,_wdy=_wpn.y-o.y,_wd=Math.hypot(_wdx,_wdy);
+        if(_wd>2){
+          var _wnx=o.x+_wdx/_wd*_wps,_wny=o.y+_wdy/_wd*_wps;
+          if(passable(_wnx,_wny,o))o.x=_wnx,o.y=_wny;
+          else if(passable(_wnx,o.y,o))o.x=_wnx;
+          else if(passable(o.x,_wny,o))o.y=_wny;
+          else{o._path=null;o._pi=0;}
+        }
+        if(d<12){o._path=null;o._pi=0;return true;}
+        return false;
+      }else{o._path=null;o._pi=0;}
+    }
     if(o.water){
       if(o._wsRest&&gt<o._wsRest)return false;
       if(o._wsRest&&gt>=o._wsRest)o._wsRest=0;
@@ -3554,7 +3627,7 @@ function applyMove(us,x,y){
     }
     if(boarded)return;
   }
-  us.forEach(function(u,i){var ang=i/us.length*PI*2;u.tx=x+Math.cos(ang)*15*(i>0?1:0);u.ty=y+Math.sin(ang)*15*(i>0?1:0);u.tgt=null;u.ord='m';u.wSide=undefined;u._path=null;u._stuckN=0;u._wsRest=0;});
+  us.forEach(function(u,i){var ang=i/us.length*PI*2;var _mtx=x+Math.cos(ang)*15*(i>0?1:0),_mty=y+Math.sin(ang)*15*(i>0?1:0);u.tx=_mtx;u.ty=_mty;u.tgt=null;u.ord='m';u.wSide=undefined;u._stuckN=0;u._wsRest=0;u._pi=0;u._path=(u.water&&!u.fly)?findPathWater(u.x,u.y,u.tx,u.ty):null;});
   setCamFollow(us);
 }
 function applyAttack(us,tgt){us.forEach(function(s){s.tgt=tgt;s.ord='a';s.tx=undefined;s.ty=undefined;s._path=null;s.wSide=undefined;s._wsRest=0;});setCamFollow(us);}
@@ -3927,6 +4000,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
