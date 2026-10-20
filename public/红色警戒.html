@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1088</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1089</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -170,7 +170,7 @@ var UD={
   heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.7,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
   artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.2,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
   heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:5.5,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
-  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.45,rng:300,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
+  ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.45,rng:400,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
   hero:{n:'英雄指挥官',g:2500,hp:2500,atk:80,spd:2.6,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
   tesla:{n:'磁暴兵',g:400,hp:90,atk:30,spd:1.7,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
   apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.9,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
@@ -1535,7 +1535,7 @@ function updateUnits(){
     }
     var tgt=u.tgt;
     if(!tgt||tgt.hp<=0||dist(u,tgt)>u.rng*2||(u.wSide!==undefined&&tgt.side!==u.wSide&&tgt.side!==undefined)){
-      var scanRng=u.tx!==undefined?(u.wSide!==undefined?u.rng*2:u.rng):u.rng*2.5;
+      var scanRng=(u.water===1)?u.rng*3:(u.tx!==undefined?(u.wSide!==undefined?u.rng*2:u.rng):u.rng*2.5);
       u.tgt=findTgt(u,scanRng);tgt=u.tgt;
     }
     if(tgt&&tgt.hp>0){
@@ -4037,6 +4037,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
