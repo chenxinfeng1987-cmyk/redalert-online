@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1076</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1077</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3044,6 +3044,8 @@ mcp.ontouchend=function(e){
 };
 restoreMiniPos();
 function showTab(t){
+  var _bp3=document.getElementById('bottom');
+  if(_bp3.classList.contains('collapsed')){_bp3.classList.remove('collapsed');document.getElementById('btToggle').textContent='▾';try{localStorage.setItem('ra_panel','0')}catch(e){}syncMiniPos();}
   document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:(t==='u'?1:2))?' on':'');});
   document.getElementById('pb').className='pbody'+(t==='b'?' on':'');
   document.getElementById('pu').className='pbody'+(t==='u'?' on':'');
@@ -3889,4 +3891,5 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
