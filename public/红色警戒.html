@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1087</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1088</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -158,6 +158,7 @@ var BD={
   tunnel:{n:'地道',g:500,hp:600,ic:'🕳️',sz:2,rq:'refinery',gn:0,us:0},
   nukesilo:{n:'核弹发射井',g:3000,hp:1500,ic:'☢️',sz:3,rq:'lab',gn:0,us:80},
   shipyard:{n:'船厂',g:800,hp:800,ic:'🚢',sz:3,rq:'refinery',gn:0,us:40,sea:1},
+  tower:{n:'中央高塔',g:0,hp:2500,ic:'🗼',sz:2,rq:null,gn:0,us:0},
 };
 var UD={
   rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.4,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
@@ -350,6 +351,7 @@ var mData=[];
 var mapCX=0,mapCY=0,mapR=0;
 var ais=[null,null,null,null];
 var mType='symmetric';
+var _towerT=0;
 var mySide=0;
 var humanSide=[true,false,false,false];
 var _eid=1;
@@ -430,7 +432,7 @@ function genMap(){
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
   weather='clear';weatherTimer=1800;supplies=[];supplyTimer=2400;nukeStates={0:null,1:null,2:null,3:null};
-  nukes=[];nukeFx=[];screenFlash=0;
+  nukes=[];nukeFx=[];screenFlash=0;_towerT=0;
   ais=[null,null,null,null];
   var strategies=['infantry','armor','turtle'];
   for(var i=1;i<=3;i++){ais[i]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};}
@@ -445,6 +447,7 @@ function genMap(){
   }
   _mBase=mData.map(function(r){return r.slice();});
   placeOres();placeBases();
+  if(mType==='fortress')spawnTower();
   for(var _wi=0;_wi<6;_wi++){
     var _wx=Math.random()*MW,_wy=Math.random()*MH;
     if(tileAt(_wx,_wy)===3&&tileAt(_wx+50,_wy)===3&&tileAt(_wx-50,_wy)===3&&tileAt(_wx,_wy+50)===3&&tileAt(_wx,_wy-50)===3){
@@ -534,15 +537,20 @@ function _segDist(px,py,a,b){
   return Math.hypot(px-(a.x+t*(b.x-a.x)),py-(a.y+t*(b.y-a.y)));
 }
 function genOpen(c,r){
+  var _p1=Math.random()*PI*2,_p2=Math.random()*PI*2;
   for(var y=0;y<r;y++)for(var x=0;x<c;x++){
-    var nx=x/c,ny=y/r;
-    if(nx<0.04||nx>0.96||ny<0.04||ny>0.96)mData[y][x]=3;
-    var d1=Math.hypot(nx-0.3,ny-0.3),d2=Math.hypot(nx-0.7,ny-0.7),d3=Math.hypot(nx-0.5,ny-0.5);
-    if(d1<0.1&&Math.random()<0.4)mData[y][x]=4;
-    if(d2<0.1&&Math.random()<0.4)mData[y][x]=4;
-    if(d3<0.08&&Math.random()<0.3)mData[y][x]=4;
-    if(Math.random()<0.03&&mData[y][x]===0)mData[y][x]=2;
+    var wx=(x+0.5)*T,wy=(y+0.5)*T;
+    var dx=wx/MW-0.5,dy=wy/MH-0.5;
+    var dc=Math.hypot(dx,dy),_ag=Math.atan2(dy,dx);
+    var sh=0.26+0.40*Math.pow(Math.cos(2*(_ag-PI/4)),2)+0.018*Math.cos(6*_ag+_p1)+0.012*Math.cos(10*_ag+_p2);
+    if(dc<sh){
+      mData[y][x]=0;
+      if(Math.random()<0.004)mData[y][x]=2;
+      if(dc>sh-0.06&&Math.random()<0.10)mData[y][x]=4;
+    }
   }
+  for(var fx=0;fx<c;fx++){mData[0][fx]=3;mData[r-1][fx]=3;}
+  for(var fy=0;fy<r;fy++){mData[fy][0]=3;mData[fy][c-1]=3;}
 }
 function genFort(c,r){
   for(var y=0;y<r;y++)for(var x=0;x<c;x++){
@@ -653,6 +661,10 @@ function addB(type,x,y,side){
     if(best){b._pair=best.id;best._pair=b.id;b._tn='out';best._tn='in';}
   }
   blds.push(b);upPwr();return b;
+}
+function spawnTower(){
+  blds.push({id:_eid++,type:'tower',x:MW/2,y:MH/2,side:-1,hp:BD.tower.hp,mhp:BD.tower.hp,ready:1,bt:0,sz:BD.tower.sz,atk:0,art:0});
+  _towerT=0;
 }
 function upPwr(){
   if(paraCd>0){paraCd--;var pb=document.getElementById('paraBtn');if(pb)pb.textContent='🪂 伞兵 '+(~~(paraCd/60))+'s';}
@@ -1110,8 +1122,19 @@ function dealDmg(target,dmg){
         captureHQ(target,attacker);
       }
     }
-    sideGold[target.side]+=50;
-    if(target.side===mySide)gold=sideGold[mySide];
+    if(target.type==='tower'){
+      var _tk=findKiller(target.side,target);
+      var _ts=_tk?_tk.side:-1;
+      if(_ts>=0){
+        sideGold[_ts]+=10000;
+        gold=sideGold[mySide];
+        parts.push({x:target.x,y:target.y-40,vx:0,vy:-1.5,life:90,col:'#fc0',sz:16});
+      }
+      _towerT=gt+1800;
+    }else{
+      sideGold[target.side]+=50;
+      if(target.side===mySide)gold=sideGold[mySide];
+    }
     var killer=findKiller(target.side,target);
     if(killer&&killer.hp>0){
       killer.ex=(killer.ex||0)+50;
@@ -2433,6 +2456,12 @@ function draw(){
       }
       cx.fillStyle='#ff0';cx.font='bold '+(14*camZ)+'px sans-serif';cx.textAlign='center';
       cx.fillText('☢️',sp.x,sp.y+5*camZ);
+    }else if(b.type==='tower'){
+      cx.fillStyle='#666';cx.fillRect(sp.x-sz*0.8,sp.y-sz*0.15,sz*1.6,sz*0.95);
+      cx.fillStyle=dk;cx.fillRect(sp.x-sz*0.32,sp.y-sz*1.5,sz*0.64,sz*1.4);
+      cx.fillStyle=col;cx.fillRect(sp.x-sz*0.52,sp.y-sz*1.85,sz*1.04,sz*0.42);
+      cx.fillStyle='#222';cx.fillRect(sp.x-sz*0.28,sp.y-sz*1.2,sz*0.56,sz*0.28);
+      cx.fillStyle='#ffd700';cx.beginPath();cx.arc(sp.x,sp.y-sz*1.95,4*camZ,0,PI*2);cx.fill();
     }
     if(b.hp<b.mhp){
       cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(sp.x-sz,sp.y-sz-8*camZ,sz*2,5*camZ);
@@ -3171,7 +3200,7 @@ var UINF=['rifle','rocket','engineer','spy','dog','hero','tesla'],UVEH=['light',
 function buildPanels(){
   var pb=document.getElementById('pb');pb.innerHTML='';
   Object.keys(BD).forEach(function(id){
-    if(id==='hq')return;
+    if(id==='hq'||id==='tower')return;
     var d=BD[id];
     var hasReq=(!d.rq||blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;}))&&techUnlocked(id,mySide);
     var canAfford=gold>=d.g;
@@ -3448,6 +3477,7 @@ function tick(){
     units=units.filter(function(u){return u.hp>0;});
     miners=miners.filter(function(m){return m.hp>0;});
     blds=blds.filter(function(b){return b.hp>0;});
+    if(_towerT&&gt>=_towerT)spawnTower();
     if(NET.mode==='host'){NET.snapAcc++;if(NET.snapAcc>=NET.snapEvery){NET.snapAcc=0;hostSnapshot();}}
     }
   }
@@ -4007,6 +4037,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
