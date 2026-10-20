@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1084</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1085</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -513,14 +513,23 @@ function genSym(c,r){
   }
 }
 function genLanes(c,r){
+  var _A0={x:300,y:MH-300},_A1={x:MW-300,y:300},_B0={x:300,y:300},_B1={x:MW-300,y:MH-300};
   for(var y=0;y<r;y++)for(var x=0;x<c;x++){
-    var nx=x/c,ny=y/r;
-    if(nx<0.05||nx>0.95||ny<0.04||ny>0.96)mData[y][x]=3;
-    var r1=Math.abs(ny-0.33)<0.035,r2=Math.abs(ny-0.66)<0.035;
-    if((r1||r2)&&nx>0.08&&nx<0.92){mData[y][x]=3;if(Math.abs(nx-0.25)<0.025||Math.abs(nx-0.5)<0.025||Math.abs(nx-0.75)<0.025)mData[y][x]=5;}
-    if((r1||r2)&&Math.random()<0.12)mData[y][x]=4;
-    if(Math.random()<0.05&&mData[y][x]===0)mData[y][x]=2;
+    var wx=(x+0.5)*T,wy=(y+0.5)*T;
+    var d1=_segDist(wx,wy,_A0,_A1),d2=_segDist(wx,wy,_B0,_B1);
+    var dc=Math.hypot(wx-MW/2,wy-MH/2);
+    var _arm=d1<110||d2<110,_isl=dc<330;
+    if(_arm||_isl)mData[y][x]=(d1<40||d2<40||dc<130)?5:0;
+    else mData[y][x]=3;
+    if((_arm||_isl)&&Math.random()<0.06)mData[y][x]=4;
+    if(Math.random()<0.04&&mData[y][x]===0)mData[y][x]=2;
   }
+}
+function _segDist(px,py,a,b){
+  var L2=(b.x-a.x)*(b.x-a.x)+(b.y-a.y)*(b.y-a.y)||1;
+  var t=((px-a.x)*(b.x-a.x)+(py-a.y)*(b.y-a.y))/L2;
+  t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(a.x+t*(b.x-a.x)),py-(a.y+t*(b.y-a.y)));
 }
 function genOpen(c,r){
   for(var y=0;y<r;y++)for(var x=0;x<c;x++){
@@ -561,7 +570,17 @@ function placeOres(){
   spots.forEach(function(s){
     var n=6+~~(Math.random()*6);
     for(var i=0;i<n;i++){
-      ores.push({x:s.x*MW+(Math.random()-.5)*120,y:s.y*MH+(Math.random()-.5)*120,a:500+~~(Math.random()*1000),m:1500});
+      var ox=s.x*MW+(Math.random()-.5)*120,oy=s.y*MH+(Math.random()-.5)*120;
+      var tt0=tileAt(ox,oy);
+      if(tt0===3||tt0===4||tt0===9){
+        var ok3=false;
+        for(var j3=0;j3<10;j3++){
+          var jx3=ox+(Math.random()-.5)*400,jy3=oy+(Math.random()-.5)*400,tt3=tileAt(jx3,jy3);
+          if(tt3!==3&&tt3!==4&&tt3!==9){ox=jx3;oy=jy3;ok3=true;break;}
+        }
+        if(!ok3)continue;
+      }
+      ores.push({x:ox,y:oy,a:500+~~(Math.random()*1000),m:1500});
     }
   });
 }
@@ -4012,6 +4031,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
