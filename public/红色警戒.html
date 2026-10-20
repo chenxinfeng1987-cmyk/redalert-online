@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1068</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1069</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -753,28 +753,30 @@ function moveTow(o,tx,ty,spd){
     if(o.water){
       if(o._wsRest&&gt<o._wsRest)return false;
       if(o._wsRest&&gt>=o._wsRest)o._wsRest=0;
+      if(o._wsCoo&&gt<o._wsCoo)return false;
+      if(o._wsCoo&&gt>=o._wsCoo)o._wsCoo=0;
       if(o._wsBc!==undefined&&gt<o._wsBc){
         var _f0=spd*(weather==='rain'?0.7:1),_bp2x=o.x+Math.cos(o._wsBa)*_f0,_bp2y=o.y+Math.sin(o._wsBa)*_f0;
-        if(Math.hypot(o._wsBx-o.x,o._wsBy-o.y)<18||!passable(_bp2x,_bp2y,o))o._wsBc=0;
-        else{o.x=_bp2x;o.y=_bp2y;return false;}
+        if(Math.hypot(o._wsBx-o.x,o._wsBy-o.y)<18||!passable(_bp2x,_bp2y,o)){
+          o._wsBc=0;o._wsCoo=gt+120;o._wsAx=undefined;
+        }else{o.x=_bp2x;o.y=_bp2y;return false;}
       }
       if(gt%30===0){
         var _trig=o._wsAx!==undefined&&d>(o.rng||0)&&Math.hypot(o.x-o._wsAx,o.y-o._wsAy)<20;
         if(_trig){
-          var _bw2=-999,_ba2=-1,_bx2=o.x,_by2=o.y,_bi2,_wj2;
+          var _f0g=spd*(weather==='rain'?0.7:1);
+          var _bw2=-1,_ba2=-1,_bx2=o.x,_by2=o.y,_bi2,_wj2;
           for(_bi2=0;_bi2<8;_bi2++){
-            var _wa2=Math.round(gt/7)*0.3+_bi2*PI/4,_wc2=0,_ok2=true;
-            for(_wj2=1;_wj2<=3;_wj2++){
-              var _wr2=55*_wj2,_wx2=o.x+Math.cos(_wa2)*_wr2,_wy3=o.y+Math.sin(_wa2)*_wr2;
-              if(tileAt(_wx2,_wy3)!==3){_ok2=false;_wc2-=1;}
-              else _wc2+=_wj2*2;
-              if(!passable(_wx2,_wy3,o))_ok2=false;
+            var _wa2=Math.round(gt/7)*0.3+_bi2*PI/4,_br2=0;
+            for(_wj2=1;_wj2<=7;_wj2++){
+              var _wr2=120*_wj2,_wx2=o.x+Math.cos(_wa2)*_wr2,_wy3=o.y+Math.sin(_wa2)*_wr2;
+              if(tileAt(_wx2,_wy3)!==3||!passable(_wx2,_wy3,o))break;
+              if(tileAt(_wx2-34,_wy3)===3&&tileAt(_wx2+34,_wy3)===3&&tileAt(_wx2,_wy3-34)===3&&tileAt(_wx2,_wy3+34)===3)_br2=Math.max(_br2,_wr2);
             }
-            if(_ok2&&tileAt(o.x+Math.cos(_wa2)*150,o.y+Math.sin(_wa2)*150)===3)_wc2+=3;
-            if(_wc2>_bw2){_bw2=_wc2;_ba2=_wa2;_bx2=o.x+Math.cos(_wa2)*130,_by2=o.y+Math.sin(_wa2)*130;}
+            if(_br2>_bw2){_bw2=_br2;_ba2=_wa2;_bx2=o.x+Math.cos(_wa2)*_br2*0.92,_by2=o.y+Math.sin(_wa2)*_br2*0.92;}
           }
-          if(_ba2>=0){
-            o._wsBc=gt+40;o._wsBa=_ba2;o._wsBx=_bx2;o._wsBy=_by2;
+          if(_bw2>=240){
+            o._wsBc=gt+~~(_bw2/(_f0g||3))+50;o._wsBa=_ba2;o._wsBx=_bx2;o._wsBy=_by2;
             o._wsAx=o.x;o._wsAy=o.y;o._bcN=(o._bcN||0)+1;
           }else{
             o._wsRest=gt+90;
