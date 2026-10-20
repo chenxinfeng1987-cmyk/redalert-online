@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1080</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1082</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1766,17 +1766,17 @@ function runAI(side){
     var _tuns=blds.filter(function(b){return b.type==='tunnel'&&b.side===side&&b.hp>0&&b.ready;});
     var _tinN=_tuns.filter(function(b){return b._tn==='in'&&b._pair;});
     var _outN=_tuns.filter(function(b){return b._tn==='out'&&b._pair;});
-    if(ai.tunCd===undefined)ai.tunCd=strat==='paraRush'?gt+600:gt+1800;
-    if(sideGold[side]>=1500&&!_tinN.length&&gt>=ai.tunCd){
+    if(ai.tunCd===undefined)ai.tunCd=1e12;
+    if(false&&sideGold[side]>=1500&&!_tinN.length&&gt>=ai.tunCd){
       var _txi=hx+(Math.random()-0.5)*260,_tyi=hy+(Math.random()-0.5)*260;
       for(var _tki=0;_tki<8;_tki++){
         var _sx2=_txi+(Math.random()-0.5)*240,_sy2=_tyi+(Math.random()-0.5)*240;
         _sx2=Math.max(120,Math.min(MW-120,_sx2));_sy2=Math.max(120,Math.min(MH-120,_sy2));
         if(_tinOk(_sx2,_sy2,BD.tunnel.sz*T/2)){sideGold[side]-=500;addB('tunnel',_sx2,_sy2,side);ai.tunCd=gt+600;break;}
       }
-    }else if(_tinN.length&&!_outN.length&&sideGold[side]>=1500&&gt>=ai.tunCd){
+    }else if(false){
       var _es=pickWeakTarget(side),_eth=_es!==null?cornerOf(_es):{x:MW/2,y:MH/2};
-      for(var _tko=0;_tko<12;_tko++){
+      for(var _tko=0;_tko<24;_tko++){
         var _sx3=_eth.x+(Math.random()-0.5)*480,_sy3=_eth.y+(Math.random()-0.5)*480;
         _sx3=Math.max(150,Math.min(MW-150,_sx3));_sy3=Math.max(150,Math.min(MH-150,_sy3));
         if(_tinOk(_sx3,_sy3,BD.tunnel.sz*T/2)){sideGold[side]-=500;addB('tunnel',_sx3,_sy3,side);ai.tunCd=gt+900;break;}
@@ -1792,6 +1792,14 @@ function runAI(side){
     var labOk=hasLab(side);
     var armyCount=units.filter(function(u){return u.side===side&&u.hp>0;}).length;
     var maxUnits=strat==='turtle'?30:strat==='armor'?45:55;
+    var _espX=units.some(function(u2){return u2.side!==side&&u2.type==='spy'&&u2.hp>0;});
+    if(_espX){
+      var _dgX=0;
+      for(var dx5=0;dx5<units.length;dx5++){var du6=units[dx5];if(du6.side===side&&du6.hp>0&&!du6.riding&&du6.type==='dog')_dgX++;}
+      var _hbX=false;
+      for(var bx3=0;bx3<blds.length;bx3++){var bb3=blds[bx3];if(bb3.type==='barracks'&&bb3.side===side&&bb3.hp>0&&bb3.ready){_hbX=true;break;}}
+      if(_hbX&&_dgX<5&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
+    }
     if(armyCount<maxUnits){
       var dmgOwn=blds.filter(function(b){return b.side===side&&b.hp>0&&b.hp<b.mhp*0.6;}).length;
       var engCnt=units.filter(function(u){return u.side===side&&u.hp>0&&!u.riding&&u.type==='engineer';}).length;
@@ -1929,21 +1937,22 @@ function runAI(side){
   }
 
   if(ai.dropCd===undefined||gt>=ai.dropCd){
-    var _tinN2=blds.find(function(b){return b.type==='tunnel'&&b.side===side&&b.hp>0&&b.ready&&b._tn==='in'&&b._pair;});
-    var _tout2=blds.find(function(b){return b._tn==='out'&&b._pair===(_tinN2?_tinN2.id:-1)&&b.hp>0;});
-    if(_tinN2&&_tout2){
-      ai.dropCd=gt+(strat==='paraRush'?800:1500);
-      var _picks=[];
-      for(var pui=0;pui<units.length;pui++){
-        var pu=units[pui];
-        if(pu.side!==side||pu.hp<=0||pu.riding||pu._tin||pu.type==='engineer'||pu.type==='miner'||pu.tgt)continue;
-        if(pu.type!=='rifle'&&pu.type!=='rocket'&&pu.type!=='light')continue;
-        if(Math.hypot(pu.x-_tinN2.x,pu.y-_tinN2.y)<250)_picks.push(pu);
+    var tSide4=pickWeakTarget(side),_idle4=0;
+    for(var i4=0;i4<units.length;i4++){var u4=units[i4];if(u4.side===side&&u4.hp>0&&!u4.riding&&!u4._tin)_idle4++;}
+    if(tSide4!==null&&tSide4!==undefined&&(strat==='paraRush'||_idle4>=12)&&sideGold[side]>=500){
+      ai.dropCd=gt+(strat==='paraRush'?1000:1800);
+      sideGold[side]-=500;
+      var _dd3=cornerOf(tSide4);
+      for(var di5=0;di5<10;di5++){
+        var da5=di5/10*PI*2,r5=30+Math.random()*40;
+        var px=_dd3.x+Math.cos(da5)*r5,py=_dd3.y+Math.sin(da5)*r5;
+        for(var k4=0;k4<5&&tileAt(px,py)===3;k4++){px+=(Math.random()-0.5)*160;py+=(Math.random()-0.5)*160;}
+        px=Math.max(50,Math.min(MW-50,px));py=Math.max(50,Math.min(MH-50,py));
+        var du5=spawnUnit(strat==='paraRush'&&(di5%3!==0)?'rocket':'rifle',px,py,side);
+        if(du5){du5._chute=80;du5._aiDrop=1;du5._born=gt;}
       }
-      _picks=_picks.slice(0,6);
-      _picks.forEach(function(pu){pu._tin={fid:_tinN2.id,tid:_tout2.id,sx:_tinN2.x,sy:_tinN2.y,p:0};pu._aiDrop=1;pu.tx=undefined;pu.ty=undefined;pu.tgt=null;pu.ord=null;});
-      if(_picks.length)parts.push({x:_tinN2.x,y:_tinN2.y,vx:0,vy:0,life:30,col:'#0f0',sz:10});
-    }
+      parts.push({x:_dd3.x,y:_dd3.y,vx:0,vy:0,life:50,col:'#0f0',sz:20});
+    }else{ai.dropCd=gt+300;}
   }
   // ===== RAID: small harassment when not full attacking =====
   if(!ai.atkOn){
@@ -4000,6 +4009,8 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
 
 
 
