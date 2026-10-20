@@ -14,7 +14,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .ptabs{display:flex;gap:2px;padding:0 4px}
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
 .ptab.on{color:#4af;border-color:rgba(68,170,255,.3);background:rgba(20,20,40,.98)}
-.pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto}
+.pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px}
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .ic{width:74px;padding:5px 3px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);text-align:center;cursor:pointer;position:relative}
 .ic:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15)}
@@ -53,6 +53,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   #topbar{overflow-x:auto;white-space:nowrap;font-size:10px;padding:0 6px;gap:6px}
   #topbar .info{display:none}
   #bottom{right:0}
+  .pbody{max-width:332px}
   .ptabs{flex-wrap:nowrap}
   .ptab{white-space:nowrap;padding:6px 12px;font-size:12px}
   .ic{width:60px}
@@ -67,7 +68,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #bottom.collapsed .pbody{display:none!important}
 @media(max-height:520px){
   #bottom{right:auto;width:392px;max-width:calc(100vw - 8px)}
-  .pbody{max-height:88px;min-height:0;padding:4px}
+  .pbody{max-height:88px;min-height:0;padding:4px;max-width:292px}
   .ptab{padding:3px 9px;font-size:11px}
   #btToggle{padding:3px 10px;font-size:12px}
   .ic{width:52px;padding:3px 2px}
@@ -111,7 +112,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1072</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1073</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
