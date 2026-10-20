@@ -111,7 +111,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1069</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1070</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1566,17 +1566,42 @@ function aiBoardApcs(myArmy){
     }
   }
 }
-function navyPush(u,side,tside){
-  if(u.tgt&&u.tgt.hp>0&&u.ord==='a'&&(u._bcN||0)<3){u.wSide=tside;return;}
-  var _t1=null,_t2=null,_d1=1e9,_d2=1e9;
-  for(var ni=0;ni<blds.length;ni++){
-    var nb=blds[ni];if(nb.side===side||nb.hp<=0)continue;
-    var nd=dist(u,nb);
-    if(nb.type==='shipyard'&&nd<_d1){_d1=nd;_t1=nb;}
-    if(nd<_d2){_d2=nd;_t2=nb;}
+function navyPatrol(u,side){
+  if(u.tgt){
+    if(u.tgt.hp>0){u.wSide=u.tgt.side;return;}
+    u.tgt=null;
   }
-  var nt=(u._bcN||0)>=3?(_t2||_t1):(_t1||_t2);
-  if(nt){if(u.tgt!==nt){u._wsRest=0;u._bcN=0;}u.tgt=nt;u.ord='a';u.tx=undefined;u.ty=undefined;u._path=null;u.wSide=tside;}
+  if(!u._pw2){
+    var _pcx=MW/2,_pcy=MH/2,_pa=MW/2-160,_pb=MH/2-160,_pn=12,_wq=[];
+    for(var _ii=0;_ii<_pn;_ii++){
+      var _ia=_ii/_pn*PI*2,_px0=_pcx+Math.cos(_ia)*_pa,_py0=_pcy+Math.sin(_ia)*_pb;
+      for(var _ri=0;_ri<12;_ri++){
+        if(tileAt(_px0,_py0)===3)break;
+        var _rf=1-_ri*0.07;_px0=_pcx+(_px0-_pcx)*_rf;_py0=_pcy+(_py0-_pcy)*_rf;
+      }
+      _wq.push({x:_px0,y:_py0});
+    }
+    u._pw2=_wq;u._pdh2=u.id%2?1:-1;u._pi2=(u.id*3)%_pn;
+  }
+  var _ns=null,_nd2=1e9,_nb2=null,_bd3=1e9;
+  for(var ni=0;ni<blds.length;ni++){
+    var nb3=blds[ni];if(nb3.side===side||nb3.hp<=0)continue;
+    var nd3=dist(u,nb3);
+    if(nb3.type==='shipyard'&&nd3<560&&nd3<_nd2){_nd2=nd3;_ns=nb3;}
+    if(nd3<380&&nd3<_bd3){_bd3=nd3;_nb2=nb3;}
+  }
+  var _nt2=_ns||_nb2;
+  if(_nt2){
+    if(u.tgt!==_nt2)u._bcN=0;
+    u.tgt=_nt2;u.ord='a';u.tx=undefined;u.ty=undefined;u._path=null;
+    return;
+  }
+  var _wp2=u._pw2[u._pi2];
+  if(Math.hypot(_wp2.x-u.x,_wp2.y-u.y)<90){
+    u._pi2=((u._pi2+u._pdh2)%12+12)%12;
+    _wp2=u._pw2[u._pi2];
+  }
+  u.tgt=null;u.ord='m';u.tx=_wp2.x;u.ty=_wp2.y;
 }
 function runAI(side){
   var ai=ais[side];if(!ai)return;
@@ -1693,7 +1718,7 @@ function runAI(side){
   ai.timer--;
   var myArmy=units.filter(function(u){return u.side===side&&u.hp>0;});
   var _navy2=myArmy.filter(function(u){return u.water===1;});
-  for(var nvi=0;nvi<_navy2.length;nvi++)navyPush(_navy2[nvi],side,ai.atkSide===null||ai.atkSide===undefined?1+(nvi%3):ai.atkSide);
+  for(var nvi=0;nvi<_navy2.length;nvi++)navyPatrol(_navy2[nvi],side);
   if(ai.atkOn){
     ai.loadCd=(ai.loadCd===undefined?90:ai.loadCd)-1;
     if(ai.loadCd<=0){ai.loadCd=150;aiBoardApcs(myArmy);}
@@ -1703,7 +1728,7 @@ function runAI(side){
       for(var ui=0;ui<myArmy.length;ui++){
         var au=myArmy[ui];
         if(au.type==='engineer')continue;
-        if(au.water===1){navyPush(au,side,ai.atkSide);continue;}
+        if(au.water===1)continue;
         var engaged=au.tgt&&au.tgt.hp>0&&dist(au,au.tgt)<au.rng*2.5;
         if(!engaged&&au.tx===undefined){
           var wa=ui*2.4;
@@ -1730,7 +1755,7 @@ function runAI(side){
           for(var ui2=0;ui2<myArmy.length;ui2++){
             var au2=myArmy[ui2];
             if(au2.type==='engineer')continue;
-            if(au2.water===1){navyPush(au2,side,tSide);continue;}
+            if(au2.water===1)continue;
             au2.tx=eHQ2.x+Math.cos(ui2*2.4)*300;
             au2.ty=eHQ2.y+Math.sin(ui2*2.4)*300;
             au2.tgt=null;au2._path=null;au2._stuckN=0;au2.wSide=tSide;
