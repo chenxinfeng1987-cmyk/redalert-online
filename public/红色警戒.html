@@ -27,7 +27,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #gameover{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #gameover h2{font-size:30px;color:#fff}
 #gameover .rb{padding:8px 28px;font-size:14px;border:2px solid #fff;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer}
-#hint{position:fixed;bottom:155px;right:176px;background:rgba(10,10,20,.85);color:#667;font-size:9px;padding:4px 7px;border-radius:4px;z-index:10;line-height:1.4}
+#hint{background:rgba(10,10,20,.85);color:#667;font-size:9px;padding:3px 8px;line-height:1.4;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:left;border-left:2px solid rgba(255,215,0,.25)}
 #netbtn{color:#4af;border:1px solid rgba(68,170,255,.4);padding:2px 9px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap}
 #netbtn:hover{background:rgba(68,170,255,.12)}
 #lobby{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);z-index:300;display:none;align-items:center;justify-content:center}
@@ -112,7 +112,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1073</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1074</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -807,13 +807,14 @@ function moveTow(o,tx,ty,spd){
         var _lx=o.x+Math.cos(_cand[wi])*_look,_ly=o.y+Math.sin(_cand[wi])*_look;
         if(!passable(_lx,_ly,o))continue;
         var _sc2=-wi*0.01;
+        if(o._lastA!==undefined)_sc2-=Math.abs(_cand[wi]-o._lastA)*0.3;
         for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=1;
         if(_sc2>_gs2){_gs2=_sc2;_got=wi;}
       }
       var _ox2=o.x,_oy2=o.y;
       if(_got>=0){
         var _nx=o.x+Math.cos(_cand[_got])*fspd,_ny=o.y+Math.sin(_cand[_got])*fspd;
-        if(passable(_nx,_ny,o)){o.x=_nx;o.y=_ny;}
+        if(passable(_nx,_ny,o)){o.x=_nx;o.y=_ny;o._lastA=_cand[_got];}
       }
       if(Math.hypot(o.x-_ox2,o.y-_oy2)<0.1){
         o._wsS=(o._wsS||0)+1;
@@ -1580,7 +1581,7 @@ function navyPatrol(u,side){
     u.tgt=null;
   }
   if(!u._pw2){
-    var _pcx=MW/2,_pcy=MH/2,_pa=MW/2-160,_pb=MH/2-160,_pn=12,_wq=[];
+    var _pcx=MW/2,_pcy=MH/2,_pa=MW/2-160,_pb=MH/2-160,_pn=28,_wq=[];
     for(var _ii=0;_ii<_pn;_ii++){
       var _ia=_ii/_pn*PI*2,_px0=_pcx+Math.cos(_ia)*_pa,_py0=_pcy+Math.sin(_ia)*_pb;
       for(var _ri=0;_ri<12;_ri++){
@@ -1591,6 +1592,7 @@ function navyPatrol(u,side){
     }
     u._pw2=_wq;u._pdh2=u.id%2?1:-1;u._pi2=(u.id*3)%_pn;
   }
+  var _pn2=u._pw2.length;
   var _ns=null,_nd2=1e9,_nb2=null,_bd3=1e9;
   for(var ni=0;ni<blds.length;ni++){
     var nb3=blds[ni];if(nb3.side===side||nb3.hp<=0)continue;
@@ -1606,7 +1608,7 @@ function navyPatrol(u,side){
   }
   var _wp2=u._pw2[u._pi2];
   if(Math.hypot(_wp2.x-u.x,_wp2.y-u.y)<90){
-    u._pi2=((u._pi2+u._pdh2)%12+12)%12;
+    u._pi2=((u._pi2+u._pdh2)%_pn2+_pn2)%_pn2;
     _wp2=u._pw2[u._pi2];
   }
   u.tgt=null;u.ord='m';u.tx=_wp2.x;u.ty=_wp2.y;
@@ -1667,7 +1669,7 @@ function runAI(side){
       }
       if(built>=2)break;
     }
-    if(!bCount.shipyard&&sideGold[side]>=900){
+    if(!bCount.shipyard&&sideGold[side]>=1700&&units.filter(function(u){return u.side===side&&u.hp>0&&u.water!==1;}).length>=4){
       var _ysp=seaSpot(hx,hy);
       if(_ysp){sideGold[side]-=900;addB('shipyard',_ysp.x,_ysp.y,side);}
     }
@@ -1684,14 +1686,14 @@ function runAI(side){
     var _tinN=_tuns.filter(function(b){return b._tn==='in'&&b._pair;});
     var _outN=_tuns.filter(function(b){return b._tn==='out'&&b._pair;});
     if(ai.tunCd===undefined)ai.tunCd=gt+1800;
-    if(sideGold[side]>=500&&!_tinN.length&&gt>=ai.tunCd){
+    if(sideGold[side]>=1500&&!_tinN.length&&gt>=ai.tunCd){
       var _txi=hx+(Math.random()-0.5)*260,_tyi=hy+(Math.random()-0.5)*260;
       for(var _tki=0;_tki<8;_tki++){
         var _sx2=_txi+(Math.random()-0.5)*240,_sy2=_tyi+(Math.random()-0.5)*240;
         _sx2=Math.max(120,Math.min(MW-120,_sx2));_sy2=Math.max(120,Math.min(MH-120,_sy2));
         if(_tinOk(_sx2,_sy2,BD.tunnel.sz*T/2)){sideGold[side]-=500;addB('tunnel',_sx2,_sy2,side);ai.tunCd=gt+600;break;}
       }
-    }else if(_tinN.length&&!_outN.length&&sideGold[side]>=500&&gt>=ai.tunCd){
+    }else if(_tinN.length&&!_outN.length&&sideGold[side]>=1500&&gt>=ai.tunCd){
       var _es=pickWeakTarget(side),_eth=_es!==null?cornerOf(_es):{x:MW/2,y:MH/2};
       for(var _tko=0;_tko<12;_tko++){
         var _sx3=_eth.x+(Math.random()-0.5)*480,_sy3=_eth.y+(Math.random()-0.5)*480;
@@ -3719,6 +3721,8 @@ function guestStart(m){
   closeLobby();
 }
 
+var _hintEl=document.getElementById('hint');
+if(_hintEl){var _btm2=document.getElementById('bottom');if(_btm2&&_hintEl.parentNode!==_btm2)_btm2.insertBefore(_hintEl,_btm2.firstChild);}
 document.getElementById('lb-create').onclick=lbCreate;
 document.getElementById('lb-join').onclick=lbJoin;
 document.getElementById('lb-leave').onclick=lbLeave;
