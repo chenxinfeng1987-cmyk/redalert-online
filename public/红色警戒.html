@@ -102,19 +102,19 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
     <div class="ptab" onclick="showTab('u')">⚔️ 兵种</div>
-    <div class="ptab" onclick="showTab('v')">🚗 战车</div>
+    <div class="ptab" onclick="showTab('v')">🚗 战车</div><div class="ptab" onclick="showTab('h')">🌟 英雄</div>
     <div id="btToggle" onclick="togglePanel()" title="收起/展开面板">▾</div>
   </div>
   <div class="pbody on" id="pb"></div>
   <div class="pbody" id="pu"></div>
-  <div class="pbody" id="pv"></div>
+  <div class="pbody" id="pv"></div><div class="pbody" id="ph"></div>
 </div>
 <div id="panelBtn" onclick="toggleMobPanel()">🏗️ 建造</div>
 <div id="hint">左键选择 | 右键移动攻击 | 中键拖动 | 滚轮缩放</div>
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1093</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1094</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3366,12 +3366,13 @@ restoreMiniPos();
 function showTab(t){
   var _bp3=document.getElementById('bottom');
   if(_bp3.classList.contains('collapsed')){_bp3.classList.remove('collapsed');document.getElementById('btToggle').textContent='▾';try{localStorage.setItem('ra_panel','0')}catch(e){}syncMiniPos();}
-  document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:(t==='u'?1:2))?' on':'');});
+  document.querySelectorAll('.ptab').forEach(function(el,i){el.className='ptab'+(i===(t==='b'?0:(t==='u'?1:(t==='v'?2:3)))?' on':'');});
   document.getElementById('pb').className='pbody'+(t==='b'?' on':'');
   document.getElementById('pu').className='pbody'+(t==='u'?' on':'');
   document.getElementById('pv').className='pbody'+(t==='v'?' on':'');
+  document.getElementById('ph').className='pbody'+(t==='h'?' on':'');
 }
-var UINF=['rifle','rocket','engineer','spy','dog','hero','tesla','tanya','sniper','toxin','pulse','stalker'],UVEH=['light','heavy','artillery','heli','ship','apc','carrier'];
+var UINF=['rifle','rocket','engineer','spy','dog','tesla'],UVEH=['light','heavy','artillery','heli','ship','apc','carrier'],UHERO=['hero'].concat(HERO5);
 function buildPanels(){
   var pb=document.getElementById('pb');pb.innerHTML='';
   Object.keys(BD).forEach(function(id){
@@ -3388,7 +3389,8 @@ function buildPanels(){
   });
   var pu=document.getElementById('pu');pu.innerHTML='';
   var pv=document.getElementById('pv');pv.innerHTML='';
-  UINF.concat(UVEH).forEach(function(id){
+  var ph=document.getElementById('ph');ph.innerHTML='';
+  UINF.concat(UVEH).concat(UHERO).forEach(function(id){
     var d=UD[id];var cost=unitCost(d);
     var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});
     var techOk=techUnlocked(id,mySide);
@@ -3415,15 +3417,15 @@ function buildPanels(){
       }
       var _nu=spawnUnit(uid,_sx,_sy,mySide);if(_nu){_nu._born=gt;}}
     };
-    (UINF.indexOf(id)>=0?pu:pv).appendChild(card);
+    (UINF.indexOf(id)>=0?pu:(UVEH.indexOf(id)>=0?pv:ph)).appendChild(card);
   });
 }
 function buildPanels_update(){
   var cards=document.querySelectorAll('#pb .ic');
   var keys=Object.keys(BD).filter(function(k){return k!=='hq';});
   for(var i=0;i<cards.length&&i<keys.length;i++){var id=keys[i],d=BD[id];var hasReq=(!d.rq||blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;}))&&techUnlocked(id,mySide);cards[i].className='ic'+((!hasReq||gold<d.g)?' lk':'')+(bldMode===keys[i]?' on':'');}
-  var ucards=document.querySelectorAll('#pu .ic,#pv .ic');
-  var ukeys=UINF.concat(UVEH);
+  var ucards=document.querySelectorAll('#pu .ic,#pv .ic,#ph .ic');
+  var ukeys=UINF.concat(UVEH).concat(UHERO);
   for(var i=0;i<ucards.length&&i<ukeys.length;i++){var id=ukeys[i],d=UD[id],c=unitCost(d);var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});
     var heroU=id==='hero'||HERO5.indexOf(id)>=0,_hOn2=heroU&&heroHas(mySide,id),_hW2=heroU&&!_hOn2?heroWaitT(mySide,id):0;
     ucards[i].className='ic'+((!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0)?' lk':'');
@@ -4228,6 +4230,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
