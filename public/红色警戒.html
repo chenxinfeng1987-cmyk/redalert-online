@@ -15,6 +15,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
 .ptab.on{color:#4af;border-color:rgba(68,170,255,.3);background:rgba(20,20,40,.98)}
 #stpFab{position:fixed;right:10px;bottom:214px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(30,30,50,.94);border:1.5px solid #a8f;color:#c8f;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(170,136,255,.5);user-select:none}
+#heroTip{position:fixed;z-index:70;background:rgba(15,18,30,.96);color:#ffe;border:1px solid rgba(255,215,0,.35);padding:6px 9px;font-size:11px;border-radius:6px;max-width:240px;display:none;pointer-events:none;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px}
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .ic{width:74px;padding:5px 3px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);text-align:center;cursor:pointer;position:relative}
@@ -98,7 +99,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
-<div id="selinfo"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div>
+<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div>
 <div id="bottom">
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
@@ -115,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1097</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1098</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -178,7 +179,6 @@ var UD={
   carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.3,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1},
   tanya:{n:'谭雅·猎杀者',g:1200,hp:180,atk:60,spd:2.2,rng:130,rt:55,ar:'lt',rq:'barracks',ex:0,mx:300},
   sniper:{n:'幽灵狙击手',g:900,hp:70,atk:90,spd:2.0,rng:340,rt:90,ar:'lt',rq:'barracks',ex:0,mx:250},
-  toxin:{n:'毒气师',g:800,hp:120,atk:0,spd:1.9,rng:150,rt:60,ar:'lt',rq:'barracks',ex:0,mx:200},
   pulse:{n:'脉冲工兵',g:1000,hp:130,atk:0,spd:2.1,rng:220,rt:180,ar:'lt',rq:'barracks',ex:0,mx:150},
   stalker:{n:'时空行者',g:1500,hp:220,atk:55,spd:2.3,rng:140,rt:45,ar:'lt',rq:'barracks',ex:0,mx:100}
 };
@@ -188,7 +188,7 @@ function unitCost(d,side){
   return Math.floor(d.g*(1-Math.min(0.6,(cnt-1)*0.15)));
 }
 function techUnlocked(id,side){
-  if(id==='heavy'||id==='artillery'||id==='heli'||id==='hero'||id==='tesla'||id==='spy'||id==='tanya'||id==='sniper'||id==='toxin'||id==='pulse'||id==='stalker')
+  if(id==='heavy'||id==='artillery'||id==='heli'||id==='hero'||id==='tesla'||id==='spy'||id==='tanya'||id==='sniper'||id==='pulse'||id==='stalker')
     return blds.some(function(b){return b.type==='lab'&&b.side===side&&b.hp>0;});
   if(id==='nukesilo')
     return blds.some(function(b){return b.type==='lab'&&b.side===side&&b.hp>0;});
@@ -212,7 +212,7 @@ function loadUnitImgs(){
     });
   });
 }
-var UIFB={engineer:1,spy:1,hero:1,tesla:1,tanya:1,sniper:1,toxin:1,pulse:1,stalker:1};
+var UIFB={engineer:1,spy:1,hero:1,tesla:1,tanya:1,sniper:1,pulse:1,stalker:1};
 function uiGet(type,sfx){
   var i=unitImgs[type+sfx];
   if(i&&i._ok)return i;
@@ -305,10 +305,6 @@ function unitDeco(u,sp,sz,face,oy){
     cx.textAlign='center';
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
     cx.fillText('🎯',sp.x,sp.y-sz*1.5+oy);
-  }else if(t==='toxin'){
-    cx.textAlign='center';
-    cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
-    cx.fillText('☠️',sp.x,sp.y-sz*1.5+oy);
   }else if(t==='hero'){
     cx.textAlign='center';
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
@@ -371,7 +367,7 @@ var camX=0,camY=0,camZ=0.9,camFollowId=0,camFollowG=null;
 var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
-var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[],gas=[];
+var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0,sklMode=false,sklU=null;
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
@@ -420,7 +416,7 @@ function handleMapUpload(e){
           var r=px.data[i],g=px.data[i+1],b=px.data[i+2];
           mData[y][x]=colorToTerrain(r,g,b);
         }}
-        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];gas=[];heroR=[];
+        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];
         selU=[];selB=null;bldMode=null;
         sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
         gt=0;gOver=0;gOn=1;
@@ -455,7 +451,7 @@ function genMap(){
   _mver++;
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
-  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];gas=[];heroR=[];
+  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
@@ -1190,11 +1186,41 @@ function findKiller(deadSide,target){
   return best;
 }
 
-var heroR=[];var HERO5=['tanya','sniper','toxin','pulse','stalker'];var COPY4=['tanya','sniper','toxin','pulse'];
-var HEROIT={tanya:'🔫',sniper:'🎯',toxin:'☠️',pulse:'📡'};
+var heroR=[];var HERO5=['tanya','sniper','pulse','stalker'];var COPY4=['tanya','sniper','pulse'];
+var HEROIT={tanya:'🔫',sniper:'🎯',pulse:'📡'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
-function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='pulse'?200:(u._ab==='toxin'?150:100));return u.rt;}
+var HERO_DESC={hero:'战略单位：初始拥有大范围治疗光环（每10秒恢复周围友军150血）。击杀敌方谭雅/狙击手/脉冲工兵后立刻学会其能力，阵亡后清空可重新偷学。',
+ tanya:'一击必杀：贴脸（射程130）对任何敌方士兵/兵种一发毙命（含直升机）；打建筑则是普通炮击。移速快。',
+ sniper:'超远程单发90伤，命中附带3秒压制：目标不能移动不能开火。未开火时敌人看不见它（隐身），开火后1.5秒现形。',
+ pulse:'向目标点投掷EMP：敌方机枪塔/导弹塔10秒失明，波及范围内敌人僵直2秒。',
+ stalker:'主动技能：从英雄标签页点它的卡片（或点右下角悬浮🌀）→ 再点地图任意位置 → 把周围200px友军一起瞬移过去。落点130px内敌人掉120血。冷却20秒。'};
+function heroDesc(type){return HERO_DESC[type]||'';}
+function _abEmoji(t){return HEROIT[t]||'';}
+function showHeroTip(id,ev){
+  var t=document.getElementById('heroTip');if(!t)return;
+  var d=UD[id];var lines='<b>'+d.n+'</b>';
+  if(id==='hero'){
+    var _hb=null;
+    for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0){_hb=u._ab||null;break;}}
+    lines+='<br>当前偷学能力：'+(_hb?((UD[_hb]?UD[_hb].n:_hb)+' '+_abEmoji(_hb)):'无（击杀敌方英雄获得）');
+  }
+  var dd=heroDesc(id);if(dd)lines+='<br>'+dd;
+  var state='';
+  if(heroHas(mySide,id))state+='<br>状态：✅ 驻场';
+  else{var w=heroWaitT(mySide,id);if(w>0)state+='<br>状态：⏳ '+Math.ceil(w/60)+' 秒后复活';}
+  lines+=state;
+  t.innerHTML=lines;
+  t.style.display='block';moveHeroTip(ev);
+}
+function moveHeroTip(ev){
+  var t=document.getElementById('heroTip');if(!t||t.style.display==='none')return;
+  var x=ev.clientX,y=ev.clientY;
+  t.style.left=Math.min(window.innerWidth-250,Math.max(4,x+12))+'px';
+  t.style.top=Math.min(window.innerHeight-110,Math.max(4,y+12))+'px';
+}
+function hideHeroTip(){var t=document.getElementById('heroTip');if(t)t.style.display='none';}
+function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='pulse'?200:100);return u.rt;}
 // 单位升级
 function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
@@ -1341,10 +1367,6 @@ function fireUnit(u,t){
     bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:9,dmg:_tdm,side:u.side,life:50,t:t,ox:u.x,oy:u.y});
     return;
   }
-  if(u.type==='toxin'||(u.type==='hero'&&u._ab==='toxin')){
-    gas.push({x:t.x+(Math.random()-0.5)*30,y:t.y+(Math.random()-0.5)*30,side:u.side,t:gt+360});
-    return;
-  }
   if(u.type==='ship'){
     var _sn=3+~~(Math.random()*3);
     var _sdm=u.atk*((t&&t.bt!==undefined)?2:(t&&t.spd!==undefined?0.5:1));
@@ -1354,17 +1376,6 @@ function fireUnit(u,t){
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y,snip:(u.type==='sniper'||(u.type==='hero'&&u._ab==='sniper'))?1:0});
 }
 function updateUnits(){
-  if(gas.length){
-    if(gt%5===0){
-      for(var g9=0;g9<gas.length;g9++){var _g=gas[g9];
-        for(var gu=0;gu<units.length;gu++){var mu9=units[gu];
-          if(mu9.side===_g.side||mu9.hp<=0||mu9.riding)continue;
-          if(dist(mu9,_g)<130){dealDmg(mu9,5);parts.push({x:mu9.x,y:mu9.y-8,vx:0,vy:-0.6,life:12,col:'#7c5',sz:4});}
-        }
-      }
-    }
-    for(var gcl=0;gcl<gas.length;gcl++){if(gt>gas[gcl].t){gas.splice(gcl,1);gcl--;}}
-  }
   units.forEach(function(u){
     if(u.hp<=0)return;
     u.cooldown=u.cooldown?u.cooldown-1:0;
@@ -1764,7 +1775,7 @@ function aiBoardApcs(myArmy){
     for(var si3=0;si3<myArmy.length&&ap3.cargo.length<(ap3.cap||4);si3++){
       var sd3=myArmy[si3];
       if(sd3===ap3||sd3.type==='apc'||sd3.riding||sd3.loadTo!==undefined||sd3.hp<=0)continue;
-      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='tesla'||sd3.type==='hero'||sd3.type==='tanya'||sd3.type==='sniper'||sd3.type==='toxin'){
+      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='tesla'||sd3.type==='hero'||sd3.type==='tanya'||sd3.type==='sniper'){
         if(dist(sd3,ap3)<220){ap3.cargo.push(sd3);sd3.riding=ap3;sd3.ord=null;sd3.tx=undefined;sd3.ty=undefined;sd3.tgt=null;}
       }
     }
@@ -2865,17 +2876,6 @@ function draw(){
     cx.fillStyle=sideColor(b.side);cx.shadowColor=cx.fillStyle;cx.shadowBlur=3;
     cx.beginPath();cx.arc(sp.x,sp.y,1.8*camZ,0,PI*2);cx.fill();cx.shadowBlur=0;
   });
-  gas.forEach(function(g){
-    var sp=worldToScr(g.x,g.y);
-    var lt2=(g.t-gt)/360;
-    cx.globalAlpha=Math.min(0.45,Math.min(1,lt2*3)*0.45);
-    cx.fillStyle='#5c5';
-    for(var gi=0;gi<4;gi++){
-      var gph=gt*0.03+gi*1.7,gr=130*camZ*(0.55+0.12*Math.sin(gph*1.3+gi));
-      cx.beginPath();cx.arc(sp.x+Math.cos(gph)*18*camZ,sp.y+Math.sin(gph*1.19)*16*camZ,gr,0,PI*2);cx.fill();
-    }
-    cx.globalAlpha=1;
-  });
   parts.forEach(function(p){
     var sp=worldToScr(p.x,p.y);
     cx.globalAlpha=p.life/40;cx.fillStyle=p.col;
@@ -3401,10 +3401,13 @@ function buildPanels(){
     var _hW=(heroU&&!_hOn)?heroWaitT(mySide,id):0;
     if(heroU&&(_hOn||_hW>0))lk=true;
     var card=document.createElement('div');card.className='ic'+(lk?' lk':'');
-    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='toxin'?'☠️':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+cost+'</div>';
+    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+cost+'</div>';
     card.setAttribute('data-id',id);
     if(id==='stalker')card.onclick=function(e2){e2.stopPropagation();toggleStalker();};
     else if(heroU)card.onclick=null;
+    if(heroU)card.onmouseenter=function(ev){showHeroTip(id,ev);};
+    if(heroU)card.onmousemove=function(ev){moveHeroTip(ev);};
+    if(heroU)card.onmouseleave=hideHeroTip;
     else card.onclick=function(e){
       e.stopPropagation();if(this.classList.contains('lk'))return;
       var uid=this.getAttribute('data-id');
@@ -3866,7 +3869,7 @@ function applyMove(us,x,y){
     for(var bi=0;bi<us.length;bi++){
       var bu=us[bi];
       if(bu.type==='apc'||bu.type==='heli'||bu.riding||bu._tin)continue;
-      var _canLoad=ap.water?true:(bu.type==='rifle'||bu.type==='rocket'||bu.type==='engineer'||bu.type==='tesla'||bu.type==='hero'||bu.type==='tanya'||bu.type==='sniper'||bu.type==='toxin');
+      var _canLoad=ap.water?true:(bu.type==='rifle'||bu.type==='rocket'||bu.type==='engineer'||bu.type==='tesla'||bu.type==='hero'||bu.type==='tanya'||bu.type==='sniper');
       if(_canLoad){
         if(ap.cargo.length+boarded<(ap.cap||4)){bu.ord='load';bu.loadTo=ap.id;bu.tgt=null;bu._path=null;bu.wSide=undefined;boarded++;}
       }
@@ -4073,7 +4076,7 @@ function guestStart(m){
   NET.bStore={};NET.mStore={};NET.uStore={};
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
-  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];gas=[];heroR=[];
+  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
@@ -4246,6 +4249,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
