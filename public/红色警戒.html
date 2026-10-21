@@ -14,6 +14,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .ptabs{display:flex;gap:2px;padding:0 4px}
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
 .ptab.on{color:#4af;border-color:rgba(68,170,255,.3);background:rgba(20,20,40,.98)}
+#stpFab{position:fixed;right:10px;bottom:214px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(30,30,50,.94);border:1.5px solid #a8f;color:#c8f;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(170,136,255,.5);user-select:none}
 .pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px}
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .ic{width:74px;padding:5px 3px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);text-align:center;cursor:pointer;position:relative}
@@ -89,7 +90,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
     <option value="fortress">🏰 据点争夺</option>
     <option value="custom">📷 自定义地图</option>
   </select>
-  <button id="paraBtn" style="background:rgba(30,30,50,.9);color:#ffd700;border:1px solid rgba(255,215,0,.3);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px" onclick="togglePara()">🪂 伞兵</button><button id="stpBtn" style="background:rgba(30,30,50,.9);color:#ffd700;border:1px solid rgba(255,215,0,.3);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px" onclick="toggleStalker()">🌀 传送</button>
+  <button id="paraBtn" style="background:rgba(30,30,50,.9);color:#ffd700;border:1px solid rgba(255,215,0,.3);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px" onclick="togglePara()">🪂 伞兵</button>
   <label style="cursor:pointer;color:#ffd700;font-size:11px;border:1px solid rgba(255,215,0,.3);padding:2px 8px;border-radius:4px">📤 上传图片<input type="file" id="mapUpload" accept="image/*" style="display:none" onchange="handleMapUpload(event)"></label>
   <div class="res" id="eRes"></div>
   <div style="color:#8f8;font-size:12px" id="timer">0:00</div>
@@ -97,7 +98,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
-<div id="selinfo"></div>
+<div id="selinfo"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div>
 <div id="bottom">
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
@@ -114,7 +115,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1094</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1097</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -653,6 +654,7 @@ function placeBases(){
     spawnUnit('dog',c.x-150,c.y+80,c.side);
     spawnUnit('dog',c.x-170,c.y+110,c.side);
     spawnUnit('engineer',c.x-190,c.y+140,c.side);
+    UHERO.forEach(function(t){var _hu=spawnUnit(t,c.x-150,c.y+80,c.side);if(_hu){_hu._born=gt;}});
   });
   ensureMiners();
 }
@@ -1927,8 +1929,6 @@ function runAI(side){
       var spyCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='spy';}).length;
       if(enemySpy&&dogCnt<3&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
       else if(labOk&&ai.atkOn&&spyCnt<2&&hasBarr&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('spy',0,0,side);}
-      var _hro=['tanya','sniper','toxin','pulse'].filter(function(t){return !heroHas(side,t);});
-      if(labOk&&hasBarr&&_hro.length&&sideGold[side]>=900&&Math.random()<0.5){var _hb3=_hro[~~(Math.random()*_hro.length)];sideGold[side]-=unitCost(UD[_hb3],side);spawnUnit(_hb3,0,0,side);}
       var _yb=null;
       for(var _yi=0;_yi<blds.length;_yi++){var _yb2=blds[_yi];if(_yb2.type==='shipyard'&&_yb2.side===side&&_yb2.hp>0&&_yb2.ready){_yb=_yb2;break;}}
       var _shCnt=_yb?units.filter(function(u){return u.side===side&&u.hp>0&&u.water;}).length:0;
@@ -1946,8 +1946,7 @@ function runAI(side){
         else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
         else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
       }else if(strat==='armor'){
-        if(labOk&&hasFac&&!heroHas(side,'hero')&&sideGold[side]>=2500){sideGold[side]-=2500;spawnUnit('hero',0,0,side);}
-        else if(labOk&&hasFac&&sideGold[side]>=900){sideGold[side]-=900;spawnUnit('heavy',0,0,side);}
+        if(labOk&&hasFac&&sideGold[side]>=900){sideGold[side]-=900;spawnUnit('heavy',0,0,side);}
         else if(labOk&&hasFac&&sideGold[side]>=700){sideGold[side]-=700;spawnUnit('artillery',0,0,side);}
         else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
         else if(labOk&&hasBarr&&sideGold[side]>=400){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
@@ -1955,8 +1954,7 @@ function runAI(side){
         else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
         else if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
       }else if(strat==='turtle'){
-        if(labOk&&hasFac&&!heroHas(side,'hero')&&sideGold[side]>=2500){sideGold[side]-=2500;spawnUnit('hero',0,0,side);}
-        else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
+        if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
         else if(labOk&&hasBarr&&sideGold[side]>=400){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
         else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
         else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
@@ -3213,11 +3211,13 @@ function togglePara(){
 }
 function toggleStalker(){
   var s2=null;
-  for(var i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0)s2=selU[i];
-  if(!s2){alert('先选中一个时空行者');return;}
+  for(var i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0){s2=selU[i];break;}
+  if(!s2){for(var j=0;j<units.length;j++){var c9=units[j];if(c9.type==='stalker'&&c9.side===mySide&&c9.hp>0&&c9.skillCd<=0){s2=c9;break;}}}
+  if(!s2){alert('没有就绪的时空行者');return;}
   if(s2.skillCd>0){alert('传送冷却中');return;}
+  if(sklMode&&sklU===s2){sklMode=false;sklU=null;return;}
   sklU=s2;sklMode=true;paraMode=false;bldMode=null;
-  var pb=document.getElementById('stpBtn');if(pb){pb.style.borderColor='#a8f';pb.style.color='#a8f';}
+  var pb=document.getElementById('stpFab');if(pb){pb.style.borderColor='#0f0';pb.style.color='#0f0';}
 }
 function doStalkerWarp(wx,wy){
   if(!sklU||sklU.hp<=0||sklU.skillCd>0){sklMode=false;sklU=null;return;}
@@ -3242,8 +3242,8 @@ function doStalkerWarp(wx,wy){
     if(Math.abs(e.x-wx)<130&&Math.abs(e.y-wy)<130){dealDmg(e,120);parts.push({x:e.x,y:e.y,vx:0,vy:0,life:25,col:'#a8f',sz:12});}
   }
   sklMode=false;sklU=null;
-  var pb=document.getElementById('stpBtn');
-  if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}
+  var pb=document.getElementById('stpFab');
+  if(pb){pb.style.borderColor='#a8f';pb.style.color='#c8f';}
 }
 function doParaDrop(wx,wy){
   if(paraCd>0||gold<500)return false;
@@ -3403,7 +3403,9 @@ function buildPanels(){
     var card=document.createElement('div');card.className='ic'+(lk?' lk':'');
     card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='toxin'?'☠️':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+cost+'</div>';
     card.setAttribute('data-id',id);
-    card.onclick=function(e){
+    if(id==='stalker')card.onclick=function(e2){e2.stopPropagation();toggleStalker();};
+    else if(heroU)card.onclick=null;
+    else card.onclick=function(e){
       e.stopPropagation();if(this.classList.contains('lk'))return;
       var uid=this.getAttribute('data-id');
       if(NET.mode==='guest'){netCmd({k:'train',type:uid});return;}
@@ -3428,9 +3430,17 @@ function buildPanels_update(){
   var ukeys=UINF.concat(UVEH).concat(UHERO);
   for(var i=0;i<ucards.length&&i<ukeys.length;i++){var id=ukeys[i],d=UD[id],c=unitCost(d);var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});
     var heroU=id==='hero'||HERO5.indexOf(id)>=0,_hOn2=heroU&&heroHas(mySide,id),_hW2=heroU&&!_hOn2?heroWaitT(mySide,id):0;
-    ucards[i].className='ic'+((!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0)?' lk':'');
+    ucards[i].className='ic'+((!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0)?' lk':'')+((id==='stalker'&&sklMode&&sklU)?' on':'');
     var _nEl=ucards[i].querySelector('.n');
-    if(_nEl)_nEl.innerHTML=d.n+(techUnlocked(id,mySide)?'':' 🔒')+(_hOn2?' ✅':(_hW2>0?' ⏳'+Math.ceil(_hW2/60)+'s':''));}
+    if(_nEl){
+      if(id==='stalker'){
+        var _sk3=null;
+        for(var fi3=0;fi3<units.length;fi3++){var su3=units[fi3];if(su3.type==='stalker'&&su3.side===mySide&&su3.hp>0){_sk3=su3;break;}}
+        _nEl.innerHTML=d.n+' '+(_sk3?(_sk3.skillCd>0?'⏳'+Math.ceil(_sk3.skillCd/60)+'s':(sklMode?'✋点目标':'🌀就绪·点卡')):'✅驻场');
+      }else{
+        _nEl.innerHTML=d.n+(techUnlocked(id,mySide)?'':' 🔒')+(_hOn2?' ✅':(_hW2>0?' ⏳'+Math.ceil(_hW2/60)+'s':''));
+      }
+    }}
 }
 function canBuild(type,x,y,side){
   side=(side===undefined)?mySide:side;
@@ -3450,6 +3460,12 @@ function canBuild(type,x,y,side){
 var _selKey=null,_selHide=0;
 function updateSelInfo(){
   var el=document.getElementById('selinfo');
+  var _fab=document.getElementById('stpFab');
+  if(_fab){var _sh3=false,_cd3=false;
+    for(var fi=0;fi<selU.length;fi++)if(selU[fi].type==='stalker'&&selU[fi].hp>0){_sh3=true;if(selU[fi].skillCd>0)_cd3=true;break;}
+    _fab.style.display=_sh3?'block':'none';
+    _fab.style.borderColor=_cd3?'#888':'#a8f';
+    _fab.style.color=_cd3?'#98a':'#c8f';}
   var key=selU.length?('u'+(selU[0]?selU[0].id:0)+'x'+selU.length):(selB?('b'+selB.id):'');
   if(key!==_selKey){_selKey=key;_selHide=gt+240;}
   var mob=isMobileUI();
@@ -4230,6 +4246,9 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
+
 
 
 
