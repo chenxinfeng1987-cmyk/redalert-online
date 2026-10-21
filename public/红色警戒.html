@@ -114,7 +114,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1089</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1091</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -870,7 +870,7 @@ function moveTow(o,tx,ty,spd){
             var _ba3=_bs2/16*PI*2,_bx4=o.x+Math.cos(_ba3)*90,_by4=o.y+Math.sin(_ba3)*90;
             if(passable(_bx4,_by4,o)){o.x+=Math.cos(_ba3)*40;o.y+=Math.sin(_ba3)*40;break;}
           }
-          o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+60;o._wsS=0;o._path=null;
+          o._wsS=0;o._path=null;
         }
         o._wsAx=o.x;o._wsAy=o.y;
       }
@@ -895,9 +895,9 @@ function moveTow(o,tx,ty,spd){
       for(var wi=0;wi<_cand.length;wi++){
         var _lx=o.x+Math.cos(_cand[wi])*_look,_ly=o.y+Math.sin(_cand[wi])*_look;
         if(!passable(_lx,_ly,o))continue;
-        var _sc2=-wi*0.01;
+        var _sc2=-wi*0.01;if(wi===0)_sc2+=0.5;
         if(o._lastA!==undefined)_sc2-=Math.abs(_cand[wi]-o._lastA)*0.3;
-        for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=0.6;
+        for(var _sq=0;_sq<8;_sq++)if(tileAt(_lx+Math.cos(_sq/8*PI*2)*52,_ly+Math.sin(_sq/8*PI*2)*52)!==3)_sc2-=0.45;
         if(passable(_lx+Math.cos(_cand[wi])*_look,_ly+Math.sin(_cand[wi])*_look,o))_sc2+=0.55;else _sc2-=0.4;
         if(_sc2>_gs2){_gs2=_sc2;_got=wi;}
       }
@@ -908,8 +908,8 @@ function moveTow(o,tx,ty,spd){
       }
       if(Math.hypot(o.x-_ox2,o.y-_oy2)<0.1){
         o._wsS=(o._wsS||0)+1;
-        if(o._wsS===46){o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+120;}
-        if(o._wsS>=150){o._wsS=0;o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+80;}
+        if(o._wsS===46){o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+24;}
+        if(o._wsS>=150){o._wsS=0;o._wsH=(o._wsH===PI/2?-PI/2:PI/2);o._wsT=gt+40;}
       }else o._wsS=0;
       return false;
     }
@@ -1265,6 +1265,17 @@ function updateMiners(){
   });
 }
 
+function shipFirePos(u,t){
+  var ang=Math.atan2(u.y-t.y,u.x-t.x);
+  var D=u.rng-50;
+  for(var k=0;k<8;k++){
+    var dd=D-k*30;
+    if(dd<110)break;
+    var px=t.x+Math.cos(ang)*dd,py=t.y+Math.sin(ang)*dd;
+    if(tileAt(px,py)===3&&passable(px,py,u))return {x:px,y:py};
+  }
+  return null;
+}
 function fireUnit(u,t){
   if(u.type==='tesla')return;
   u._atkT=gt;
@@ -1275,7 +1286,8 @@ function fireUnit(u,t){
   }
   if(u.type==='ship'){
     var _sn=3+~~(Math.random()*3);
-    for(var _sj=0;_sj<_sn;_sj++)bullets.push({x:u.x,y:u.y,tx:t.x+(Math.random()-0.5)*40,ty:t.y+(Math.random()-0.5)*40,spd:6,dmg:u.atk,side:u.side,life:60,t:t,ox:u.x,oy:u.y});
+    var _sdm=u.atk*((t&&t.bt!==undefined)?2:(t&&t.spd!==undefined?0.5:1));
+    for(var _sj=0;_sj<_sn;_sj++)bullets.push({x:u.x,y:u.y,tx:t.x+(Math.random()-0.5)*40,ty:t.y+(Math.random()-0.5)*40,spd:6,dmg:_sdm,side:u.side,life:60,t:t,ox:u.x,oy:u.y});
     return;
   }
   bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y});
@@ -1474,6 +1486,10 @@ function updateUnits(){
             fireUnit(u,at);
             u.cooldown=u.rt;
           }
+        }else if(u.water===1){
+          var _fp=shipFirePos(u,at);
+          if(_fp){if(moveTow(u,_fp.x,_fp.y,u.spd)){u.tx=undefined;u.ty=undefined;}}
+          else moveTow(u,at.x,at.y,u.spd);
         }else{moveTow(u,at.x,at.y,u.spd);}
         return;
       }
@@ -1543,6 +1559,11 @@ function updateUnits(){
       if(d<=u.rng){
         u.tx=undefined;u.ty=undefined;u._path=null;
         if(u.cooldown<=0){fireUnit(u,tgt);u.cooldown=u.rt;}
+      }else if(u.water===1){
+        if(d>u.rng*2.5&&tgt.bt===undefined){return;}
+        var _fp2=shipFirePos(u,tgt);
+        if(_fp2){if(moveTow(u,_fp2.x,_fp2.y,u.spd)){u.tx=undefined;u.ty=undefined;}}
+        else moveTow(u,tgt.x,tgt.y,u.spd);
       }else if(d<=u.rng*4||(u.wSide!==undefined&&tgt.side===u.wSide)){moveTow(u,tgt.x,tgt.y,u.spd);}
       else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;}}
     }else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;if(u.wSide!==undefined)u.wSide=undefined;}}
@@ -1908,7 +1929,24 @@ function runAI(side){
     if(_eb2){sp4.tx=_eb2.x+(sp4.id%2?80:-80);sp4.ty=_eb2.y+(sp4.id%3-1)*60;sp4.tgt=null;sp4._path=null;sp4.wSide=(side===0?1:0);}
   }
   var _navy2=myArmy.filter(function(u){return u.water===1;});
-  for(var nvi=0;nvi<_navy2.length;nvi++)navyPatrol(_navy2[nvi],side);
+  if(gt%40===0){
+    var _nvHQ=ai.atkOn?blds.find(function(b){return b.type==='hq'&&b.side===ai.atkSide&&b.hp>0;}):null;
+    for(var nvi=0;nvi<_navy2.length;nvi++){
+      var nvU=_navy2[nvi];
+      if(nvU.tgt&&nvU.tgt.hp>0)continue;
+      if(_nvHQ){
+        var _fpN=shipFirePos(nvU,_nvHQ);
+        if(_fpN&&dist(nvU,_fpN)>40){nvU.ord='m';nvU.tx=_fpN.x;nvU.ty=_fpN.y;nvU.tgt=null;nvU.wSide=undefined;nvU._path=findPathWater(nvU.x,nvU.y,nvU.tx,nvU.ty);nvU._pi=0;}
+        else{nvU.tx=undefined;nvU.ty=undefined;nvU._path=null;}
+        continue;
+      }
+      var _nyd=blds.find(function(b){return b.type==='shipyard'&&b.side===side&&b.hp>0;});
+      if(_nyd&&nvU.tx===undefined&&dist(nvU,_nyd)>750){
+        var _paN=seaSpot(_nyd.x,_nyd.y);
+        if(_paN){nvU.ord='m';nvU.tx=_paN.x+(nvU.id%3-1)*60;nvU.ty=_paN.y+(nvU.id%2?60:-60);nvU.tgt=null;nvU._path=findPathWater(nvU.x,nvU.y,nvU.tx,nvU.ty);nvU._pi=0;}
+      }
+    }
+  }
   if(ai.atkOn){
     ai.loadCd=(ai.loadCd===undefined?90:ai.loadCd)-1;
     if(ai.loadCd<=0){ai.loadCd=150;aiBoardApcs(myArmy);}
@@ -4037,6 +4075,8 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
 
 
 
