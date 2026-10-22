@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1106</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1107</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -416,7 +416,7 @@ function handleMapUpload(e){
           var r=px.data[i],g=px.data[i+1],b=px.data[i+2];
           mData[y][x]=colorToTerrain(r,g,b);
         }}
-        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];torns=[];_hqDown={};
+        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];torns=[];dogQ=[];_hqDown={};
         selU=[];selB=null;bldMode=null;
         sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
         gt=0;gOver=0;gOn=1;
@@ -451,7 +451,7 @@ function genMap(){
   _mver++;
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
-  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];torns=[];_hqDown={};
+  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];torns=[];dogQ=[];_hqDown={};
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
@@ -1187,7 +1187,7 @@ function findKiller(deadSide,target){
   return best;
 }
 
-var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','weather','stalker'];var COPY4=['tanya','sniper','weather'];var torns=[];
+var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','weather','stalker'];var COPY4=['tanya','sniper','weather'];var torns=[];var dogQ=[];
 var HEROIT={tanya:'🔫',sniper:'🎯',weather:'🌪️'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
@@ -3753,7 +3753,8 @@ function tick(){
     buildPanels_update();updateSelInfo();updateResUI();checkWin();
     var _ns=document.getElementById('netstat');if(_ns)_ns.textContent=(NET.mode==='off')?'':('延迟 '+NET.ping+'ms');
     units.forEach(function(u){if(u.hp<=0&&!u._dm){u._dm=1;if(uiGet(u.type,'_d'))corpses.push({x:u.x,y:u.y,type:u.type,side:u.side,t:0});
-      if(u.type==='hero'||HERO5.indexOf(u.type)>=0)heroR.push({type:u.type,side:u.side,t:gt+1800});}});
+      if(u.type==='hero'||HERO5.indexOf(u.type)>=0)heroR.push({type:u.type,side:u.side,t:gt+1800});
+      if(u.type==='dog')dogQ.push({side:u.side,t:gt+300});}});
     units=units.filter(function(u){return u.hp>0;});
     miners=miners.filter(function(m){return m.hp>0;});
     blds=blds.filter(function(b){return b.hp>0;});
@@ -3776,6 +3777,26 @@ function tick(){
       heroR.splice(hrX,1);hrX--;
       var _nu2=spawnUnit(hR.type,0,0,hR.side);
       if(_nu2){_nu2._born=gt;parts.push({x:_nu2.x,y:_nu2.y,vx:0,vy:0,life:60,col:'#a8f',sz:16});}
+    }
+    for(var dq2=dogQ.length-1;dq2>=0;dq2--){var dQ2=dogQ[dq2];
+      if(gt<dQ2.t)continue;
+      var _hq9=null,_hqN9=0;
+      for(var h3=0;h3<blds.length;h3++){var b14=blds[h3];
+        if(b14.type==='hq'&&b14.side===dQ2.side&&b14.hp>0){_hq9=_hq9||b14;_hqN9++;}}
+      if(!_hq9){dogQ.splice(dq2,1);continue;}
+      var _bar9=blds.some(function(b){return b.type==='barracks'&&b.side===dQ2.side&&b.hp>0;});
+      var _pwr9=blds.some(function(b){return b.type==='power'&&b.side===dQ2.side&&b.hp>0;});
+      if(!_bar9||!_pwr9)continue;
+      var _alv9=0,_pen9=0;
+      for(var u8=0;u8<units.length;u8++){var uu8=units[u8];if(uu8.side===dQ2.side&&uu8.hp>0&&uu8.type==='dog'&&!uu8.riding)_alv9++;}
+      for(var p8=0;p8<dogQ.length;p8++)if(dogQ[p8].side===dQ2.side)_pen9++;
+      if(_alv9+_pen9>=2*_hqN9){dogQ.splice(dq2,1);continue;}
+      var _dc9=UD.dog.g;
+      if(sideGold[dQ2.side]<_dc9)continue;
+      sideGold[dQ2.side]-=_dc9;if(dQ2.side===mySide)gold=sideGold[dQ2.side];
+      var _nd9=spawnUnit('dog',_hq9.x-150+(Math.random()-0.5)*90,_hq9.y+90+(Math.random()-0.5)*40,dQ2.side);
+      if(_nd9)parts.push({x:_nd9.x,y:_nd9.y,vx:0,vy:0,life:50,col:'#8af',sz:10});
+      dogQ.splice(dq2,1);
     }
     if(_towerT&&gt>=_towerT)spawnTower();
     if(NET.mode==='host'){NET.snapAcc++;if(NET.snapAcc>=NET.snapEvery){NET.snapAcc=0;hostSnapshot();}}
@@ -4164,7 +4185,7 @@ function guestStart(m){
   NET.bStore={};NET.mStore={};NET.uStore={};
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
-  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];torns=[];_hqDown={};
+  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];torns=[];dogQ=[];_hqDown={};
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
@@ -4368,6 +4389,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
