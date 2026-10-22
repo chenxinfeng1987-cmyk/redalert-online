@@ -15,7 +15,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .ptab{padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
 .ptab.on{color:#4af;border-color:rgba(68,170,255,.3);background:rgba(20,20,40,.98)}
 #stpFab{position:fixed;right:10px;bottom:214px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(30,30,50,.94);border:1.5px solid #a8f;color:#c8f;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(170,136,255,.5);user-select:none}
-#heroTip{position:fixed;z-index:70;background:rgba(15,18,30,.96);color:#ffe;border:1px solid rgba(255,215,0,.35);padding:6px 9px;font-size:11px;border-radius:6px;max-width:240px;display:none;pointer-events:none;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+#heroTip{position:fixed;z-index:9999;background:rgba(15,18,30,.96);color:#ffe;border:1px solid rgba(255,215,0,.35);padding:6px 9px;font-size:11px;border-radius:6px;max-width:240px;display:none;pointer-events:none;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px}
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .ic{width:74px;padding:5px 3px;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);text-align:center;cursor:pointer;position:relative}
@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1098</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1099</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1216,8 +1216,8 @@ function showHeroTip(id,ev){
 function moveHeroTip(ev){
   var t=document.getElementById('heroTip');if(!t||t.style.display==='none')return;
   var x=ev.clientX,y=ev.clientY;
-  t.style.left=Math.min(window.innerWidth-250,Math.max(4,x+12))+'px';
-  t.style.top=Math.min(window.innerHeight-110,Math.max(4,y+12))+'px';
+  t.style.left=Math.min(window.innerWidth-252,Math.max(4,x+14))+'px';
+  t.style.top=Math.max(4,y-((t.offsetHeight||96)+14))+'px';
 }
 function hideHeroTip(){var t=document.getElementById('heroTip');if(t)t.style.display='none';}
 function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='pulse'?200:100);return u.rt;}
@@ -3400,8 +3400,8 @@ function buildPanels(){
     var _hOn=heroU&&heroHas(mySide,id);
     var _hW=(heroU&&!_hOn)?heroWaitT(mySide,id):0;
     if(heroU&&(_hOn||_hW>0))lk=true;
-    var card=document.createElement('div');card.className='ic'+(lk?' lk':'');
-    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+cost+'</div>';
+    var card=document.createElement('div');card.className='ic'+(heroU?'':(lk?' lk':''));
+    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk||heroU?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+(heroU?'标配':cost)+'</div>';
     card.setAttribute('data-id',id);
     if(id==='stalker')card.onclick=function(e2){e2.stopPropagation();toggleStalker();};
     else if(heroU)card.onclick=null;
@@ -3433,17 +3433,20 @@ function buildPanels_update(){
   var ukeys=UINF.concat(UVEH).concat(UHERO);
   for(var i=0;i<ucards.length&&i<ukeys.length;i++){var id=ukeys[i],d=UD[id],c=unitCost(d);var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});
     var heroU=id==='hero'||HERO5.indexOf(id)>=0,_hOn2=heroU&&heroHas(mySide,id),_hW2=heroU&&!_hOn2?heroWaitT(mySide,id):0;
-    ucards[i].className='ic'+((!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0)?' lk':'')+((id==='stalker'&&sklMode&&sklU)?' on':'');
+    var _lk3=heroU?(id==='stalker'&&(function(){var s9=null;for(var f9=0;f9<units.length;f9++){var s10=units[f9];if(s10.type==='stalker'&&s10.side===mySide&&s10.hp>0){s9=s10;break;}}return !s9||s9.skillCd>0;})()&&!(sklMode&&sklU)):(!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0);
+    ucards[i].className='ic'+(_lk3?' lk':'')+((id==='stalker'&&sklMode&&sklU)?' on':'');
     var _nEl=ucards[i].querySelector('.n');
     if(_nEl){
       if(id==='stalker'){
         var _sk3=null;
-        for(var fi3=0;fi3<units.length;fi3++){var su3=units[fi3];if(su3.type==='stalker'&&su3.side===mySide&&su3.hp>0){_sk3=su3;break;}}
-        _nEl.innerHTML=d.n+' '+(_sk3?(_sk3.skillCd>0?'⏳'+Math.ceil(_sk3.skillCd/60)+'s':(sklMode?'✋点目标':'🌀就绪·点卡')):'✅驻场');
+        for(var fi3=0;fi3<units.length;fi3++){var su3=units[fi3];if(su3.type==='stalker'&&fi3<units.length&&su3.side===mySide&&su3.hp>0){_sk3=su3;break;}}
+        _nEl.innerHTML=d.n+' '+(_sk3?(_sk3.skillCd>0?'⏳'+Math.ceil(_sk3.skillCd/60)+'s':(sklMode?'✋点目标':'🌀就绪·点卡')):'⏳复活中');
       }else{
-        _nEl.innerHTML=d.n+(techUnlocked(id,mySide)?'':' 🔒')+(_hOn2?' ✅':(_hW2>0?' ⏳'+Math.ceil(_hW2/60)+'s':''));
+        _nEl.innerHTML=d.n+((_hOn2||_hW2>0)?'':' 🔒')+(_hOn2?' ✅':(_hW2>0?' ⏳'+Math.ceil(_hW2/60)+'s':''));
       }
-    }}
+    }
+    var _pEl=ucards[i].querySelector('.p');
+    if(_pEl&&heroU)_pEl.innerHTML='标配';}
 }
 function canBuild(type,x,y,side){
   side=(side===undefined)?mySide:side;
@@ -4249,6 +4252,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
