@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1103</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1104</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -179,7 +179,7 @@ var UD={
   carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.3,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1},
   tanya:{n:'谭雅·猎杀者',g:1200,hp:180,atk:60,spd:2.2,rng:130,rt:55,ar:'lt',rq:'barracks',ex:0,mx:300},
   sniper:{n:'幽灵狙击手',g:900,hp:70,atk:90,spd:2.0,rng:340,rt:90,ar:'lt',rq:'barracks',ex:0,mx:250},
-  pulse:{n:'脉冲工兵',g:1000,hp:130,atk:0,spd:2.1,rng:220,rt:180,ar:'lt',rq:'barracks',ex:0,mx:150},
+  weather:{n:'气象大师',g:1000,hp:160,atk:30,spd:2.1,rng:200,rt:150,rq:'barracks',ex:0,mx:150},
   stalker:{n:'时空行者',g:1500,hp:220,atk:55,spd:2.3,rng:140,rt:45,ar:'lt',rq:'barracks',ex:0,mx:100}
 };
 function unitCost(d,side){
@@ -188,7 +188,7 @@ function unitCost(d,side){
   return Math.floor(d.g*(1-Math.min(0.6,(cnt-1)*0.15)));
 }
 function techUnlocked(id,side){
-  if(id==='heavy'||id==='artillery'||id==='heli'||id==='hero'||id==='tesla'||id==='spy'||id==='tanya'||id==='sniper'||id==='pulse'||id==='stalker')
+  if(id==='heavy'||id==='artillery'||id==='heli'||id==='hero'||id==='tesla'||id==='spy'||id==='tanya'||id==='sniper'||id==='weather'||id==='stalker')
     return blds.some(function(b){return b.type==='lab'&&b.side===side&&b.hp>0;});
   if(id==='nukesilo')
     return blds.some(function(b){return b.type==='lab'&&b.side===side&&b.hp>0;});
@@ -212,7 +212,7 @@ function loadUnitImgs(){
     });
   });
 }
-var UIFB={engineer:1,spy:1,hero:1,tesla:1,tanya:1,sniper:1,pulse:1,stalker:1};
+var UIFB={engineer:1,spy:1,hero:1,tesla:1,tanya:1,sniper:1,weather:1,stalker:1};
 function uiGet(type,sfx){
   var i=unitImgs[type+sfx];
   if(i&&i._ok)return i;
@@ -293,10 +293,10 @@ function unitDeco(u,sp,sz,face,oy){
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
     cx.fillText('🌀',sp.x,sp.y-sz*1.5+oy);
     if(u.skillCd<=0){cx.strokeStyle='#a8f';cx.lineWidth=1.5*camZ;cx.beginPath();cx.arc(sp.x,sp.y+oy,sz*1.5,0,PI*2);cx.stroke();cx.lineWidth=1;}
-  }else if(t==='pulse'){
+  }else if(t==='weather'){
     cx.textAlign='center';
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
-    cx.fillText('📡',sp.x,sp.y-sz*1.5+oy);
+    cx.fillText('🌪️',sp.x,sp.y-sz*1.5+oy);
   }else if(t==='tanya'){
     cx.textAlign='center';
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
@@ -416,7 +416,7 @@ function handleMapUpload(e){
           var r=px.data[i],g=px.data[i+1],b=px.data[i+2];
           mData[y][x]=colorToTerrain(r,g,b);
         }}
-        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];_hqDown={};
+        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];torns=[];_hqDown={};
         selU=[];selB=null;bldMode=null;
         sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
         gt=0;gOver=0;gOn=1;
@@ -451,7 +451,7 @@ function genMap(){
   _mver++;
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
-  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];_hqDown={};
+  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];torns=[];_hqDown={};
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
@@ -1004,7 +1004,7 @@ function moveTow(o,tx,ty,spd){
 
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function spyVis(e){return e.type==='spy'&&e._rev!==undefined&&gt-e._rev<180;}
-var AIRH=['rocket','heli','turret','missile','ship','carrier','apc','light','heavy','artillery','hero','tanya','sniper','pulse','stalker'];
+var AIRH=['rocket','heli','turret','missile','ship','carrier','apc','light','heavy','artillery','hero','tanya','sniper','weather','stalker'];
 function canHitAir(u){return AIRH.indexOf(u.type)>=0;}
 function findTgt(u,rng){
   var best=null,bd=rng;
@@ -1187,14 +1187,14 @@ function findKiller(deadSide,target){
   return best;
 }
 
-var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','pulse','stalker'];var COPY4=['tanya','sniper','pulse'];
-var HEROIT={tanya:'🔫',sniper:'🎯',pulse:'📡'};
+var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','weather','stalker'];var COPY4=['tanya','sniper','weather'];var torns=[];
+var HEROIT={tanya:'🔫',sniper:'🎯',weather:'🌪️'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
 var HERO_DESC={hero:'战略单位：初始拥有大范围治疗光环（每10秒恢复周围友军150血）。击杀敌方谭雅/狙击手/脉冲工兵后立刻学会其能力，阵亡后清空可重新偷学。',
  tanya:'一击必杀：贴脸（射程130）对任何敌方士兵/兵种一发毙命（含直升机）；打建筑则是普通炮击。移速快。',
  sniper:'超远程单发90伤，命中附带3秒压制：目标不能移动不能开火。未开火时敌人看不见它（隐身），开火后1.5秒现形。',
- pulse:'向目标点投掷EMP：敌方机枪塔/导弹塔10秒失明，波及范围内敌人僵直2秒。',
+ weather:'风压射击：命中把敌人直接推离70px（2.5秒一发，不算连续打击）。6级起自动召唤龙卷风：把周围敌人卷上天锁住约3秒。18级起龙卷风还会持续破坏建筑。被动：清风拂面，定期解除周围友军受到的冻结压制。',
  stalker:'主动技能：从英雄标签页点它的卡片（或点右下角悬浮🌀）→ 再点地图任意位置 → 把周围200px友军一起瞬移过去。落点130px内敌人掉120血。冷却20秒。'};
 function heroDesc(type){return HERO_DESC[type]||'';}
 function _abEmoji(t){return HEROIT[t]||'';}
@@ -1224,7 +1224,7 @@ function moveHeroTip(ev){
   t.style.top=Math.max(4,y-((t.offsetHeight||96)+14))+'px';
 }
 function hideHeroTip(){var t=document.getElementById('heroTip');if(t)t.style.display='none';}
-function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='pulse'?200:100);return u.rt;}
+function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='weather'?200:100);return u.rt;}
 // 单位升级
 function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
@@ -1352,18 +1352,12 @@ function fireUnit(u,t){
     for(var _ci=0;_ci<3;_ci++)bullets.push({x:u.x,y:u.y-8,tx:t.x+(Math.random()-0.5)*36,ty:t.y+(Math.random()-0.5)*36,spd:8,dmg:u.atk,side:u.side,life:62,plane:1,t:t,ox:u.x,oy:u.y});
     return;
   }
-  if(u.type==='pulse'||(u.type==='hero'&&u._ab==='pulse')){
-    var _ex=t.x,_ey=t.y;
-    for(var pi9=0;pi9<blds.length;pi9++){var pb9=blds[pi9];
-      if(pb9.hp<=0||pb9.side===u.side||pb9.atk<=0)continue;
-      var _ps9=pb9.sz*T/2;
-      if(Math.abs(pb9.x-_ex)<220+_ps9&&Math.abs(pb9.y-_ey)<220+_ps9){pb9._emp=gt+600;parts.push({x:pb9.x,y:pb9.y,vx:0,vy:0,life:20,col:'#f8f',sz:12});}
+  if(u.type==='weather'||(u.type==='hero'&&u._ab==='weather')){
+    bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:6,dmg:u.atk,side:u.side,life:50,t:t,ox:u.x,oy:u.y,wind:1});
+    if(u.type==='weather'&&u.lv>=6&&!(u._tornCd>gt)){
+      torns.push({x:t.x,y:t.y,side:u.side,life:180,cnt:0,bl:u.lv>=18});
+      u._tornCd=gt+420;parts.push({x:t.x,y:t.y,vx:0,vy:0,life:24,col:'#aef',sz:22});
     }
-    for(var pu9=0;pu9<units.length;pu9++){var eu9=units[pu9];
-      if(eu9.side===u.side||eu9.hp<=0||eu9.riding||eu9.fly)continue;
-      if(Math.abs(eu9.x-_ex)<170&&Math.abs(eu9.y-_ey)<170){eu9._fz=Math.max(eu9._fz||0,gt+120);parts.push({x:eu9.x,y:eu9.y,vx:0,vy:0,life:16,col:'#f8f',sz:8});}
-    }
-    parts.push({x:_ex,y:_ey,vx:0,vy:0,life:30,col:'#f8f',sz:22});
     return;
   }
   if(u.type==='tanya'||(u.type==='hero'&&u._ab==='tanya')){
@@ -1383,6 +1377,11 @@ function updateUnits(){
   units.forEach(function(u){
     if(u.hp<=0)return;
     u.cooldown=u.cooldown?u.cooldown-1:0;
+    if(u.type==='weather'&&gt%60===u.id%60){
+      for(var fc9=0;fc9<units.length;fc9++){var fu9=units[fc9];
+        if(fu9.side!==u.side||fu9.hp<=0)continue;
+        if(fu9._sbz!==undefined&&fu9._sbz>gt&&dist(fu9,u)<180){fu9._sbz=0;parts.push({x:fu9.x,y:fu9.y,vx:0,vy:-1,life:14,col:'#aef',sz:6});}}
+    }
     if(u._sbz!==undefined&&u._sbz>gt)return;
     if(u._chute>0){
       u._chute--;
@@ -1668,6 +1667,11 @@ function updateBullets(){
         if(b.t.hp>0&&b.t.side!==b.side&&!b.t.riding&&!b.t._tin){
           dealDmg(b.t,b.dmg);
           if(b.snip&&b.t.hp>0&&b.t.spd!==undefined){b.t._sbz=gt+180;parts.push({x:b.t.x,y:b.t.y,vx:0,vy:0,life:22,col:'#f8f',sz:10});}
+          if(b.wind&&b.t.hp>0&&b.t.bt===undefined){
+            var _kdx=b.t.x-(b.ox!==undefined?b.ox:b.x),_kdy=b.t.y-(b.oy!==undefined?b.oy:b.y),_kd=Math.hypot(_kdx,_kdy)||1;
+            var _nx=Math.max(40,Math.min(MW-40,b.t.x+_kdx/_kd*70)),_ny=Math.max(40,Math.min(MH-40,b.t.y+_kdy/_kd*70));
+            if(_okWarp(_nx,_ny,b.t.fly&&true)){b.t.x=_nx;b.t.y=_ny;b.t._path=null;b.t.tx=undefined;}
+          }
           hitT=b.t;
         }
       }else{
@@ -1779,7 +1783,7 @@ function aiBoardApcs(myArmy){
     for(var si3=0;si3<myArmy.length&&ap3.cargo.length<(ap3.cap||4);si3++){
       var sd3=myArmy[si3];
       if(sd3===ap3||sd3.type==='apc'||sd3.riding||sd3.loadTo!==undefined||sd3.hp<=0)continue;
-      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='tesla'||sd3.type==='hero'||sd3.type==='tanya'||sd3.type==='sniper'){
+      if(sd3.type==='rifle'||sd3.type==='rocket'||sd3.type==='tesla'||sd3.type==='hero'||sd3.type==='tanya'||sd3.type==='sniper'||sd3.type==='weather'){
         if(dist(sd3,ap3)<220){ap3.cargo.push(sd3);sd3.riding=ap3;sd3.ord=null;sd3.tx=undefined;sd3.ty=undefined;sd3.tgt=null;}
       }
     }
@@ -2623,6 +2627,13 @@ function draw(){
     }
   });
   units.sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
+  for(var to3=0;to3<torns.length;to3++){var t6=torns[to3];
+    var tp2=worldToScr(t6.x,t6.y),_tfade=(t6.life/180)*0.75+0.2;
+    for(var tk=0;tk<4;tk++){
+      var tr=(58-tk*11)*camZ,_tsw=(gt*0.16-tk*0.5)%(PI*2);
+      cx.strokeStyle='rgba(170,230,250,'+_tfade+')';cx.lineWidth=2.5*camZ;
+      cx.beginPath();cx.ellipse(tp2.x,tp2.y-14*camZ*tk,tr*0.62,tr*0.28,_tsw,0,PI*2);cx.stroke();}
+  }
   units.forEach(function(u){
     if(u.hp<=0||u.riding||u._tin)return;
     if(u.type==='sniper'&&u.side!==mySide&&(!u._atkT||gt-u._atkT>90))return;
@@ -2644,7 +2655,7 @@ function draw(){
       cx.strokeStyle='rgba(120,235,255,'+(0.55+0.3*Math.sin(gt*0.5+u.id))+')';
       cx.lineWidth=2.5;cx.beginPath();cx.arc(sp.x,sp.y,sz+4*camZ,0,PI*2);cx.stroke();
     }
-    var oy=isAir?-8*camZ:(u.fly?-5*camZ:0);if(u._chute>0)oy-=(u._chute/75)*46*camZ;
+    var oy=isAir?-8*camZ:(u.fly?-5*camZ:0);if(u._chute>0)oy-=(u._chute/75)*46*camZ;if(u._lift&&gt<u._lift)oy-=34*camZ;
     if(u._chute>0){
       var _cp2=Math.max(0,u._chute)/75,_csz=sz*(1.2+_cp2*0.2),_cxp=sp.x+Math.sin(gt*0.7+u.id)*2.5*camZ,_cyp=sp.y+oy-sz*1.05-_csz;
       cx.fillStyle='rgba(245,245,240,0.95)';
@@ -3230,6 +3241,21 @@ function _okWarp(px,py,fly){
   for(var b7=0;b7<blds.length;b7++){var b8=blds[b7];if(b8.hp<=0)continue;var b9=b8.sz*T/2;if(Math.abs(b8.x-px)<b9&&Math.abs(b8.y-py)<b9)return false;}
   return true;
 }
+function updateTorns(){
+  for(var tn=torns.length-1;tn>=0;tn--){var t9=torns[tn];
+    t9.life--;t9.cnt++;
+    if(t9.life<=0){torns.splice(tn,1);continue;}
+    for(var te=0;te<units.length;te++){var eu=units[te];
+      if(eu.side===t9.side||eu.hp<=0||eu.riding)continue;
+      if(Math.abs(eu.x-t9.x)<160&&Math.abs(eu.y-t9.y)<160){eu._fz=gt+80;eu._lift=gt+60;}
+    }
+    if(t9.bl&&t9.cnt%20===0){
+      for(var tb7=0;tb7<blds.length;tb7++){var b13=blds[tb7];
+        if(b13.side===t9.side||b13.hp<=0)continue;
+        if(Math.abs(b13.x-t9.x)<220&&Math.abs(b13.y-t9.y)<220){dealDmg(b13,60);parts.push({x:b13.x,y:b13.y,vx:0,vy:-1,life:14,col:'#aef',sz:10});}}
+    }
+  }
+}
 function doStalkerWarp(wx,wy){
   if(!sklU||sklU.hp<=0||sklU.skillCd>0){sklMode=false;sklU=null;return;}
   if(NET.mode==='guest'){alert('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
@@ -3421,7 +3447,7 @@ function buildPanels(){
     var _hW=(heroU&&!_hOn)?heroWaitT(mySide,id):0;
     if(heroU&&(_hOn||_hW>0))lk=true;
     var card=document.createElement('div');card.className='ic'+(heroU?'':(lk?' lk':''));
-    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='pulse'?'📡':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk||heroU?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+(heroU?'标配':cost)+'</div>';
+    card.innerHTML='<div class="e">'+(id==='engineer'?'🔧':id==='hero'?'⭐':id==='tesla'?'⚡':id==='tanya'?'🔫':id==='sniper'?'🎯':id==='weather'?'🌪️':id==='stalker'?'🌀':id==='spy'?'🎭':id==='dog'?'🐶':id==='apc'?'🚙':id==='ship'?'🚢':id==='carrier'?'🛫':d.ar==='air'?'🚁':d.ar==='hv'?'🔷':'👤')+'</div><div class="n">'+d.n+(techOk||heroU?'':' 🔒')+(_hOn?' ✅':(_hW>0?' ⏳'+Math.ceil(_hW/60)+'s':''))+'</div><div class="p">'+(heroU?'标配':cost)+'</div>';
     card.setAttribute('data-id',id);
     if(id==='stalker')card.onclick=function(e2){e2.stopPropagation();toggleStalker();};
     else if(heroU)card.onclick=null;
@@ -3705,7 +3731,7 @@ function tick(){
     document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
     gold=sideGold[mySide];
     updateMiners();updateUnits();updateBullets();updateParticles();updateTurrets();pushUnits();
-    updateWeather();updateSupplies();updateNukes();heroAura();updateHeroSkill();
+    updateWeather();updateSupplies();updateNukes();heroAura();updateHeroSkill();updateTorns();
     for(var si=0;si<4;si++){if(!isHumanSide(si))runAI(si);}
     blds.forEach(function(b){if(!b.ready&&b.hp>0){b.bt--;if(b.bt<=0){b.ready=1;b.bt=0;if(b.type==='refinery')ensureMiners();}}});
     ensureMiners();
@@ -3917,7 +3943,7 @@ function applyMove(us,x,y){
     for(var bi=0;bi<us.length;bi++){
       var bu=us[bi];
       if(bu.type==='apc'||bu.type==='heli'||bu.riding||bu._tin)continue;
-      var _canLoad=ap.water?true:(bu.type==='rifle'||bu.type==='rocket'||bu.type==='engineer'||bu.type==='tesla'||bu.type==='hero'||bu.type==='tanya'||bu.type==='sniper');
+      var _canLoad=ap.water?true:(bu.type==='rifle'||bu.type==='rocket'||bu.type==='engineer'||bu.type==='tesla'||bu.type==='hero'||bu.type==='tanya'||bu.type==='sniper'||bu.type==='weather');
       if(_canLoad){
         if(ap.cargo.length+boarded<(ap.cap||4)){bu.ord='load';bu.loadTo=ap.id;bu.tgt=null;bu._path=null;bu.wSide=undefined;boarded++;}
       }
@@ -4124,7 +4150,7 @@ function guestStart(m){
   NET.bStore={};NET.mStore={};NET.uStore={};
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
-  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];_hqDown={};
+  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];torns=[];_hqDown={};
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
@@ -4312,6 +4338,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
