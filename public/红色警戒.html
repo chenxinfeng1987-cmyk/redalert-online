@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1101</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1102</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -164,7 +164,7 @@ var BD={
 };
 var UD={
   rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.4,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
-  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.9,rng:150,rt:60,rq:'barracks',ex:0,mx:100},
+  rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.9,rng:150,rt:60,ar:'air',rq:'barracks',ex:0,mx:100},
   engineer:{n:'工程师',g:300,hp:50,atk:0,spd:2.05,rng:30,rt:0,ar:'lt',rq:'barracks',ex:0,mx:100},
   spy:{n:'间谍',g:600,hp:100,atk:0,spd:2.6,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
   dog:{n:'警犬',g:300,hp:80,atk:30,spd:3.45,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
@@ -1004,7 +1004,8 @@ function moveTow(o,tx,ty,spd){
 
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function spyVis(e){return e.type==='spy'&&e._rev!==undefined&&gt-e._rev<180;}
-function canHitAir(u){return u.type==='rocket'||u.type==='heli'||u.type==='turret'||u.type==='missile';}
+var AIRH=['rocket','heli','turret','missile','ship','carrier','apc','light','heavy','artillery','hero','tanya','sniper','pulse','stalker'];
+function canHitAir(u){return AIRH.indexOf(u.type)>=0;}
 function findTgt(u,rng){
   var best=null,bd=rng;
   var _ha=canHitAir(u);
@@ -2154,7 +2155,7 @@ function spawnUnit(type,x,y,side){
     if(_fw){x=_fw.x;y=_fw.y;}
   }
   var u={id:_eid++,type:type,x:x,y:y,side:side,hp:d.hp,mhp:d.hp,atk:d.atk,spd:d.spd,rng:d.rng,rt:d.rt,ar:d.ar,cap:d.cap,
-    fly:(type==='heli')?1:0,water:UD[type]&&UD[type].water?1:0,cargo:(type==='apc'||type==='heli')?[]:null,batk:d.atk,riding:0,
+    fly:(type==='rocket'||type==='heli')?1:0,water:UD[type]&&UD[type].water?1:0,cargo:(type==='apc'||type==='heli')?[]:null,batk:d.atk,riding:0,
     cooldown:0,tx:undefined,ty:undefined,tgt:null,_path:null,_pi:0,ex:0,lv:0,kills:0,skillCd:600,wSide:undefined,_stuckN:0,_wfSide:Math.random()<0.5?1:-1,ord:null};
   if(type==='hero'){u.hp=2500;u.mhp=2500;u.atk=80;u.spd=1.5;u.rng=160;u.rt=35;u.ar='hv';}
   units.push(u);
@@ -4217,14 +4218,30 @@ if(location.search.indexOf('test=v2')>=0){
       if(mData[yy][xx]===3&&mData[yy-1][xx]!==3&&mData[yy+1][xx]!==3){wspot={x:(xx+0.5)*T,y:(yy+0.5)*T};break;}
     }
     if(wspot){
-      var rk=spawnUnit('rocket',wspot.x+200,wspot.y,mySide); // 火箭兵不再是飞行单位，在陆地行走
-      res.rocketFlyFlag=!rk.fly;
+      var rk=spawnUnit('rocket',wspot.x+200,wspot.y,mySide); // 附近陆地生成
+      rk.x=wspot.x;rk.y=wspot.y; // 强制放水上
+      res.rocketFlyFlag=!!rk.fly;
       var startX=rk.x,startY=rk.y;
       applyMove([rk],hq.x+100,hq.y+100);
       for(var f=0;f<200;f++){rk.cooldown=0;updateUnits();}
       res.rocketMoved=Math.hypot(rk.x-startX,rk.y-startY)>150;
       var ix0=units.indexOf(rk);if(ix0>=0)units.splice(ix0,1);rk.hp=0;
     }
+    // ---- 对空规则：飞行火箭兵只被防空名单单位攻击 ----
+    var _fa2=spawnUnit('rocket',hq.x+120,hq.y+60,foeman);
+    var _fw1=spawnUnit('rifle',hq.x+60,hq.y+60,mySide),_fw2=spawnUnit('dog',hq.x+60,hq.y+100,mySide);
+    var _fw3=spawnUnit('ship',wspot?wspot.x:wspot,hq.y+200,mySide);_fw3.hp=9999;_fw3.mhp=9999;
+    applyMove([_fw1,_fw2,_fw3],_fa2.x,_fa2.y);
+    var _fd0=_fa2.hp;
+    for(var f10=0;f10<200&&_fa2.hp>0;f10++){_fw1.cooldown=0;_fw2.cooldown=0;_fw3.cooldown=0;updateUnits();updateBullets();}
+    var _fdN=_fd0-_fa2.hp;
+    res.airDeniedInf=(_fdN===0);
+    var _ah1=spawnUnit('tanya',hq.x+80,hq.y+80,mySide);
+    var _fd1=_fa2.hp;
+    for(var f11=0;f11<200&&_fa2.hp>0;f11++){_ah1.cooldown=0;updateUnits();updateBullets();}
+    var _fdT=_fd1-_fa2.hp;
+    res.airHeroHits=(_fdT>0)&&(_fa2.hp<=0);
+    if(units.indexOf(_fa2)>=0)units.splice(units.indexOf(_fa2),1);
     // ---- 磁爆兵：锁定冻结，5 秒后消灭；不再发射链状子弹 ----
     var tx0=hq.x+400,ty0=hq.y+400;
     var t1=spawnUnit('tesla',tx0,ty0,mySide);
@@ -4272,6 +4289,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
