@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1107</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1109</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1194,7 +1194,7 @@ function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2
 var HERO_DESC={hero:'战略单位：初始拥有大范围治疗光环（每10秒恢复周围友军150血）。击杀敌方谭雅/狙击手/脉冲工兵后立刻学会其能力，阵亡后清空可重新偷学。',
  tanya:'一击必杀：贴脸（射程130）对任何敌方士兵/兵种一发毙命（含直升机）；打建筑则是普通炮击。移速快。',
  sniper:'超远程单发90伤，命中附带3秒压制：目标不能移动不能开火。未开火时敌人看不见它（隐身），开火后1.5秒现形。',
- weather:'风压射击：命中把敌人直接推离70px（2.5秒一发，不算连续打击）。6级起自动召唤龙卷风：把周围敌人卷上天锁住约3秒。18级起龙卷风还会持续破坏建筑。被动：清风拂面（只解冻我方）——定期吹散施加在我方友军身上的控制：敌方狙击手压制、被敌方龙卷风卷起锁住的我军。',
+ weather:'风压射击：命中把敌人直接推离70px（2.5秒一发，不算连续打击）。3级起自动召唤台风：把周围敌人卷上天锁住约3秒。6级起台风还会持续破坏建筑。12级起一次召唤3个台风。被动：清风拂面（只解冻我方）——定期吹散施加在我方友军身上的控制：敌方狙击手压制、被敌方龙卷风卷起锁住的我军。',
  stalker:'主动技能：从英雄标签页点它的卡片（或点右下角悬浮🌀）→ 再点地图任意位置 → 把周围200px友军一起瞬移过去。落点130px内敌人掉120血。冷却20秒。'};
 function heroDesc(type){return HERO_DESC[type]||'';}
 function _abEmoji(t){return HEROIT[t]||'';}
@@ -1354,8 +1354,9 @@ function fireUnit(u,t){
   }
   if(u.type==='weather'||(u.type==='hero'&&u._ab==='weather')){
     bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:6,dmg:u.atk,side:u.side,life:50,t:t,ox:u.x,oy:u.y,wind:1});
-    if(u.type==='weather'&&u.lv>=6&&!(u._tornCd>gt)){
-      torns.push({x:t.x,y:t.y,side:u.side,life:180,cnt:0,bl:u.lv>=18});
+    if(u.type==='weather'&&u.lv>=3&&!(u._tornCd>gt)){
+      var _tN=u.lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
+      for(var tq2=0;tq2<_tN;tq2++)torns.push({x:t.x+_to2[tq2][0],y:t.y+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:u.lv>=6});
       u._tornCd=gt+420;parts.push({x:t.x,y:t.y,vx:0,vy:0,life:24,col:'#aef',sz:22});
     }
     return;
@@ -4389,6 +4390,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
