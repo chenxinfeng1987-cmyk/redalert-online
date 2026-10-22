@@ -109,14 +109,14 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   </div>
   <div class="pbody on" id="pb"></div>
   <div class="pbody" id="pu"></div>
-  <div class="pbody" id="pv"></div><div class="pbody" id="ph"></div>
+  <div class="pbody" id="pv"></div><div class="pbody" id="ph"><div id="warpBtn" onclick="event.stopPropagation();toggleStalker();return false;" style="width:100%;text-align:center;background:rgba(40,30,70,.92);color:#c8f;border:1px solid #a8f;border-radius:5px;padding:5px 8px;font-size:13px;cursor:pointer;">🌀 瞬移 · 就绪（点击）</div></div>
 </div>
 <div id="panelBtn" onclick="toggleMobPanel()">🏗️ 建造</div>
 <div id="hint">左键选择 | 右键移动攻击 | 中键拖动 | 滚轮缩放</div>
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1102</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1103</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3223,21 +3223,37 @@ function toggleStalker(){
   sklU=s2;sklMode=true;paraMode=false;bldMode=null;
   var pb=document.getElementById('stpFab');if(pb){pb.style.borderColor='#0f0';pb.style.color='#0f0';}
 }
+function _okWarp(px,py,fly){
+  var t2=tileAt(px,py);
+  if(t2===9)return false;
+  if(!fly&&(t2===3||t2===4))return false;
+  for(var b7=0;b7<blds.length;b7++){var b8=blds[b7];if(b8.hp<=0)continue;var b9=b8.sz*T/2;if(Math.abs(b8.x-px)<b9&&Math.abs(b8.y-py)<b9)return false;}
+  return true;
+}
 function doStalkerWarp(wx,wy){
   if(!sklU||sklU.hp<=0||sklU.skillCd>0){sklMode=false;sklU=null;return;}
   if(NET.mode==='guest'){alert('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
   wx=Math.max(60,Math.min(MW-60,wx));wy=Math.max(60,Math.min(MH-60,wy));
-  if(!passable(wx,wy,null)){alert('那里不能传送');return;}
+  if(!_okWarp(wx,wy,sklU.fly&&true)){alert('那里不能传送');return;}
   sklU.skillCd=1200;
   parts.push({x:sklU.x,y:sklU.y,vx:0,vy:0,life:30,col:'#a8f',sz:18});
   var grp=[sklU],wi=0;
-  for(var gi=0;gi<units.length;gi++){var a=units[gi];
-    if(a!==sklU&&a.side===mySide&&a.hp>0&&!a.water&&dist(a,sklU)<200)grp.push(a);}
+  var _selG=selU.filter(function(q){return q.hp>0&&!q.water;});
+  if(_selG.length>1){
+    if(_selG.indexOf(sklU)>=0)grp=_selG;
+    else grp=[sklU].concat(_selG);
+  }else{
+    for(var gi=0;gi<units.length;gi++){var a=units[gi];
+      if(a!==sklU&&a.side===mySide&&a.hp>0&&!a.water&&dist(a,sklU)<200)grp.push(a);}
+  }
+  sklU.x=wx;sklU.y=wy;sklU.tx=undefined;sklU.ty=undefined;sklU.ord=null;sklU.tgt=null;sklU._path=null;
+  var gem=grp[grp.indexOf(sklU)];grp.splice(grp.indexOf(sklU),1);grp.push(gem);
   for(var g2=0;g2<grp.length;g2++){var w=grp[g2];
-    var ang=wi/6*PI*2,r=20+Math.random()*45;wi++;
+    if(w===sklU)continue; // already placed at exact target
+    var ring=1+~~(wi/6),ang=((wi%6)/6)*PI*2+ring*0.3,r=40*ring+(Math.random()-0.5)*12;wi++;
     var px=wx+Math.cos(ang)*r,py=wy+Math.sin(ang)*r;
     px=Math.max(40,Math.min(MW-40,px));py=Math.max(40,Math.min(MH-40,py));
-    if(!passable(px,py,{water:1}))continue;
+    if(!_okWarp(px,py,w.fly&&true))continue;
     w.x=px;w.y=py;w.tx=undefined;w.ty=undefined;w.ord=null;w.tgt=null;w._path=null;
     parts.push({x:px,y:py,vx:0,vy:0,life:30,col:'#a8f',sz:12});
   }
@@ -3430,6 +3446,13 @@ function buildPanels(){
   });
 }
 function buildPanels_update(){
+  var _wb=document.getElementById('warpBtn');
+  if(_wb){var _stW=null;
+    for(var c7=0;c7<units.length;c7++){var d7=units[c7];if(d7.type==='stalker'&&d7.side===mySide&&d7.hp>0){_stW=d7;break;}}
+    if(sklMode){_wb.innerHTML='✋ 点击地图落点';_wb.style.borderColor='#0f0';_wb.style.color='#0f0';}
+    else{_wb.style.borderColor='#a8f';_wb.style.color='#c8f';
+      _wb.innerHTML=_stW?(_stW.skillCd>0?'⏳ 瞬移冷却 '+Math.ceil(_stW.skillCd/60)+'s':'🌀 瞬移 · 就绪（点击）'):'💀 时空行者阵亡';}
+  }
   var cards=document.querySelectorAll('#pb .ic');
   var keys=Object.keys(BD).filter(function(k){return k!=='hq';});
   for(var i=0;i<cards.length&&i<keys.length;i++){var id=keys[i],d=BD[id];var hasReq=(!d.rq||blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;}))&&techUnlocked(id,mySide);cards[i].className='ic'+((!hasReq||gold<d.g)?' lk':'')+(bldMode===keys[i]?' on':'');}
@@ -4289,6 +4312,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
