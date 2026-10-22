@@ -112,11 +112,11 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="pbody" id="pv"></div><div class="pbody" id="ph"><div id="warpBtn" onclick="event.stopPropagation();toggleStalker();return false;" style="width:100%;text-align:center;background:rgba(40,30,70,.92);color:#c8f;border:1px solid #a8f;border-radius:5px;padding:5px 8px;font-size:13px;cursor:pointer;">🌀 瞬移 · 就绪（点击）</div></div>
 </div>
 <div id="panelBtn" onclick="toggleMobPanel()">🏗️ 建造</div>
-<div id="hint">左键选择 | 右键移动攻击 | 中键拖动 | 滚轮缩放</div>
+<div id="hint">左键选择 | 右键移动攻击 | 中键拖动 | 滚轮缩放 | 按H全选英雄</div>
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1110</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1111</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3226,7 +3226,12 @@ cv.ontouchend=function(e){
   onUp(e);
 };
 cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDrag=false;mptrIn=false;};
-document.onkeydown=function(e){if(e.key==='Escape'){bldMode=null;paraMode=false;sklMode=false;sklU=null;selU=[];selB=null;buildPanels();updateSelInfo();var pb=document.getElementById('paraBtn');if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}}};
+document.onkeydown=function(e){
+  if(e.key==='Escape'){bldMode=null;paraMode=false;sklMode=false;sklU=null;selU=[];selB=null;buildPanels();updateSelInfo();var pb=document.getElementById('paraBtn');if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}}
+  else if(e.key==='h'||e.key==='H'){
+    selU=units.filter(function(q){return q.side===mySide&&q.hp>0&&!q.riding&&(q.type==='hero'||HERO5.indexOf(q.type)>=0);});
+    selB=null;bldMode=null;sklMode=false;sklU=null;buildPanels();updateSelInfo();
+  }};
 
 // 小地图事件见文件末 mmDrag/mcp 处理（可拖动+点击跳转）
 
@@ -4390,6 +4395,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
