@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1099</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1100</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -416,7 +416,7 @@ function handleMapUpload(e){
           var r=px.data[i],g=px.data[i+1],b=px.data[i+2];
           mData[y][x]=colorToTerrain(r,g,b);
         }}
-        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];
+        ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];_hqDown={};
         selU=[];selB=null;bldMode=null;
         sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
         gt=0;gOver=0;gOn=1;
@@ -451,7 +451,7 @@ function genMap(){
   _mver++;
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
-  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];
+  if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];_hqDown={};
   selU=[];selB=null;bldMode=null;
   sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
@@ -1186,7 +1186,7 @@ function findKiller(deadSide,target){
   return best;
 }
 
-var heroR=[];var HERO5=['tanya','sniper','pulse','stalker'];var COPY4=['tanya','sniper','pulse'];
+var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','pulse','stalker'];var COPY4=['tanya','sniper','pulse'];
 var HEROIT={tanya:'🔫',sniper:'🎯',pulse:'📡'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
@@ -1200,6 +1200,9 @@ function _abEmoji(t){return HEROIT[t]||'';}
 function showHeroTip(id,ev){
   var t=document.getElementById('heroTip');if(!t)return;
   var d=UD[id];var lines='<b>'+d.n+'</b>';
+  var _noHQ9=true;
+  for(var hq9=0;hq9<blds.length;hq9++){var b10=blds[hq9];if(b10.type==='hq'&&b10.side===mySide&&b10.hp>0){_noHQ9=false;break;}}
+  if(_noHQ9){t.innerHTML=lines+'<br>💀 基地已毁灭，英雄永久阵亡';t.style.display='block';moveHeroTip(ev);return;}
   if(id==='hero'){
     var _hb=null;
     for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0){_hb=u._ab||null;break;}}
@@ -3432,12 +3435,16 @@ function buildPanels_update(){
   var ucards=document.querySelectorAll('#pu .ic,#pv .ic,#ph .ic');
   var ukeys=UINF.concat(UVEH).concat(UHERO);
   for(var i=0;i<ucards.length&&i<ukeys.length;i++){var id=ukeys[i],d=UD[id],c=unitCost(d);var hasBld=blds.some(function(b){return b.type===d.rq&&b.side===mySide&&b.hp>0;});
-    var heroU=id==='hero'||HERO5.indexOf(id)>=0,_hOn2=heroU&&heroHas(mySide,id),_hW2=heroU&&!_hOn2?heroWaitT(mySide,id):0;
-    var _lk3=heroU?(id==='stalker'&&(function(){var s9=null;for(var f9=0;f9<units.length;f9++){var s10=units[f9];if(s10.type==='stalker'&&s10.side===mySide&&s10.hp>0){s9=s10;break;}}return !s9||s9.skillCd>0;})()&&!(sklMode&&sklU)):(!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0);
+    var heroU=id==='hero'||HERO5.indexOf(id)>=0;var _noHQ2=true;
+    for(var hq5=0;hq5<blds.length;hq5++){var b11=blds[hq5];if(b11.type==='hq'&&b11.side===mySide&&b11.hp>0){_noHQ2=false;break;}}
+    var _die9=heroU&&_noHQ2;
+    var _hOn2=heroU&&heroHas(mySide,id),_hW2=heroU&&!_hOn2?heroWaitT(mySide,id):0;
+    var _lk3=heroU?(_die9||(id==='stalker'&&(function(){var s9=null;for(var f9=0;f9<units.length;f9++){var s10=units[f9];if(s10.type==='stalker'&&s10.side===mySide&&s10.hp>0){s9=s10;break;}}return !s9||s9.skillCd>0;})()&&!(sklMode&&sklU))):(!hasBld||gold<c||!techUnlocked(id,mySide)||_hOn2||_hW2>0);
     ucards[i].className='ic'+(_lk3?' lk':'')+((id==='stalker'&&sklMode&&sklU)?' on':'');
     var _nEl=ucards[i].querySelector('.n');
     if(_nEl){
-      if(id==='stalker'){
+      if(_die9)_nEl.innerHTML=d.n+' 💀覆灭';
+      else if(id==='stalker'){
         var _sk3=null;
         for(var fi3=0;fi3<units.length;fi3++){var su3=units[fi3];if(su3.type==='stalker'&&fi3<units.length&&su3.side===mySide&&su3.hp>0){_sk3=su3;break;}}
         _nEl.innerHTML=d.n+' '+(_sk3?(_sk3.skillCd>0?'⏳'+Math.ceil(_sk3.skillCd/60)+'s':(sklMode?'✋点目标':'🌀就绪·点卡')):'⏳复活中');
@@ -3686,6 +3693,20 @@ function tick(){
     units=units.filter(function(u){return u.hp>0;});
     miners=miners.filter(function(m){return m.hp>0;});
     blds=blds.filter(function(b){return b.hp>0;});
+    for(var s9=0;s9<4;s9++){
+      if(_hqDown[s9])continue;
+      var _a9=false;
+      for(var b9=0;b9<blds.length;b9++){var bb9=blds[b9];if(bb9.type==='hq'&&bb9.side===s9&&bb9.hp>0){_a9=true;break;}}
+      if(_a9)continue;
+      var _hg9=false;
+      for(var ui9=units.length-1;ui9>=0;ui9--){var hu9=units[ui9];
+        if(hu9.side===s9&&hu9.hp>0&&(hu9.type==='hero'||HERO5.indexOf(hu9.type)>=0)){_hg9=true;
+          hu9.hp=0;hu9._dm=1;
+          if(uiGet(hu9.type,'_d'))corpses.push({x:hu9.x,y:hu9.y,type:hu9.type,side:hu9.side,t:0});
+          units.splice(ui9,1);}}
+      for(var hr9=heroR.length-1;hr9>=0;hr9--)if(heroR[hr9].side===s9){heroR.splice(hr9,1);_hg9=true;}
+      if(_hg9){_hqDown[s9]=1;parts.push({x:0,y:0,vx:0,vy:0,life:1,col:'#f66',sz:1});}
+    }
     for(var hrX=0;hrX<heroR.length;hrX++){var hR=heroR[hrX];
       if(gt<hR.t)continue;
       heroR.splice(hrX,1);hrX--;
@@ -4079,7 +4100,7 @@ function guestStart(m){
   NET.bStore={};NET.mStore={};NET.uStore={};
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
-  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];
+  units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];_hqDown={};
   ais=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
@@ -4252,6 +4273,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
