@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1111</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1112</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -149,7 +149,7 @@ var SIDES=[
   {n:'🇯🇵日本',fl:'🇯🇵',c:'#dddddd',dk:'#888888',lt:'#ffffff',wh:'#ffffff'}
 ];
 var BD={
-  hq:{n:'基地',g:0,hp:2000,ic:'🏛️',sz:3,rq:null,gn:0,us:0},
+  hq:{n:'基地',g:0,hp:5000,ic:'🏛️',sz:3,rq:null,gn:0,us:0},
   power:{n:'电厂',g:300,hp:400,ic:'⚡',sz:2,rq:'hq',gn:100,us:0},
   refinery:{n:'矿场',g:500,hp:600,ic:'⛏️',sz:2,rq:'power',gn:0,us:30},
   barracks:{n:'兵营',g:400,hp:500,ic:'🏠',sz:2,rq:'refinery',gn:0,us:20},
@@ -310,7 +310,7 @@ function unitDeco(u,sp,sz,face,oy){
     cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';
     cx.fillText('\u2B50',sp.x,sp.y-sz*1.5+oy);
     if(u.skillCd<=0){cx.strokeStyle='#0f0';cx.lineWidth=1.5*camZ;cx.beginPath();cx.arc(sp.x,sp.y+oy,sz*1.5,0,PI*2);cx.stroke();cx.lineWidth=1;}
-    if(u._ab&&HEROIT[u._ab]){cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';cx.fillText(HEROIT[u._ab],sp.x+sz*1.1,sp.y-sz*1.1+oy);}
+    if(u._abs&&u._abs.length){cx.fillStyle='#fff';cx.font='bold '+(9*camZ)+'px sans-serif';cx.fillText(u._abs.map(function(a6){return HEROIT[a6]||'';}).join(''),sp.x+sz*1.1,sp.y-sz*1.1+oy);}
   }
 }
 var bldImgs={};
@@ -1166,8 +1166,8 @@ function dealDmg(target,dmg){
       killer.ex=(killer.ex||0)+50;
       killer.kills=(killer.kills||0)+1;
       if(killer.kills>=3)levelUpUnit(killer);
-      if(killer.type==='hero'&&COPY4.indexOf(target.type)>=0&&killer.side!==target.side&&killer._ab!==target.type){
-        killer._ab=target.type;
+      if(killer.type==='hero'&&killer.side!==target.side&&HERO5.indexOf(target.type)>=0&&(killer._abs||[]).indexOf(target.type)<0){
+        (killer._abs=killer._abs||[]).push(target.type);
         parts.push({x:killer.x,y:killer.y-20,vx:0,vy:-1,life:60,col:'#a8f',sz:10});
       }
     }
@@ -1206,8 +1206,8 @@ function showHeroTip(id,ev){
   if(_noHQ9){t.innerHTML=lines+'<br>💀 基地已毁灭，英雄永久阵亡';t.style.display='block';moveHeroTip(ev);return;}
   if(id==='hero'){
     var _hb=null;
-    for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0){_hb=u._ab||null;break;}}
-    lines+='<br>当前偷学能力：'+(_hb?((UD[_hb]?UD[_hb].n:_hb)+' '+_abEmoji(_hb)):'无（击杀敌方英雄获得）');
+    for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0){_hb=u._abs||null;break;}}
+    lines+='<br>当前偷学能力：'+(_hb&&_hb.length?_hb.map(function(a7){return (UD[a7]?UD[a7].n:a7)+' '+_abEmoji(a7);}).join('、'):'无（击杀敌方英雄获得，可叠加无上限）');
   }
   var dd=heroDesc(id);if(dd)lines+='<br>'+dd;
   var state='';
@@ -1224,7 +1224,7 @@ function moveHeroTip(ev){
   t.style.top=Math.max(4,y-((t.offsetHeight||96)+14))+'px';
 }
 function hideHeroTip(){var t=document.getElementById('heroTip');if(t)t.style.display='none';}
-function fireCd(u){if(u.type==='hero'&&u._ab)return Math.max(u.rt,u._ab==='weather'?200:100);return u.rt;}
+function fireCd(u){if(u.type==='hero'&&u._abs&&u._abs.length)return Math.max(u.rt,u._abs.indexOf('weather')>=0?200:100);return u.rt;}
 // 单位升级
 function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
@@ -1352,7 +1352,7 @@ function fireUnit(u,t){
     for(var _ci=0;_ci<3;_ci++)bullets.push({x:u.x,y:u.y-8,tx:t.x+(Math.random()-0.5)*36,ty:t.y+(Math.random()-0.5)*36,spd:8,dmg:u.atk,side:u.side,life:62,plane:1,t:t,ox:u.x,oy:u.y});
     return;
   }
-  if(u.type==='weather'||(u.type==='hero'&&u._ab==='weather')){
+  if(u.type==='weather'||(u.type==='hero'&&u._abs&&u._abs.indexOf('weather')>=0)){
     bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:6,dmg:u.atk,side:u.side,life:50,t:t,ox:u.x,oy:u.y,wind:1});
     if(u.type==='weather'&&u.lv>=3&&!(u._tornCd>gt)){
       var _tN=u.lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
@@ -1361,7 +1361,7 @@ function fireUnit(u,t){
     }
     return;
   }
-  if(u.type==='tanya'||(u.type==='hero'&&u._ab==='tanya')){
+  if(u.type==='tanya'||(u.type==='hero'&&u._abs&&u._abs.indexOf('tanya')>=0)){
     var _tdm=(t&&t.spd!==undefined&&t.bt===undefined&&t.hp>0)?9999:u.atk;
     bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:9,dmg:_tdm,side:u.side,life:50,t:t,ox:u.x,oy:u.y});
     return;
@@ -1372,7 +1372,7 @@ function fireUnit(u,t){
     for(var _sj=0;_sj<_sn;_sj++)bullets.push({x:u.x,y:u.y,tx:t.x+(Math.random()-0.5)*40,ty:t.y+(Math.random()-0.5)*40,spd:6,dmg:_sdm,side:u.side,life:60,t:t,ox:u.x,oy:u.y});
     return;
   }
-  bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y,snip:(u.type==='sniper'||(u.type==='hero'&&u._ab==='sniper'))?1:0});
+  bullets.push({x:u.x,y:u.y,tx:t.x,ty:t.y,spd:tesla?7:5,dmg:u.atk,side:u.side,life:tesla?45:60,tesla:tesla?1:0,t:t,ox:u.x,oy:u.y,snip:(u.type==='sniper'||(u.type==='hero'&&u._abs&&u._abs.indexOf('sniper')>=0))?1:0});
 }
 function updateUnits(){
   units.forEach(function(u){
@@ -3247,6 +3247,7 @@ function toggleStalker(){
   var s2=null;
   for(var i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0){s2=selU[i];break;}
   if(!s2){for(var j=0;j<units.length;j++){var c9=units[j];if(c9.type==='stalker'&&c9.side===mySide&&c9.hp>0&&c9.skillCd<=0){s2=c9;break;}}}
+  if(!s2){for(var j4=0;j4<units.length;j4++){var c10=units[j4];if(c10.type==='hero'&&c10.side===mySide&&c10.hp>0&&(c10._abs||[]).indexOf('stalker')>=0&&c10.skillCd<=0){s2=c10;break;}}}
   if(!s2){alert('没有就绪的时空行者');return;}
   if(s2.skillCd>0){alert('传送冷却中');return;}
   if(sklMode&&sklU===s2){sklMode=false;sklU=null;return;}
@@ -4395,6 +4396,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
