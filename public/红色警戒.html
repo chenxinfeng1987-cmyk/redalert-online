@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1113</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1114</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -2634,17 +2634,21 @@ function draw(){
     var tp2=worldToScr(t6.x,t6.y),_sw2=Math.sin(gt*0.04+to3*2.1)*10*camZ;
     cx.fillStyle='rgba(185,220,240,0.22)';
     cx.beginPath();cx.ellipse(tp2.x,tp2.y+6*camZ,64*camZ,20*camZ,0,0,PI*2);cx.fill();
-    for(var tk=0;tk<=4;tk++){
-      var rr=(62-tk*11)*camZ,ty2=tp2.y+10*camZ-tk*26*camZ;
-      var _tsw=(gt*0.3-((tk%2)?1.9:0)-tk*0.7)%(PI*2);
-      cx.strokeStyle='rgba(205,235,250,'+(0.55-tk*0.07)+')';
-      cx.lineWidth=(3-tk*0.4)*camZ;
-      cx.beginPath();cx.ellipse(tp2.x+_sw2*(1.4-tk*0.28),ty2,rr,rr*0.34,_tsw,0,PI*2);cx.stroke();
-    }
-    for(var tz=0;tz<3;tz++){
-      var _az=gt*0.22+tz*2.1,_ax=Math.cos(_az)*(46-tz*10)*camZ,_ay=Math.sin(_az)*8*camZ;
-      cx.fillStyle='rgba(220,240,250,0.5)';
-      cx.beginPath();cx.arc(tp2.x+_sw2+_ax,tp2.y+8*camZ-tz*18*camZ+_ay,3*camZ,0,PI*2);cx.fill();
+    cx.save();
+    cx.globalAlpha=0.92;
+    cx.translate(tp2.x+_sw2,tp2.y-64*camZ);
+    cx.rotate(Math.sin(gt*0.06+to3*1.7)*0.14);
+    cx.font='bold '+(64+8*Math.sin(gt*0.1+to3*0.9))*camZ+'px sans-serif';
+    cx.textAlign='center';
+    cx.fillText('🌪️',0,0);
+    cx.restore();
+    for(var tz=0;tz<12;tz++){
+      var _ph=tz*0.52+to3*1.3,_hhh=(gt*0.35+tz*4)%62,_rad=(58-_hhh*0.7)*camZ;
+      var _ax2=Math.cos(_ph+gt*0.22+_hhh*0.05)*_rad,_ay2=Math.sin(_ph+gt*0.22+_hhh*0.05)*_rad*0.3;
+      var _dw=_hhh/62,_sup=tz%3;
+      cx.fillStyle=_sup===0?'rgba(176,146,110,'+(0.6-_dw*0.5).toFixed(2)+')':_sup===1?'rgba(220,200,160,'+(0.5-_dw*0.4).toFixed(2)+')':'rgba(190,225,245,'+(0.55-_dw*0.45).toFixed(2)+')';
+      var _dsz=(2.6-_dw*1.2)*camZ;
+      cx.fillRect(tp2.x+_sw2+_ax2-_dsz/2,tp2.y+10*camZ-_hhh*0.9*camZ-_dsz/2,_dsz,_dsz);
     }
   }
   units.forEach(function(u){
@@ -4396,6 +4400,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
