@@ -14,7 +14,11 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 .ptabs{display:flex;gap:2px;padding:0 4px;pointer-events:none}
 .ptab{pointer-events:auto;padding:5px 14px;background:rgba(20,20,35,.92);border:1px solid rgba(255,255,255,.08);border-bottom:none;border-radius:6px 6px 0 0;font-size:11px;color:#8899aa;cursor:pointer}
 .ptab.on{color:#4af;border-color:rgba(68,170,255,.3);background:rgba(20,20,40,.98)}
-#stpFab{position:fixed;right:10px;bottom:214px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(30,30,50,.94);border:1.5px solid #a8f;color:#c8f;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(170,136,255,.5);user-select:none}
+#stpFab{position:fixed;right:10px;bottom:214px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(30,30,50,.94);border:1.5px solid #a8f;color:#c8f;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(170,136,255,.5);user-select:none;overflow:hidden}
+#stpFab.stpRdy{border-color:#4f4;box-shadow:0 0 16px rgba(80,255,120,.65);color:#8f8;animation:stpPulse 1.3s ease-in-out infinite}
+@keyframes stpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+#stpFabBar{position:absolute;left:0;bottom:0;height:4px;background:#0f0;width:0;transition:width .2s}
+#stpFabNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
 #heroTip{position:fixed;z-index:9999;background:rgba(15,18,30,.96);color:#ffe;border:1px solid rgba(255,215,0,.35);padding:6px 9px;font-size:11px;border-radius:6px;max-width:240px;display:none;pointer-events:none;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px}
 .pbody.on{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
@@ -116,7 +120,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1122</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1123</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3365,7 +3369,7 @@ function doStalkerWarp(wx,wy){
   if(NET.mode==='guest'){alert('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
   wx=Math.max(60,Math.min(MW-60,wx));wy=Math.max(60,Math.min(MH-60,wy));
   if(!_okWarp(wx,wy,sklU.fly&&true)){alert('那里不能传送');return;}
-  sklU.skillCd=1200;
+  sklU.skillCd=1200;sklU.skillMax=1200;
   parts.push({x:sklU.x,y:sklU.y,vx:0,vy:0,life:30,col:'#a8f',sz:18});
   var grp=[sklU],wi=0;
   var _selG=selU.filter(function(q){return q.hp>0&&!q.water;});
@@ -3628,11 +3632,30 @@ var _selKey=null,_selHide=0;
 function updateSelInfo(){
   var el=document.getElementById('selinfo');
   var _fab=document.getElementById('stpFab');
-  if(_fab){var _sh3=false,_cd3=false;
-    for(var fi=0;fi<selU.length;fi++)if(selU[fi].type==='stalker'&&selU[fi].hp>0){_sh3=true;if(selU[fi].skillCd>0)_cd3=true;break;}
-    _fab.style.display=_sh3?'block':'none';
-    _fab.style.borderColor=_cd3?'#888':'#a8f';
-    _fab.style.color=_cd3?'#98a':'#c8f';}
+  if(_fab){
+    var _ss2=null;
+    for(var fi=0;fi<units.length;fi++){var fw2=units[fi];
+      if(fw2.side===mySide&&fw2.hp>0&&(fw2.type==='stalker'||(fw2.type==='hero'&&(fw2._abs||[]).indexOf('stalker')>=0))){
+        if(!_ss2||fw2.skillCd<_ss2.skillCd)_ss2=fw2;}}
+    if(_ss2){
+      _fab.style.display='block';
+      var _sb2=document.getElementById('stpFabBar');
+      if(!_sb2){_sb2=document.createElement('div');_sb2.id='stpFabBar';_fab.appendChild(_sb2);var _snA=document.createElement('div');_snA.id='stpFabNum';_fab.appendChild(_snA);}
+      var _sn2=document.getElementById('stpFabNum');
+      if(_ss2.skillCd>0){
+        _fab.classList.remove('stpRdy');
+        if(!_ss2.skillMax)_ss2.skillMax=1200;
+        var _cdN=Math.ceil(_ss2.skillCd/60);
+        _sb2.style.width=Math.max(0,Math.min(1,1-_ss2.skillCd/_ss2.skillMax))*100+'%';
+        _sn2.textContent=_cdN+'s';
+        _sn2.style.display='block';
+      }else{
+        _fab.classList.add('stpRdy');
+        _sb2.style.width='100%';
+        _sn2.style.display='none';
+      }
+      _fab.style.borderColor='';_fab.style.color='';
+    }else _fab.style.display='none';}
   var key=selU.length?('u'+(selU[0]?selU[0].id:0)+'x'+selU.length):(selB?('b'+selB.id):'');
   if(key!==_selKey){_selKey=key;_selHide=gt+240;}
   var mob=isMobileUI();
@@ -3806,7 +3829,7 @@ function heroAura(){
     if(u.type==='stalker'&&u.hp>0&&u.skillCd>0)u.skillCd--;
     if(u.type!=='hero'||u.hp<=0||u.riding)return;
     if(u.skillCd>0){u.skillCd--;return;}
-    u.skillCd=600;
+    u.skillCd=600;u.skillMax=600;
     units.forEach(function(a){
       if(a.side===u.side&&a.hp>0&&dist(a,u)<200){
         a.hp=Math.min(a.mhp,a.hp+150);
@@ -4479,6 +4502,8 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
 
 
 
