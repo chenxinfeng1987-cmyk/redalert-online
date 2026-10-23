@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1120</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1121</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1986,6 +1986,22 @@ function runAI(side){
       var enemySpy=units.some(function(u2){return u2.side!==side&&u2.type==='spy'&&u2.hp>0;});
       var dogCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='dog';}).length;
       var spyCnt=units.filter(function(u2){return u2.side===side&&u2.hp>0&&!u2.riding&&u2.type==='spy';}).length;
+      var _fx={inf:0,veh:0,air:0};
+      for(var fx5=0;fx5<units.length;fx5++){var fe5=units[fx5];
+        if(fe5.side===side||fe5.hp<=0)continue;
+        if(fe5.type==='heli')_fx.air++;
+        else if(fe5.type==='apc'||fe5.type==='light'||fe5.type==='heavy'||fe5.type==='artillery')_fx.veh++;
+        else _fx.inf++;
+      }
+      var _cntRFC='';
+      if(_fx.air>=2&&hasBarr&&sideGold[side]>=200)_cntRFC='rocket';
+      else if(_fx.veh>=4&&labOk&&hasBarr&&sideGold[side]>=400)_cntRFC='tesla';
+      else if(_fx.veh>=4&&hasBarr&&sideGold[side]>=200)_cntRFC='rocket';
+      else if(_fx.inf>=7&&hasBarr&&sideGold[side]>=300&&dogCnt<3)_cntRFC='dog';
+      else if(_fx.inf>=7&&labOk&&hasBarr&&sideGold[side]>=400&&Math.random()<0.5)_cntRFC='tesla';
+      if(_cntRFC==='rocket'){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
+      else if(_cntRFC==='tesla'){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
+      else if(_cntRFC==='dog'){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
       if(enemySpy&&dogCnt<3&&hasBarr&&sideGold[side]>=300){sideGold[side]-=300;spawnUnit('dog',0,0,side);}
       else if(labOk&&ai.atkOn&&spyCnt<2&&hasBarr&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('spy',0,0,side);}
       var _yb=null;
@@ -4450,6 +4466,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
