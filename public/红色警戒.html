@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1117</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1118</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1125,8 +1125,32 @@ function captureHQ(hq,newSide){
   });
   parts.push({x:hq.x,y:hq.y,vx:0,vy:0,life:60,col:SIDES[newSide].c,sz:20});
 }
+var AC=null,_lastHitS=0;
+function initAudioOnce(){
+  if(AC)return;
+  try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+document.addEventListener('pointerdown',initAudioOnce,{passive:true});
+function hitSfx(big){
+  if(!AC)return;var t0=AC.currentTime;
+  if(t0-_lastHitS<0.09)return;_lastHitS=t0;
+  try{
+    var o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+    f.type='lowpass';f.frequency.value=big?900:2400;
+    o.type=big?'triangle':'square';
+    o.frequency.setValueAtTime(big?150:300+Math.random()*80,t0);
+    o.frequency.exponentialRampToValueAtTime(big?55:110,t0+0.08);
+    g.gain.setValueAtTime(big?0.16:0.1,t0);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+(big?0.14:0.08));
+    o.connect(f);f.connect(g);g.connect(AC.destination);
+    o.start(t0);o.stop(t0+0.16);
+  }catch(e){}
+}
 function dealDmg(target,dmg){
   target.hp-=dmg;
+  parts.push({x:target.x,y:target.y-6,vx:(Math.random()-.5)*2,vy:-1.5,life:6,col:'#fff',sz:11});
+  hitSfx(ART_B.indexOf(target.type)>=0);
   if(target.hp<=0&&(target.type==='apc'||target.type==='heli')&&target.cargo&&target.cargo.length){
     for(var _ci=0;_ci<target.cargo.length;_ci++){
       var _cu=target.cargo[_ci];
@@ -4413,6 +4437,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
