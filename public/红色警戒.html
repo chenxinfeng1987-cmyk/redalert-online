@@ -116,7 +116,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1119</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1120</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1125,26 +1125,39 @@ function captureHQ(hq,newSide){
   });
   parts.push({x:hq.x,y:hq.y,vx:0,vy:0,life:60,col:SIDES[newSide].c,sz:20});
 }
-var AC=null,_lastHitS=0;
+var AC=null,_lastHitS=0,_mslS=0,_wndS=0;
 function initAudioOnce(){
   if(AC)return;
   try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
   if(AC&&AC.state==='suspended')AC.resume();
 }
 document.addEventListener('pointerdown',initAudioOnce,{passive:true});
-function hitSfx(big){
+function sfxShot(kind){
   if(!AC)return;var t0=AC.currentTime;
-  if(t0-_lastHitS<0.09)return;_lastHitS=t0;
   try{
-    var o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
-    f.type='lowpass';f.frequency.value=big?900:2400;
-    o.type=big?'triangle':'square';
-    o.frequency.setValueAtTime(big?150:300+Math.random()*80,t0);
-    o.frequency.exponentialRampToValueAtTime(big?55:110,t0+0.08);
-    g.gain.setValueAtTime(big?0.16:0.1,t0);
-    g.gain.exponentialRampToValueAtTime(0.001,t0+(big?0.14:0.08));
-    o.connect(f);f.connect(g);g.connect(AC.destination);
-    o.start(t0);o.stop(t0+0.16);
+    if(kind==='mg'){
+      if(t0-_lastHitS<0.09)return;_lastHitS=t0;
+      var o=AC.createOscillator(),g=AC.createGain();
+      o.type='square';o.frequency.setValueAtTime(950+Math.random()*120,t0);
+      o.frequency.exponentialRampToValueAtTime(300,t0+0.05);
+      g.gain.setValueAtTime(0.05,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.05);
+      o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+0.06);
+    }else if(kind==='msl'){
+      if(t0-_mslS<0.25)return;_mslS=t0;
+      var o2=AC.createOscillator(),g2=AC.createGain();
+      o2.type='sawtooth';o2.frequency.setValueAtTime(220,t0);
+      o2.frequency.exponentialRampToValueAtTime(1100,t0+0.18);
+      g2.gain.setValueAtTime(0.08,t0);g2.gain.exponentialRampToValueAtTime(0.001,t0+0.22);
+      o2.connect(g2);g2.connect(AC.destination);o2.start(t0);o2.stop(t0+0.24);
+    }else if(kind==='wind'){
+      if(t0-_wndS<1.2)return;_wndS=t0;
+      var bn=AC.createBufferSource(),buf=AC.createBuffer(1,Math.floor(AC.sampleRate*0.8),AC.sampleRate),dd=buf.getChannelData(0);
+      for(var i=0;i<dd.length;i++)dd[i]=(Math.random()*2-1)*0.5;
+      var f2=AC.createBiquadFilter(),g3=AC.createGain();
+      f2.type='bandpass';f2.frequency.setValueAtTime(300,t0);f2.frequency.exponentialRampToValueAtTime(1400,t0+0.5);f2.Q.value=2;
+      g3.gain.setValueAtTime(0.0001,t0);g3.gain.exponentialRampToValueAtTime(0.12,t0+0.15);g3.gain.exponentialRampToValueAtTime(0.001,t0+0.8);
+      bn.buffer=buf;bn.connect(f2);f2.connect(g3);g3.connect(AC.destination);bn.start(t0);
+    }
   }catch(e){}
 }
 function dealDmg(target,dmg){
@@ -1380,7 +1393,7 @@ function fireUnit(u,t){
     if(u.type==='weather'&&u.lv>=3&&!(u._tornCd>gt)){
       var _tN=u.lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
       for(var tq2=0;tq2<_tN;tq2++)torns.push({x:t.x+_to2[tq2][0],y:t.y+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:u.lv>=6});
-      u._tornCd=gt+420;parts.push({x:t.x,y:t.y,vx:0,vy:0,life:24,col:'#aef',sz:22});
+      u._tornCd=gt+420;parts.push({x:t.x,y:t.y,vx:0,vy:0,life:24,col:'#aef',sz:22});sfxShot('wind');
     }
     return;
   }
@@ -1757,8 +1770,9 @@ function updateTurrets(){
       if(b.type==='missile'){
         bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:26,dmg:b.atk,side:b.side,life:30,laser:1,t:t,ox:b.x,oy:b.y});
         bolts.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,t:0,dur:14,seed:Math.random()*100});
+        sfxShot('msl');
       }
-      else bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:5,dmg:b.atk,side:b.side,life:50,t:t,ox:b.x,oy:b.y});
+      else{bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:5,dmg:b.atk,side:b.side,life:50,t:t,ox:b.x,oy:b.y});sfxShot('mg');}
     });
     if(targets.length>0)b._cd=b.type==='missile'?26:30;
   });
@@ -4436,6 +4450,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
