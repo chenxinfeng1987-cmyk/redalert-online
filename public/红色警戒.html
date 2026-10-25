@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1141</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1142</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -206,6 +206,8 @@ function techUnlocked(id,side){
   return true;
 }
 var unitImgs={},corpses=[];
+var HEROART={hero:1,tanya:1,sniper:1,weather:1,stalker:1};
+var _artPending=0,_artReady=0,_artWait=0;
 var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s'],['_k','_k']];
 var AV='1062';
 var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner','ship','carrier','hero','tanya','sniper','weather','stalker'];
@@ -213,11 +215,17 @@ function loadUnitImgs(){
   ART_U.forEach(function(k){
     UI_ST.forEach(function(st){
       var img=new Image();
+      var _hp=!!HEROART[k];
+      if(_hp)_artPending++;
       img.onload=function(){
         var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
         img._ok=1;img._cols=Math.max(1,Math.round(w/h));
+        if(_hp){_artPending--;if(_artPending<=0)_artReady=1;}
       };
-      img.onerror=function(){img._ok=0;};
+      img.onerror=function(){
+        img._ok=0;
+        if(_hp){_artPending--;if(_artPending<=0)_artReady=1;}
+      };
       img.src='assets/units/'+k+st[1]+'.png?v='+AV;
       unitImgs[k+st[0]]=img;
     });
@@ -4133,6 +4141,16 @@ function updateHeroSkill(){
   });
 }
 function tick(){
+  if(gOn&&!gOver&&!_artReady){
+    _artWait++;
+    if(_artWait>600)_artReady=1;
+    cx.fillStyle='#0a2a4a';cx.fillRect(0,0,W,H);
+    cx.fillStyle='#8cf';cx.font='bold 22px sans-serif';cx.textAlign='center';
+    cx.fillText('正在载入英雄贴图…',W/2,H/2-10);
+    cx.fillStyle='#6a8';cx.font='13px sans-serif';
+    cx.fillText('剩余 '+Math.max(0,_artPending)+' 个文件',W/2,H/2+24);
+    requestAnimationFrame(tick);return;
+  }
   if(gOn&&!gOver){
     if(NET.mode==='guest'){
       guestFrame();
@@ -4788,6 +4806,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
