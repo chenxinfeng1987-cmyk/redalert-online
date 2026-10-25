@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1138</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1139</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -206,8 +206,8 @@ function techUnlocked(id,side){
   return true;
 }
 var unitImgs={},corpses=[];
-var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s']];
-var AV='1060';
+var UI_ST=[['','_i'],['_m','_m'],['_a','_a'],['_d','_d'],['_s','_s'],['_k','_k']];
+var AV='1061';
 var ART_U=['rifle','light','heavy','dog','rocket','apc','heli','miner','ship','carrier','hero','tanya','sniper','weather','stalker'];
 function loadUnitImgs(){
   ART_U.forEach(function(k){
@@ -263,6 +263,8 @@ function uStateF(u){
   return r>=0.75?0:(r>=0.5?1:(r>=0.25?2:3));
 }
 function uiFrame(u,mv){
+  var _kk=uiGet(u.type,'_k');
+  if(_kk&&u._sklT!==undefined&&gt-u._sklT<28)return {i:_kk,f:Math.min(3,~~((gt-u._sklT)/7))};
   var a=uiGet(u.type,'_a');
   if(a&&u._atkT!==undefined&&gt-u._atkT<26)return {i:a,f:Math.min(3,~~((gt-u._atkT)/7))};
   var m=uiGet(u.type,'_m');
@@ -3543,7 +3545,7 @@ function doRally(){
   for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0&&!u.riding){if(!h||(u.skillCd||0)<(h.skillCd||0))h=u;}}
   if(!h){alert('全能英雄不在场');return;}
   if((h.skillCd||0)>0){alert('战吼冷却中：'+Math.ceil(h.skillCd/60)+'秒');return;}
-  h.skillCd=2400;h.skillMax=2400;
+  h.skillCd=2400;h.skillMax=2400;h._sklT=gt;
   for(var j=0;j<units.length;j++){var a=units[j];if(a.side!==mySide||a.hp<=0)continue;if(dist(a,h)<=_rallyR)a._rally=gt+480;}
   parts.push({x:h.x,y:h.y,vx:0,vy:0,life:30,col:'#fc0',sz:26});
   for(var k2=0;k2<12;k2++){var an2=k2/12*PI*2;parts.push({x:h.x+Math.cos(an2)*40,y:h.y+Math.sin(an2)*40,vx:Math.cos(an2)*3,vy:Math.sin(an2)*3,life:20,col:'#fc0',sz:8});}
@@ -3563,7 +3565,7 @@ function toggleTornado(){
   var pbs=document.getElementById('tornFab');
   if(_tornMode&&_tornU===c){_tornMode=false;_tornU=null;if(pbs)pbs.classList.remove('stpArmed');return;}
   if(c._tornCd&&c._tornCd>gt){alert('台风冷却中：'+Math.ceil((c._tornCd-gt)/60)+'秒');return;}
-  _tornU=c;_tornMode=true;sklMode=false;sklU=null;paraMode=false;bldMode=null;
+  _tornU=c;_tornMode=true;sklMode=false;sklU=null;paraMode=false;bldMode=null;c._sklT=gt;
   if(pbs)pbs.classList.add('stpArmed');
 }
 function doTornado(wx,wy){
@@ -3575,7 +3577,7 @@ function doTornado(wx,wy){
   var lv=u.lv||1,_bl9=(u.type==='hero')?true:(lv>=6);
   var _tN=lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
   for(var tq2=0;tq2<_tN;tq2++)torns.push({x:wx+_to2[tq2][0],y:wy+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:_bl9});
-  u._tornCd=gt+300;
+  u._tornCd=gt+300;u._sklT=gt;
   parts.push({x:wx,y:wy,vx:0,vy:0,life:24,col:'#aef',sz:22});
   sfxShot('wind');
   _tornMode=false;_tornU=null;
@@ -3623,7 +3625,7 @@ function doStalkerWarp(wx,wy){
   if(NET.mode==='guest'){alert('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
   wx=Math.max(60,Math.min(MW-60,wx));wy=Math.max(60,Math.min(MH-60,wy));
   if(!_okWarp(wx,wy,sklU.fly&&true)){alert('那里不能传送');return;}
-  sklU.skillCd=1200;sklU.skillMax=1200;
+  sklU.skillCd=1200;sklU.skillMax=1200;sklU._sklT=gt;
   parts.push({x:sklU.x,y:sklU.y,vx:0,vy:0,life:30,col:'#a8f',sz:18});
   var grp=[sklU],wi=0;
   var _selG=selU.filter(function(q){return q.hp>0&&!q.water;});
@@ -4786,6 +4788,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
