@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1131</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1132</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1915,16 +1915,17 @@ function runAI(side){
     }else{
       order=['power','refinery','refinery','barracks','turret','barracks','warfactory','turret','missile','lab','barracks','refinery'];
     }
+    if(strat!=='paraRush')order=order.concat(['missile','missile','missile','missile']);
     var built=0;
     for(var loop=0;loop<3;loop++){
       for(var i=0;i<order.length;i++){
         var id=order[i];
         var maxCount;
-        if(strat==='turtle'){maxCount=id==='turret'?8:id==='missile'?6:id==='refinery'?4:id==='lab'?1:1;}
-        else if(strat==='armor'){maxCount=id==='warfactory'?3:id==='turret'?3:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;}
-        else if(strat==='spyRush'){maxCount=id==='barracks'?3:id==='turret'?2:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;}
-    else if(strat==='paraRush'){maxCount=id==='barracks'?4:id==='refinery'?3:id==='turret'?2:id==='missile'?1:1;}
-    else{maxCount=id==='barracks'?3:id==='turret'?2:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;}
+        if(strat==='turtle'){maxCount=id==='turret'?8:id==='missile'?9:id==='refinery'?4:id==='lab'?1:1;}
+        else if(strat==='armor'){maxCount=id==='warfactory'?3:id==='turret'?4:id==='missile'?6:id==='refinery'?3:id==='lab'?1:1;}
+        else if(strat==='spyRush'){maxCount=id==='barracks'?3:id==='turret'?3:id==='missile'?5:id==='refinery'?3:id==='lab'?1:1;}
+    else if(strat==='paraRush'){maxCount=id==='barracks'?4:id==='refinery'?3:id==='turret'?3:id==='missile'?4:1;}
+    else{maxCount=id==='barracks'?3:id==='turret'?4:id==='missile'?6:id==='refinery'?3:id==='lab'?1:1;}
         if((bCount[id]||0)<maxCount&&sideGold[side]>=BD[id].g){
           var bx,by;
           if(id==='turret'||id==='missile'){
@@ -3181,7 +3182,10 @@ function uiBottomTop(x){
   if(bt.classList.contains('mobhide'))return H;
   var r=bt.getBoundingClientRect();if(r.height===0)return H;
   if(x===undefined||x===null)return r.top;
-  var boxes=[bt.querySelector('.ptabs')];
+  var boxes=[];
+  var tabs=bt.querySelectorAll('.ptab');
+  for(var ti=0;ti<tabs.length;ti++)boxes.push(tabs[ti]);
+  var btg=document.getElementById('btToggle');if(btg)boxes.push(btg);
   var onb=bt.querySelector('.pbody.on');if(onb)boxes.push(onb);
   for(var i=0;i<boxes.length;i++){var bb=boxes[i];if(!bb)continue;
     var br=bb.getBoundingClientRect();
@@ -4658,6 +4662,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
