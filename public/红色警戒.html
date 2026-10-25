@@ -22,6 +22,9 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #tornFab.stpRdy{border-color:#4f4;box-shadow:0 0 16px rgba(80,255,120,.65);animation:stpPulse 1.3s ease-in-out infinite}
 #tornFab.stpArmed{border-color:#ff4;box-shadow:0 0 18px rgba(255,255,80,.8)}
 #tornNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
+#rallyFab{position:fixed;right:10px;bottom:322px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(55,45,15,.94);border:1.5px solid #fc4;color:#fe8;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(255,200,60,.5);user-select:none;overflow:hidden}
+#rallyFab.stpRdy{border-color:#4f4;box-shadow:0 0 16px rgba(80,255,120,.65);animation:stpPulse 1.3s ease-in-out infinite}
+#rallyNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
 #stpFabNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
 #heroTip{position:fixed;z-index:9999;background:rgba(15,18,30,.96);color:#ffe;border:1px solid rgba(255,215,0,.35);padding:6px 9px;font-size:11px;border-radius:6px;max-width:240px;display:none;pointer-events:none;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .pbody{background:rgba(12,12,22,.96);border-top:1px solid rgba(255,255,255,.06);padding:6px;display:none;min-height:100px;max-height:150px;overflow-y:auto;max-width:404px;pointer-events:auto}
@@ -107,7 +110,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
-<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div>
+<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div><div id="rallyFab" onclick="doRally()" title="战吼：周围300px友军8秒攻击+43%、移速+25%（40秒冷却）">📣</div>
 <div id="bottom">
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
@@ -124,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1126</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1127</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -876,6 +879,7 @@ function wallFollow(o,tx,ty,spd){
   return false;
 }
 function moveTow(o,tx,ty,spd){
+  if(o._rally&&o._rally>gt)spd*=1.25;
   var dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
   if(d<3)return true;
   if(o.fly||o.water){
@@ -1172,6 +1176,21 @@ function sfxShot(kind){
 function dealDmg(target,dmg){
   target.hp-=dmg;
   parts.push({x:target.x,y:target.y-6,vx:(Math.random()-.5)*2,vy:-1.5,life:6,col:'#fff',sz:11});
+  if(target.hp>0&&target.spd!==undefined&&gt>=(target._blinkCd||0)&&(target.type==='stalker'||(target.type==='hero'&&(target._abs||[]).indexOf('stalker')>=0))){
+    var _ne=null,_nd=1e9;
+    for(var bi=0;bi<units.length;bi++){var eu2=units[bi];if(eu2.side===target.side||eu2.hp<=0)continue;var dd=dist(eu2,target);if(dd<_nd){_nd=dd;_ne=eu2;}}
+    if(_ne&&_nd<420){
+      var _ang2=Math.atan2(target.y-_ne.y,target.x-_ne.x);
+      var _bx=target.x+Math.cos(_ang2)*90,_by=target.y+Math.sin(_ang2)*90;
+      _bx=Math.max(40,Math.min(MW-40,_bx));_by=Math.max(40,Math.min(MH-40,_by));
+      if(_okWarp(_bx,_by,target.fly&&true)){
+        parts.push({x:target.x,y:target.y,vx:0,vy:0,life:16,col:'#a8f',sz:12});
+        target.x=_bx;target.y=_by;target.tx=undefined;target.ty=undefined;target.tgt=null;target._path=null;
+        parts.push({x:_bx,y:_by,vx:0,vy:0,life:16,col:'#a8f',sz:12});
+        target._blinkCd=gt+180;
+      }
+    }
+  }
   if(target.hp<=0&&(target.type==='apc'||target.type==='heli')&&target.cargo&&target.cargo.length){
     for(var _ci=0;_ci<target.cargo.length;_ci++){
       var _cu=target.cargo[_ci];
@@ -1236,11 +1255,11 @@ var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','weather','stalker'];var
 var HEROIT={tanya:'🔫',sniper:'🎯',weather:'🌪️'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
-var HERO_DESC={hero:'战略单位：初始拥有大范围治疗光环（每10秒恢复周围友军150血）。击杀敌方任意英雄后学会其能力，可叠加、无上限；阵亡后清空可重新偷学。达到12级并偷学气象技能后可用台风。',
+var HERO_DESC={hero:'战略单位：治疗光环（每10秒恢复周围友军150血）。主动·📣战吼：右侧📣按钮，给300px内友军8秒攻击+43%、移速+25%，冷却40秒。击杀敌方英雄只偷学【被动】能力，可叠加、无上限：谭雅=一枪秒兵；狙击手=远程狙击；气象大师=风压推开；时空行者=受击后跳退。',
  tanya:'一击必杀：贴脸（射程130）对任何敌方士兵/兵种一发毙命（含直升机）；打建筑则是普通炮击。移速快。',
  sniper:'超远程单发90伤，命中附带3秒压制：目标不能移动不能开火。未开火时敌人看不见它（隐身），开火后1.5秒现形。',
- weather:'被动·风压射击：命中把敌人直接推离70px（2.5秒一发）。主动·台风（3级解锁）：点右侧🌪️按钮再点地面召唤，冷却5秒；6级起台风持续破坏建筑；12级一次召唤3个台风。被动·清风拂面（只解冻我方）：定期吹散我方身上的控制。全能英雄12级也可使用台风。',
- stalker:'主动技能：从英雄标签页点它的卡片（或点右下角悬浮🌀）→ 再点地图任意位置 → 把周围200px友军一起瞬移过去。落点130px内敌人掉120血。冷却20秒。'};
+ weather:'被动·风压射击：命中把敌人直接推离70px（2.5秒一发）。主动·台风（3级解锁）：点右侧🌪️按钮再点地面召唤（气象大师附近280px内），冷却5秒；6级起台风持续破坏建筑；12级一次召唤3个台风。被动·清风拂面（只解冻我方）：定期吹散我方身上的控制。全能英雄只能偷学它的风压推开。',
+ stalker:'主动·瞬移：点右下角🌀按钮再点地图，把周围200px友军一起传送过去，落点130px内敌人掉120血，冷却20秒。被动·残影后跃：被打中时自动向远离敌人的方向跳退90px（3秒一次，可躲开导弹/狙击）。'};
 function heroDesc(type){return HERO_DESC[type]||'';}
 function _abEmoji(t){return HEROIT[t]||'';}
 function showHeroTip(id,ev){
@@ -1269,7 +1288,7 @@ function moveHeroTip(ev){
   t.style.top=Math.max(4,y-((t.offsetHeight||96)+14))+'px';
 }
 function hideHeroTip(){var t=document.getElementById('heroTip');if(t)t.style.display='none';}
-function fireCd(u){if(u.type==='hero'&&u._abs&&u._abs.length)return Math.max(u.rt,u._abs.indexOf('weather')>=0?200:100);return u.rt;}
+function fireCd(u){var r=u.rt;if(u.type==='hero'&&u._abs&&u._abs.length)r=Math.max(u.rt,u._abs.indexOf('weather')>=0?200:100);if(u._rally&&u._rally>gt)r=Math.round(r*0.7);return r;}
 // 单位升级
 function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
@@ -3345,6 +3364,18 @@ function togglePara(){
   var pb=document.getElementById('paraBtn');
   if(pb){pb.style.borderColor=paraMode?'#0f0':'rgba(255,215,0,.3)';pb.style.color=paraMode?'#0f0':'#ffd700';}
 }
+var _rallyR=300;
+function doRally(){
+  var h=null;
+  for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0&&!u.riding){if(!h||(u.skillCd||0)<(h.skillCd||0))h=u;}}
+  if(!h){alert('全能英雄不在场');return;}
+  if((h.skillCd||0)>0){alert('战吼冷却中：'+Math.ceil(h.skillCd/60)+'秒');return;}
+  h.skillCd=2400;h.skillMax=2400;
+  for(var j=0;j<units.length;j++){var a=units[j];if(a.side!==mySide||a.hp<=0)continue;if(dist(a,h)<=_rallyR)a._rally=gt+480;}
+  parts.push({x:h.x,y:h.y,vx:0,vy:0,life:30,col:'#fc0',sz:26});
+  for(var k2=0;k2<12;k2++){var an2=k2/12*PI*2;parts.push({x:h.x+Math.cos(an2)*40,y:h.y+Math.sin(an2)*40,vx:Math.cos(an2)*3,vy:Math.sin(an2)*3,life:20,col:'#fc0',sz:8});}
+  sfxShot('mg');
+}
 var _tornMode=false,_tornU=null;
 var _TORN_R=280;
 function toggleTornado(){
@@ -3353,7 +3384,6 @@ function toggleTornado(){
     if(u.side!==mySide||u.hp<=0||u.riding)continue;
     var _okT=false;
     if(u.type==='weather'&&u.lv>=3)_okT=true;
-    else if(u.type==='hero'&&u.lv>=12&&(u._abs||[]).indexOf('weather')>=0)_okT=true;
     if(_okT&&(!c||(u._tornCd||0)<(c._tornCd||0)))c=u;
   }
   if(!c){alert('没有可用的台风（气象大师3级解锁，或全能英雄12级偷学气象技能）');return;}
@@ -3382,7 +3412,6 @@ function _warpUnit(readyOnly){
   var s2=null,i;
   for(i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0){s2=selU[i];break;}
   if(!s2){for(i=0;i<units.length;i++){var c9=units[i];if(c9.type==='stalker'&&c9.side===mySide&&c9.hp>0&&(!readyOnly||c9.skillCd<=0)){s2=c9;break;}}}
-  if(!s2){for(i=0;i<units.length;i++){var c10=units[i];if(c10.type==='hero'&&c10.side===mySide&&c10.hp>0&&(c10._abs||[]).indexOf('stalker')>=0&&(!readyOnly||c10.skillCd<=0)){s2=c10;break;}}}
   return s2;
 }
 function toggleStalker(){
@@ -3712,7 +3741,6 @@ function updateSelInfo(){
       if(tu3.side!==mySide||tu3.hp<=0||tu3.riding)continue;
       var _okT2=false;
       if(tu3.type==='weather'&&tu3.lv>=3)_okT2=true;
-      else if(tu3.type==='hero'&&tu3.lv>=12&&(tu3._abs||[]).indexOf('weather')>=0)_okT2=true;
       if(_okT2&&(!_tw4||(tu3._tornCd||0)<(_tw4._tornCd||0)))_tw4=tu3;
     }
     if(_tw4){
@@ -3723,6 +3751,18 @@ function updateSelInfo(){
       if(_cdT>0){_tf2.classList.remove('stpRdy');_tn3.style.display='block';_tn3.textContent=_cdT+'s';}
       else{_tf2.classList.add('stpRdy');_tn3.style.display='none';}
     }else _tf2.style.display='none';}
+  var _rf2=document.getElementById('rallyFab');
+  if(_rf2){
+    var _rh=null;
+    for(var ri2=0;ri2<units.length;ri2++){var ru2=units[ri2];if(ru2.type==='hero'&&ru2.side===mySide&&ru2.hp>0&&!ru2.riding){if(!_rh||(ru2.skillCd||0)<(_rh.skillCd||0))_rh=ru2;}}
+    if(_rh){
+      _rf2.style.display='block';
+      var _rn2=document.getElementById('rallyNum');
+      if(!_rn2){_rn2=document.createElement('div');_rn2.id='rallyNum';_rf2.appendChild(_rn2);}
+      var _cdR=(_rh.skillCd||0)>0?Math.ceil(_rh.skillCd/60):0;
+      if(_cdR>0){_rf2.classList.remove('stpRdy');_rn2.style.display='block';_rn2.textContent=_cdR+'s';}
+      else{_rf2.classList.add('stpRdy');_rn2.style.display='none';}
+    }else _rf2.style.display='none';}
   var key=selU.length?('u'+(selU[0]?selU[0].id:0)+'x'+selU.length):(selB?('b'+selB.id):'');
   if(key!==_selKey){_selKey=key;_selHide=gt+240;}
   var mob=isMobileUI();
@@ -3893,7 +3933,7 @@ function updateNukes(){
 }
 function heroAura(){
   units.forEach(function(u){
-    if(u.hp>0&&u.skillCd>0&&(u.type==='stalker'||(u.type==='hero'&&(u._abs||[]).indexOf('stalker')>=0)))u.skillCd--;
+    if(u.hp>0&&u.skillCd>0&&(u.type==='stalker'||u.type==='hero'))u.skillCd--;
     if(u.type!=='hero'||u.hp<=0||u.riding)return;
     if(u.skillCd>0){u.skillCd--;return;}
     u.skillCd=600;u.skillMax=600;
@@ -4569,6 +4609,8 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
 
 
 
