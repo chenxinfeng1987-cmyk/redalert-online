@@ -124,7 +124,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1124</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1125</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3218,6 +3218,17 @@ function onMove(e){
     cx.fillStyle='#c8f';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
     cx.fillText('🌀 点击传送',_sd2.x,_sd2.y-80*camZ);cx.lineWidth=1;
   }
+  if(_tornMode&&_tornU&&_tornU.hp>0){
+    var _tw5=worldToScr(_tornU.x,_tornU.y),_tc5=scrToWorld(p.x,p.y);
+    var _inR=dist(_tc5,_tornU)<=_TORN_R;
+    cx.strokeStyle=_inR?'rgba(120,220,255,0.75)':'rgba(255,80,80,0.75)';cx.lineWidth=1.5;
+    cx.setLineDash([8,6]);cx.beginPath();cx.arc(_tw5.x,_tw5.y,_TORN_R*camZ,0,PI*2);cx.stroke();cx.setLineDash([]);
+    cx.strokeStyle=_inR?'rgba(120,220,255,0.85)':'rgba(255,80,80,0.85)';cx.lineWidth=2;
+    cx.beginPath();cx.arc(_tc5.x,_tc5.y,70*camZ,0,PI*2);cx.stroke();
+    cx.fillStyle=_inR?'rgba(120,220,255,0.12)':'rgba(255,80,80,0.12)';cx.beginPath();cx.arc(_tc5.x,_tc5.y,70*camZ,0,PI*2);cx.fill();
+    cx.fillStyle=_inR?'#8df':'#f88';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
+    cx.fillText(_inR?'🌪️ 点击召唤台风':'⚠ 超出范围（靠近气象大师）',_tc5.x,_tc5.y-80*camZ);
+  }
   if(bldMode||paraMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
 }
@@ -3335,6 +3346,7 @@ function togglePara(){
   if(pb){pb.style.borderColor=paraMode?'#0f0':'rgba(255,215,0,.3)';pb.style.color=paraMode?'#0f0':'#ffd700';}
 }
 var _tornMode=false,_tornU=null;
+var _TORN_R=280;
 function toggleTornado(){
   var c=null;
   for(var i=0;i<units.length;i++){var u=units[i];
@@ -3356,6 +3368,7 @@ function doTornado(wx,wy){
   var u=_tornU;
   if((u._tornCd||0)>gt){_tornMode=false;_tornU=null;return;}
   wx=Math.max(40,Math.min(MW-40,wx));wy=Math.max(40,Math.min(MH-40,wy));
+  if(dist({x:wx,y:wy},u)>_TORN_R){alert('只能在气象大师附近（蓝圈内）召唤台风');_tornMode=false;_tornU=null;var _pbz=document.getElementById('tornFab');if(_pbz)_pbz.classList.remove('stpArmed');return;}
   var lv=u.lv||1,_bl9=(u.type==='hero')?true:(lv>=6);
   var _tN=lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
   for(var tq2=0;tq2<_tN;tq2++)torns.push({x:wx+_to2[tq2][0],y:wy+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:_bl9});
@@ -3365,11 +3378,15 @@ function doTornado(wx,wy){
   _tornMode=false;_tornU=null;
   var pbt=document.getElementById('tornFab');if(pbt)pbt.classList.remove('stpArmed');
 }
+function _warpUnit(readyOnly){
+  var s2=null,i;
+  for(i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0){s2=selU[i];break;}
+  if(!s2){for(i=0;i<units.length;i++){var c9=units[i];if(c9.type==='stalker'&&c9.side===mySide&&c9.hp>0&&(!readyOnly||c9.skillCd<=0)){s2=c9;break;}}}
+  if(!s2){for(i=0;i<units.length;i++){var c10=units[i];if(c10.type==='hero'&&c10.side===mySide&&c10.hp>0&&(c10._abs||[]).indexOf('stalker')>=0&&(!readyOnly||c10.skillCd<=0)){s2=c10;break;}}}
+  return s2;
+}
 function toggleStalker(){
-  var s2=null;
-  for(var i=0;i<selU.length;i++)if(selU[i].type==='stalker'&&selU[i].hp>0){s2=selU[i];break;}
-  if(!s2){for(var j=0;j<units.length;j++){var c9=units[j];if(c9.type==='stalker'&&c9.side===mySide&&c9.hp>0&&c9.skillCd<=0){s2=c9;break;}}}
-  if(!s2){for(var j4=0;j4<units.length;j4++){var c10=units[j4];if(c10.type==='hero'&&c10.side===mySide&&c10.hp>0&&(c10._abs||[]).indexOf('stalker')>=0&&c10.skillCd<=0){s2=c10;break;}}}
+  var s2=_warpUnit(true);
   if(!s2){alert('没有就绪的时空行者');return;}
   if(s2.skillCd>0){alert('传送冷却中');return;}
   if(sklMode&&sklU===s2){sklMode=false;sklU=null;return;}
@@ -3668,10 +3685,7 @@ function updateSelInfo(){
   var el=document.getElementById('selinfo');
   var _fab=document.getElementById('stpFab');
   if(_fab){
-    var _ss2=null;
-    for(var fi=0;fi<units.length;fi++){var fw2=units[fi];
-      if(fw2.side===mySide&&fw2.hp>0&&(fw2.type==='stalker'||(fw2.type==='hero'&&(fw2._abs||[]).indexOf('stalker')>=0))){
-        if(!_ss2||fw2.skillCd<_ss2.skillCd)_ss2=fw2;}}
+    var _ss2=_warpUnit(true)||_warpUnit(false);
     if(_ss2){
       _fab.style.display='block';
       var _sb2=document.getElementById('stpFabBar');
@@ -4555,6 +4569,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
