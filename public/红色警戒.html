@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1136</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1137</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -602,13 +602,26 @@ function paintRoads(){
     for(var oy=0;oy<2;oy++)for(var ox=0;ox<2;ox++){
       var X=x+ox,Y=y+oy;
       if(Y<0||Y>=rows||X<0||X>=cols)continue;
-      var t=mData[Y][X];if(t===0||t===2||t===6)mData[Y][X]=1;
+      var t=mData[Y][X];if(t===0||t===2||t===6||t===7)mData[Y][X]=1;
     }
   }
   for(var ci=0;ci<corners.length;ci++){
     var x=corners[ci][0],y=corners[ci][1];
     while(x!==cx){x+=(x<cx?1:-1);put(x,y);}
     while(y!==cy){y+=(y<cy?1:-1);put(x,y);}
+  }
+  function lineTo(x0,y0,x1,y1){
+    var dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;
+    for(var guard=0;guard<5000;guard++){
+      put(x0,y0);
+      if(x0===x1&&y0===y1)break;
+      var e2=2*err;
+      if(e2>=dy){err+=dy;x0+=sx;}
+      if(e2<=dx){err+=dx;y0+=sy;}
+    }
+  }
+  for(var a1=0;a1<corners.length;a1++)for(var b1=a1+1;b1<corners.length;b1++){
+    lineTo(corners[a1][0],corners[a1][1],corners[b1][0],corners[b1][1]);
   }
 }
 function genSym(c,r){
@@ -4773,6 +4786,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
