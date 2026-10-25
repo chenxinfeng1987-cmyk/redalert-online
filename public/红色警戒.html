@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1135</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1136</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -437,7 +437,7 @@ function handleMapUpload(e){
         var strategies=['infantry','armor','turtle','spyRush','paraRush'];
         for(var a2=1;a2<=3;a2++){ais[a2]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};}
         ais[0]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};
-        placeOres();placeBases();paintRoads();
+        placeOres();placeBases();paintRoads();paintSand();
         var _h=cornerOf(mySide);focusOnBase(mySide);
         buildPanels();
       }catch(err){
@@ -483,7 +483,7 @@ function genMap(){
     _sprinkleHigh(cols,rows);
   }
   _mBase=mData.map(function(r){return r.slice();});
-  placeOres();placeBases();paintRoads();
+  placeOres();placeBases();paintRoads();paintSand();
   if(mType==='fortress')spawnTower();
   for(var _wi=0;_wi<6;_wi++){
     var _wx=Math.random()*MW,_wy=Math.random()*MH;
@@ -576,6 +576,22 @@ function drawHighTile(tx,ty,dx2,dy2){
   }else if(hsh===88){
     cx.fillStyle='rgba(255,255,255,0.75)';cx.font='bold '+(13*camZ)+'px sans-serif';cx.textAlign='center';
     cx.fillText('⛰',_sp.x,_sp.y+4*camZ);
+  }
+}
+function paintSand(){
+  var R=250;
+  for(var bi=0;bi<blds.length;bi++){
+    var b=blds[bi];
+    if(b.type!=='hq'||b.hp<=0)continue;
+    var rows=mData.length,cols=mData[0].length;
+    var t0x=Math.max(0,~~((b.x-R)/T)),t1x=Math.min(cols-1,~~((b.x+R)/T));
+    var t0y=Math.max(0,~~((b.y-R)/T)),t1y=Math.min(rows-1,~~((b.y+R)/T));
+    for(var y=t0y;y<=t1y;y++)for(var x=t0x;x<=t1x;x++){
+      var wx=x*T+T/2,wy=y*T+T/2;
+      if(Math.hypot(wx-b.x,wy-b.y)>R)continue;
+      var t=mData[y][x];
+      if(t===0||t===2)mData[y][x]=7;
+    }
   }
 }
 function paintRoads(){
@@ -2337,7 +2353,7 @@ function spawnUnit(type,x,y,side){
   return u;
 }
 
-var tileCols=['#3a7a2a','#b0a070','#2a5a2a','#2a5a9a','#888','#666','#c8b878'];
+var tileCols=['#3a7a2a','#b0a070','#2a5a2a','#2a5a9a','#888','#666','#c8b878','#cbb27c'];
 function viewRotK(){var k=[0,2,1,3][mySide&3];return (k===undefined)?0:k;}
 function viewExt(){var hw=(W/2)/(camZ*0.5),hh=(H/2)/(camZ*0.25);var e=(hw+hh)/2;return{ex:Math.min(e,6000),ey:Math.min(e,6000)};}
 function rotToScreen(dx,dy,k){if(k===1)return{x:dy,y:-dx};if(k===2)return{x:-dx,y:-dy};if(k===3)return{x:-dy,y:dx};return{x:dx,y:dy};}
@@ -2518,6 +2534,7 @@ function draw(){
       }
       else if(t===4){cx.fillStyle='#5a6a7a';}
       else if(t===6){cx.fillStyle=seed<2?'#c8b878':'#d2c489';}
+      else if(t===7){cx.fillStyle=seed<2?'#cbb27c':'#d5bd88';}
       else{cx.fillStyle='#6a6a5a';}
       var _vis=isoTile(tx,ty);
       if(t===6&&_vis)drawHighTile(tx,ty);
@@ -4756,6 +4773,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
