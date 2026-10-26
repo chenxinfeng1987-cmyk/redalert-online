@@ -1,5 +1,5 @@
 'use strict';
-// 红色警戒 联机中转服务器
+// 钢铁前线 联机中转服务器
 // 职责：1) 静态托管游戏  2) WebSocket 消息转发（不跑游戏逻辑，房主权威）
 const http = require('http');
 const fs = require('fs');
@@ -8,7 +8,8 @@ const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 8000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const GAME_FILE = '红色警戒.html';
+const GAME_FILE = 'steel-front.html';
+const LEGACY_FILES = ['红色警戒.html'];
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -22,6 +23,11 @@ const MIME = {
 const server = http.createServer(function (req, res) {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/healthz') { res.writeHead(200); res.end('ok'); return; }
+  if (LEGACY_FILES.indexOf(urlPath.replace(/^\/+/, '')) >= 0) {
+    res.writeHead(301, { Location: '/' + GAME_FILE });
+    res.end();
+    return;
+  }
   if (urlPath === '/' || urlPath === '') urlPath = '/' + GAME_FILE;
 
   const safe = path.normalize(urlPath).replace(/^([.][.][\\/])+/, '').replace(/^[\\/]+/, '');
