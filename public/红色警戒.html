@@ -92,6 +92,38 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   .ic .p{font-size:7px}
   #selinfo{top:44px;bottom:auto;left:6px;min-width:108px;font-size:10px}
 }
+
+/* --- B1155 readability scale --- */
+#topbar{height:44px;font-size:15px;gap:12px}
+#map-sel{font-size:14px;padding:3px 8px}
+#netbtn{font-size:14px;padding:3px 11px}
+.ptab{font-size:14px;padding:7px 16px}
+#btToggle{font-size:15px;padding:7px 14px}
+#hint{font-size:12px;padding:4px 10px}
+#selinfo{font-size:13px;min-width:180px;padding:9px 13px}
+.ic{width:92px;padding:7px 4px}
+.ic .e{font-size:26px}
+.ic .n{font-size:12px}
+.ic .p{font-size:11px}
+.pbody{min-height:126px;max-height:196px;max-width:500px}
+#guide{font-size:15px;padding:10px 16px}
+#guide button{font-size:14px;padding:4px 12px}
+#gameover h2{font-size:38px}
+#gostats{font-size:15px}
+#panelBtn{font-size:15px;padding:10px 16px}
+#stpFab,#tornFab,#rallyFab{width:54px;height:54px;line-height:52px;font-size:24px}
+#stpFabNum,#tornNum,#rallyNum{font-size:13px}
+#stpFab{right:12px}
+#tornFab{right:12px}
+#rallyFab{right:12px}
+@media(max-height:600px){
+  #bottom .pbody{max-height:132px;min-height:0}
+  #topbar{height:38px;font-size:13px}
+  .ic{width:78px}
+  .ic .e{font-size:22px}
+  .ic .n{font-size:11px}
+  .ic .p{font-size:10px}
+}
 </style></head><body>
 <canvas id="c"></canvas><canvas id="minimap"></canvas>
 <div id="topbar">
@@ -130,7 +162,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1154</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1155</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -387,7 +419,7 @@ function drawBldImg(img,b,sp,sz,col){
 var cv=document.getElementById('c'),cx=cv.getContext('2d');
 var mm=document.getElementById('minimap'),mx2=mm.getContext('2d');
 var W,H;
-var camX=0,camY=0,camZ=0.9,camFollowId=0,camFollowG=null;
+var camX=0,camY=0,camZ=1.25,camFollowId=0,camFollowG=null;
 var sideGold=[5000,5000,5000,5000];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
@@ -417,8 +449,18 @@ var atkAlert=[],bolts=[];
 var neutrals=[];
 var screenFlash=0;
 
-function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();}
+function syncFabPos(){
+  var h=innerHeight;
+  var base=Math.min(214,Math.max(96,h*0.40));
+  var gap=58;
+  var f1=document.getElementById('stpFab'),f2=document.getElementById('tornFab'),f3=document.getElementById('rallyFab');
+  if(f1)f1.style.bottom=base+'px';
+  if(f2)f2.style.bottom=(base+gap)+'px';
+  if(f3)f3.style.bottom=(base+gap*2)+'px';
+}
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();syncFabPos();}
 resize();onresize=resize;
+setTimeout(syncFabPos,0);
 
 function handleMapUpload(e){
   var file=e.target.files[0];if(!file)return;
@@ -4907,6 +4949,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
