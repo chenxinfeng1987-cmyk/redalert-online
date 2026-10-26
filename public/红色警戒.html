@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1144</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1145</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -149,7 +149,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
     <div style="text-align:center;margin-top:10px"><button id="lb-close">关闭</button></div>
   </div>
 </div>
-<div id="gameover"><h2 id="got"></h2><p id="gom" style="color:#aaa"></p><button class="rb" onclick="location.reload()">再来一局</button></div>
+<div id="gameover"><h2 id="got"></h2><p id="gom" style="color:#aaa"></p><div id="gostats" style="color:#ccd;font-size:13px;line-height:1.8;margin:10px 0 14px"></div><button class="rb" onclick="location.reload()">再来一局</button></div>
 <script>
 var MW=4000,MH=3000,T=40,PI=Math.PI;
 var MW0=4000,MH0=3000,_mBase=null;
@@ -391,6 +391,7 @@ var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0,sklMode=false,sklU=null;
 var CG={};
+var STAT={kill:0,loss:0,inc:0,build:0,hkill:0,hlv:0};
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
@@ -471,6 +472,7 @@ function colorToTerrain(r,g,b){
 var _mver=0;
 function genMap(){
   _mver++;
+  STAT={kill:0,loss:0,inc:0,build:0,hkill:0,hlv:0};
   var isCustom=mType==='custom'&&mData.length>0;
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
   if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];torns=[];dogQ=[];_hqDown={};
@@ -1322,6 +1324,11 @@ function dealDmg(target,dmg){
       if(target.side===mySide)gold=sideGold[mySide];
     }
     var killer=findKiller(target.side,target);
+    if(target.spd!==undefined&&!target._statD){
+      target._statD=1;
+      if(target.side===mySide)STAT.loss++;
+      else if(killer&&killer.side===mySide){STAT.kill++;if(killer.type==='hero'||HERO5.indexOf(killer.type)>=0)STAT.hkill++;}
+    }
     if(killer&&killer.hp>0){
       killer.ex=(killer.ex||0)+50;
       killer.kills=(killer.kills||0)+1;
@@ -1388,6 +1395,7 @@ function fireCd(u){var r=u.rt;if(u.type==='hero'&&u._abs&&u._abs.length)r=Math.m
 // 单位升级
 function levelUpUnit(u){
   u.lv=(u.lv||0)+1;
+  if(u.side===mySide&&(u.type==='hero'||HERO5.indexOf(u.type)>=0))STAT.hlv=Math.max(STAT.hlv,u.lv);
   u.ex=0;
   u.kills=0;
   if(u.type==='heli'&&u.cap){u.cap+=2;}
@@ -1466,6 +1474,7 @@ function updateMiners(){
     if(m.st==='idle'){
       if(m.carry>0){
         if(dist(m,m.home)<60){
+          if(m.side===mySide)STAT.inc+=m.carry;
           sideGold[m.side]+=m.carry;
           if(m.side===mySide)gold=sideGold[mySide];
           m.carry=0;
@@ -1487,7 +1496,7 @@ function updateMiners(){
       }
     }else if(m.st==='return'){
       if(m.carry<=0){m.st='idle';return;}
-      if(dist(m,m.home)<60){sideGold[m.side]+=m.carry;if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
+      if(dist(m,m.home)<60){if(m.side===mySide)STAT.inc+=m.carry;sideGold[m.side]+=m.carry;if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
       else{moveTowMiner(m,m.home.x,m.home.y,m.spd);}
     }
   });
@@ -3414,7 +3423,7 @@ function onDown(e){
         var _gh={id:-1,type:bldMode,side:mySide,x:bldX,y:bldY,hp:_gd.hp,mhp:_gd.hp,ready:0,bt:120,sz:_gd.sz,atk:0,art:0,_ghost:1,t:Date.now()};
         NET.ghosts.push(_gh);blds.push(_gh);
       }
-      else{gold-=BD[bldMode].g;sideGold[mySide]=gold;var nb=addB(bldMode,bldX,bldY,mySide);nb.ready=0;nb.bt=120;
+      else{gold-=BD[bldMode].g;sideGold[mySide]=gold;STAT.build++;var nb=addB(bldMode,bldX,bldY,mySide);nb.ready=0;nb.bt=120;
         if(bldMode==='tunnel'){var tx2=~~(bldX/T),ty2=~~(bldY/T);for(var dx2=-1;dx2<=1;dx2++)for(var dy2=-1;dy2<=1;dy2++){if(ty2+dy2>=0&&ty2+dy2<mData.length&&tx2+dx2>=0&&tx2+dx2<mData[0].length)mData[ty2+dy2][tx2+dx2]=0;}}
       }
       bldMode=null;buildPanels();
@@ -4001,6 +4010,12 @@ function updateResUI(){
   er.innerHTML=html;
 }
 
+function renderStats(){
+  var el=document.getElementById('gostats');if(!el)return;
+  var sec=~~(gt/60),mm=~~(sec/60),ss=sec%60;
+  var rows=[['⏱ 对局时长',mm+':'+(ss<10?'0':'')+ss],['⚔ 击杀敌方单位',STAT.kill],['🌟 英雄击杀',STAT.hkill],['💀 损失己方单位',STAT.loss],['💰 采矿收入',STAT.inc+' 金'],['🏗 建造建筑',STAT.build],['📈 英雄最高等级',STAT.hlv?'Lv'+STAT.hlv:'未升级']];
+  el.innerHTML=rows.map(function(r){return '<div style="display:flex;justify-content:space-between;gap:24px;min-width:240px;border-bottom:1px solid rgba(255,255,255,.08)"><span>'+r[0]+'</span><b style="color:#fc4">'+r[1]+'</b></div>';}).join('');
+}
 function checkWin(){
   if(gOver)return;
   var alive=[];
@@ -4014,6 +4029,7 @@ function checkWin(){
     if(w===mySide){gOver=2;document.getElementById('got').textContent='🏆 胜利！';document.getElementById('gom').textContent='你是最后的赢家';}
     else{gOver=1;var winner=w>=0?SIDES[w].n:'未知';document.getElementById('got').textContent='💀 失败！';document.getElementById('gom').textContent=winner+'赢得了战争';}
     document.getElementById('gameover').style.display='flex';
+    renderStats();
   }
 }
 
@@ -4825,6 +4841,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
