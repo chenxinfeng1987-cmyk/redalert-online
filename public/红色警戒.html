@@ -94,17 +94,18 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 }
 
 /* --- B1155 readability scale --- */
-#topbar{height:44px;font-size:15px;gap:12px}
-#map-sel{font-size:14px;padding:3px 8px}
-#netbtn{font-size:14px;padding:3px 11px}
-.ptab{font-size:14px;padding:7px 16px}
-#btToggle{font-size:15px;padding:7px 14px}
+#topbar{height:42px;font-size:14px;gap:11px}
+#map-sel{font-size:13px;padding:3px 8px}
+#netbtn{font-size:13px;padding:3px 10px}
+.ptabs{flex-wrap:nowrap}
+.ptab{font-size:13px;padding:5px 12px;white-space:nowrap}
+#btToggle{font-size:14px;padding:6px 11px}
 #hint{font-size:12px;padding:4px 10px}
 #selinfo{font-size:13px;min-width:180px;padding:9px 13px}
-.ic{width:92px;padding:7px 4px}
-.ic .e{font-size:26px}
-.ic .n{font-size:12px}
-.ic .p{font-size:11px}
+.ic{width:88px;padding:6px 4px}
+.ic .e{font-size:24px}
+.ic .n{font-size:11px}
+.ic .p{font-size:10px}
 .pbody{min-height:126px;max-height:196px;max-width:500px}
 #guide{font-size:15px;padding:10px 16px}
 #guide button{font-size:14px;padding:4px 12px}
@@ -162,7 +163,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1155</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1156</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -4949,6 +4950,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
