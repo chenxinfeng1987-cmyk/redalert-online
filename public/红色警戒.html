@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>红色警戒 - 四国争霸</title>
+<title>钢铁前线 - 四国争霸</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 body{background:#111;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif}
@@ -113,7 +113,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
-<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="时空行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div><div id="rallyFab" onclick="doRally()" title="战吼：周围300px友军8秒攻击+43%、移速+25%（40秒冷却）">📣</div>
+<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="隙行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div><div id="rallyFab" onclick="doRally()" title="战吼：周围300px友军8秒攻击+43%、移速+25%（40秒冷却）">📣</div>
 <div id="bottom">
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
@@ -130,7 +130,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1152</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1154</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -157,44 +157,44 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 var MW=4000,MH=3000,T=40,PI=Math.PI;
 var MW0=4000,MH0=3000,_mBase=null;
 var SIDES=[
-  {n:'🇨🇳中国',fl:'🇨🇳',c:'#ff2222',dk:'#6a1a1a',lt:'#ff8866',wh:'#ffddcc'},
-  {n:'🇺🇸美国',fl:'🇺🇸',c:'#2266cc',dk:'#1a3a6a',lt:'#66aaff',wh:'#ddeeff'},
-  {n:'🇰🇷韩国',fl:'🇰🇷',c:'#22cc44',dk:'#1a5a2a',lt:'#66ff88',wh:'#ccffdd'},
-  {n:'🇯🇵日本',fl:'🇯🇵',c:'#dddddd',dk:'#888888',lt:'#ffffff',wh:'#ffffff'}
+  {n:'赤焰同盟',fl:'🔺',c:'#ff2222',dk:'#6a1a1a',lt:'#ff8866',wh:'#ffddcc'},
+  {n:'苍蓝联邦',fl:'🔷',c:'#2266cc',dk:'#1a3a6a',lt:'#66aaff',wh:'#ddeeff'},
+  {n:'翠野军团',fl:'🟢',c:'#22cc44',dk:'#1a5a2a',lt:'#66ff88',wh:'#ccffdd'},
+  {n:'白银公国',fl:'⚪',c:'#dddddd',dk:'#888888',lt:'#ffffff',wh:'#ffffff'}
 ];
 var BD={
-  hq:{n:'基地',g:0,hp:5000,ic:'🏛️',sz:3,rq:null,gn:0,us:0},
-  power:{n:'电厂',g:300,hp:400,ic:'⚡',sz:2,rq:'hq',gn:100,us:0},
+  hq:{n:'指挥中枢',g:0,hp:5000,ic:'🏛️',sz:3,rq:null,gn:0,us:0},
+  power:{n:'能量站',g:300,hp:400,ic:'⚡',sz:2,rq:'hq',gn:100,us:0},
   refinery:{n:'矿场',g:500,hp:600,ic:'⛏️',sz:2,rq:'power',gn:0,us:30},
-  barracks:{n:'兵营',g:400,hp:500,ic:'🏠',sz:2,rq:'refinery',gn:0,us:20},
-  warfactory:{n:'战车工厂',g:800,hp:800,ic:'🏭',sz:3,rq:'barracks',gn:0,us:40},
-  turret:{n:'机枪塔',g:300,hp:500,ic:'🔫',sz:1,rq:'barracks',gn:0,us:10},
+  barracks:{n:'训练营',g:400,hp:500,ic:'🏠',sz:2,rq:'refinery',gn:0,us:20},
+  warfactory:{n:'载具车间',g:800,hp:800,ic:'🏭',sz:3,rq:'barracks',gn:0,us:40},
+  turret:{n:'哨戒炮',g:300,hp:500,ic:'🔫',sz:1,rq:'barracks',gn:0,us:10},
   missile:{n:'导弹塔',g:500,hp:700,ic:'🚀',sz:1,rq:'warfactory',gn:0,us:20},
-  lab:{n:'实验室',g:600,hp:500,ic:'🔬',sz:2,rq:'power',gn:0,us:30},
+  lab:{n:'科技中心',g:600,hp:500,ic:'🔬',sz:2,rq:'power',gn:0,us:30},
   tunnel:{n:'地道',g:500,hp:600,ic:'🕳️',sz:2,rq:'refinery',gn:0,us:0},
-  nukesilo:{n:'核弹发射井',g:3000,hp:1500,ic:'☢️',sz:3,rq:'lab',gn:0,us:80},
-  shipyard:{n:'船厂',g:800,hp:800,ic:'🚢',sz:3,rq:'refinery',gn:0,us:40,sea:1},
+  nukesilo:{n:'轨道打击井',g:3000,hp:1500,ic:'☢️',sz:3,rq:'lab',gn:0,us:80},
+  shipyard:{n:'船坞',g:800,hp:800,ic:'🚢',sz:3,rq:'refinery',gn:0,us:40,sea:1},
   tower:{n:'中央高塔',g:0,hp:2500,ic:'🗼',sz:2,rq:null,gn:0,us:0},
 };
 var UD={
   rifle:{n:'步枪兵',g:100,hp:80,atk:8,spd:2.4,rng:100,rt:25,ar:'lt',rq:'barracks',ex:0,mx:100},
   rocket:{n:'火箭兵',g:200,hp:60,atk:35,spd:1.9,rng:150,rt:60,ar:'air',rq:'barracks',ex:0,mx:100},
   engineer:{n:'工程师',g:300,hp:50,atk:0,spd:2.05,rng:30,rt:0,ar:'lt',rq:'barracks',ex:0,mx:100},
-  spy:{n:'间谍',g:600,hp:100,atk:0,spd:2.6,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
-  dog:{n:'警犬',g:300,hp:80,atk:30,spd:3.45,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
+  spy:{n:'渗透者',g:600,hp:100,atk:0,spd:2.6,rng:0,rt:0,ar:'lt',rq:'barracks',ex:0,mx:50},
+  dog:{n:'警戒犬',g:300,hp:80,atk:30,spd:3.45,rng:40,rt:25,ar:'lt',rq:'barracks',ex:0,mx:50},
   light:{n:'轻型坦克',g:500,hp:350,atk:20,spd:2.75,rng:130,rt:40,ar:'hv',rq:'warfactory',ex:0,mx:200},
   heavy:{n:'重型坦克',g:900,hp:800,atk:40,spd:1.7,rng:150,rt:55,ar:'hv',rq:'warfactory',ex:0,mx:300},
   artillery:{n:'火炮',g:700,hp:200,atk:70,spd:1.2,rng:280,rt:120,ar:'hv',rq:'warfactory',ex:0,mx:250},
   heli:{n:'武装直升机',g:1200,hp:300,atk:50,spd:5.5,rng:180,rt:50,ar:'air',rq:'warfactory',ex:0,mx:150,cap:4},
   ship:{n:'战舰',g:1500,hp:600,atk:45,spd:3.45,rng:400,rt:50,ar:'hv',rq:'shipyard',ex:0,mx:200,cap:20,water:1},
-  hero:{n:'全能英雄',g:2500,hp:300,atk:80,spd:2.6,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
-  tesla:{n:'磁暴兵',g:400,hp:90,atk:30,spd:1.7,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
+  hero:{n:'统御者',g:2500,hp:300,atk:80,spd:2.6,rng:160,rt:35,ar:'hv',rq:'lab',ex:0,mx:500},
+  tesla:{n:'电弧兵',g:400,hp:90,atk:30,spd:1.7,rng:130,rt:70,ar:'lt',rq:'barracks',ex:0,mx:100},
   apc:{n:'运兵车',g:600,hp:450,atk:25,spd:2.9,rng:140,rt:45,ar:'hv',rq:'warfactory',ex:0,mx:200,cap:4},
   carrier:{n:'航母',g:2500,hp:1200,atk:55,spd:2.3,rng:280,rt:70,ar:'air',rq:'shipyard',ex:0,mx:300,cap:30,water:1},
-  tanya:{n:'谭雅·猎杀者',g:1200,hp:180,atk:60,spd:2.2,rng:130,rt:55,ar:'lt',rq:'barracks',ex:0,mx:300},
-  sniper:{n:'幽灵狙击手',g:900,hp:70,atk:90,spd:2.0,rng:340,rt:90,ar:'lt',rq:'barracks',ex:0,mx:250},
-  weather:{n:'气象大师',g:1000,hp:160,atk:30,spd:2.1,rng:200,rt:150,rq:'barracks',ex:0,mx:150},
-  stalker:{n:'时空行者',g:1500,hp:220,atk:55,spd:2.3,rng:140,rt:45,ar:'lt',rq:'barracks',ex:0,mx:100}
+  tanya:{n:'赤翎',g:1200,hp:180,atk:60,spd:2.2,rng:130,rt:55,ar:'lt',rq:'barracks',ex:0,mx:300},
+  sniper:{n:'幽隼',g:900,hp:70,atk:90,spd:2.0,rng:340,rt:90,ar:'lt',rq:'barracks',ex:0,mx:250},
+  weather:{n:'风语者',g:1000,hp:160,atk:30,spd:2.1,rng:200,rt:150,rq:'barracks',ex:0,mx:150},
+  stalker:{n:'隙行者',g:1500,hp:220,atk:55,spd:2.3,rng:140,rt:45,ar:'lt',rq:'barracks',ex:0,mx:100}
 };
 function unitCost(d,side){
   side=(side===undefined)?mySide:side;
@@ -1369,10 +1369,10 @@ var heroR=[];var _hqDown={};var HERO5=['tanya','sniper','weather','stalker'];var
 var HEROIT={tanya:'🔫',sniper:'🎯',weather:'🌪️'};
 function heroHas(side,type){var ok=false;for(var i=0;i<units.length;i++){var u=units[i];if(u.side===side&&u.type===type&&u.hp>0){ok=true;break;}}if(!ok)for(var j=0;j<heroR.length;j++){var h=heroR[j];if(h.side===side&&h.type===type){ok=true;break;}}return ok;}
 function heroWaitT(side,type){for(var j2=0;j2<heroR.length;j2++){var h2=heroR[j2];if(h2.side===side&&h2.type===type)return h2.t-gt;}return 0;}
-var HERO_DESC={hero:'战略单位：治疗光环（每10秒恢复周围友军150血）。主动·📣战吼：右侧📣按钮，给300px内友军8秒攻击+43%、移速+25%，冷却40秒。击杀敌方英雄只偷学【被动】能力，可叠加、无上限：谭雅=一枪秒兵；狙击手=远程狙击；气象大师=风压推开；时空行者=受击后跳退。',
+var HERO_DESC={hero:'战略单位：治疗光环（每10秒恢复周围友军150血）。主动·📣战吼：右侧📣按钮，给300px内友军8秒攻击+43%、移速+25%，冷却40秒。击杀敌方英雄只偷学【被动】能力，可叠加、无上限：赤翎=一枪秒兵；幽隼=远程狙击；风语者=风压推开；隙行者=受击后跳退。',
  tanya:'一击必杀：贴脸（射程130）对任何敌方士兵/兵种一发毙命（含直升机）；打建筑则是普通炮击。移速快。',
  sniper:'超远程单发90伤，命中附带3秒压制：目标不能移动不能开火。未开火时敌人看不见它（隐身），开火后1.5秒现形。',
- weather:'被动·风压射击：命中把敌人直接推离70px（2.5秒一发）。主动·台风（3级解锁）：点右侧🌪️按钮再点地面召唤（气象大师附近280px内），冷却5秒；6级起台风持续破坏建筑；12级一次召唤3个台风。被动·清风拂面（只解冻我方）：定期吹散我方身上的控制。全能英雄只能偷学它的风压推开。',
+ weather:'被动·风压射击：命中把敌人直接推离70px（2.5秒一发）。主动·台风（3级解锁）：点右侧🌪️按钮再点地面召唤（风语者附近280px内），冷却5秒；6级起台风持续破坏建筑；12级一次召唤3个台风。被动·清风拂面（只解冻我方）：定期吹散我方身上的控制。统御者只能偷学它的风压推开。',
  stalker:'主动·瞬移：点右下角🌀按钮再点地图，把周围200px友军一起传送过去，落点130px内敌人掉120血，冷却20秒。被动·残影后跃：被打中时自动向远离敌人的方向跳退90px（3秒一次，可躲开导弹/狙击）。'};
 function heroDesc(type){return HERO_DESC[type]||'';}
 function _abEmoji(t){return HEROIT[t]||'';}
@@ -1667,13 +1667,13 @@ function updateUnits(){
       }
       u._mList=_nl;
     }
-    // ===== 警犬：侦测附近敌方间谍 =====
+    // ===== 警戒犬：侦测附近敌方渗透者 =====
     if(u.type==='dog'&&!u.riding){
       for(var i=0;i<units.length;i++){var e=units[i];
         if(e.type==='spy'&&e.side!==u.side&&e.hp>0&&dist(u,e)<220)e._rev=gt;}
     }
 
-    // ===== 间谍：伪装潜入，策反敌方建筑（基地除外） =====
+    // ===== 渗透者：伪装潜入，策反敌方建筑（基地除外） =====
     if(u.type==='spy'&&!u.riding){
       if(u._dSide===undefined){
         var nbs=null,nd=1e9;
@@ -2465,36 +2465,26 @@ function sideDk(side){return SIDES[side]?SIDES[side].dk:'#444';}
 function sideLt(side){return SIDES[side]?SIDES[side].lt:'#aaa';}
 function drawFlag(x,y,w,h,side){
   cx.save();
-  cx.lineWidth=1;
+  var _fg=['#ff2222','#3a7bff','#33d95a','#e8e8f0'][side]||'#ccc';
+  var _bg=['#2a0c0c','#0b1730','#0a2412','#232330'][side]||'#1a1a1a';
+  cx.fillStyle=_bg;cx.fillRect(x,y,w,h);
+  cx.fillStyle=_fg;
+  var ccx=x+w/2,ccy=y+h/2,r=Math.min(w,h)*0.33;
+  cx.beginPath();
   if(side===0){
-    cx.fillStyle='#de2910';cx.fillRect(x,y,w,h);
-    cx.fillStyle='#ffde00';
-    cx.beginPath();cx.arc(x+w*0.22,y+h*0.35,Math.max(2,w*0.13),0,PI*2);cx.fill();
-    cx.beginPath();cx.arc(x+w*0.45,y+h*0.18,Math.max(1,w*0.06),0,PI*2);cx.fill();
-    cx.beginPath();cx.arc(x+w*0.55,y+h*0.35,Math.max(1,w*0.06),0,PI*2);cx.fill();
-    cx.beginPath();cx.arc(x+w*0.45,y+h*0.52,Math.max(1,w*0.06),0,PI*2);cx.fill();
-    cx.beginPath();cx.arc(x+w*0.32,y+h*0.62,Math.max(1,w*0.06),0,PI*2);cx.fill();
+    cx.moveTo(ccx,ccy-r);cx.lineTo(ccx+r*0.95,ccy+r*0.65);cx.lineTo(ccx-r*0.95,ccy+r*0.65);
   }else if(side===1){
-    for(var i=0;i<7;i++){cx.fillStyle=i%2?'#ffffff':'#b22234';cx.fillRect(x,y+h*i/7,w,h/7+0.5);}
-    cx.fillStyle='#3c3b6e';cx.fillRect(x,y,w*0.45,h*0.55);
-    cx.fillStyle='#fff';
-    for(var sy=0;sy<3;sy++)for(var sx=0;sx<3;sx++){
-      cx.fillRect(x+w*0.08+sx*w*0.12,y+h*0.08+sy*h*0.15,Math.max(1,w*0.05),Math.max(1,h*0.06));
-    }
+    cx.moveTo(ccx,ccy-r);cx.lineTo(ccx+r,ccy);cx.lineTo(ccx,ccy+r);cx.lineTo(ccx-r,ccy);
   }else if(side===2){
-    cx.fillStyle='#ffffff';cx.fillRect(x,y,w,h);
-    var cy=y+h*0.5,cr=Math.max(2,h*0.3);
-    cx.fillStyle='#cd2e3a';cx.beginPath();cx.arc(x+w*0.5,cy,cr,0,PI);cx.fill();
-    cx.fillStyle='#0047a0';cx.beginPath();cx.arc(x+w*0.5,cy,cr,PI,0);cx.fill();
-    cx.fillStyle='#cd2e3a';cx.beginPath();cx.arc(x+w*0.5+w*0.12,cy-cr*0.35,cr*0.45,0,PI*2);cx.fill();
-    cx.fillStyle='#0047a0';cx.beginPath();cx.arc(x+w*0.5-w*0.12,cy+cr*0.35,cr*0.45,0,PI*2);cx.fill();
+    for(var i6=0;i6<6;i6++){var a6=PI/6+i6*PI/3,px6=ccx+Math.cos(a6)*r,py6=ccy+Math.sin(a6)*r;if(i6===0)cx.moveTo(px6,py6);else cx.lineTo(px6,py6);}
   }else{
-    cx.fillStyle='#ffffff';cx.fillRect(x,y,w,h);
-    cx.fillStyle='#bc002d';cx.beginPath();cx.arc(x+w*0.5,y+h*0.5,Math.max(2,h*0.3),0,PI*2);cx.fill();
+    for(var s5=0;s5<10;s5++){var a5=-PI/2+s5*PI/5,rr5=(s5%2===0)?r:r*0.42,px5=ccx+Math.cos(a5)*rr5,py5=ccy+Math.sin(a5)*rr5;if(s5===0)cx.moveTo(px5,py5);else cx.lineTo(px5,py5);}
   }
-  cx.strokeStyle='rgba(0,0,0,0.35)';cx.strokeRect(x,y,w,h);
+  cx.closePath();cx.fill();
+  cx.strokeStyle='rgba(255,255,255,0.45)';cx.lineWidth=1;cx.strokeRect(x+0.5,y+0.5,w-1,h-1);
   cx.restore();
 }
+
 
 function whaleFree(x,y){
   if(x<60||x>MW-60||y<60||y>MH-60)return false;
@@ -3278,7 +3268,7 @@ function draw(){
     cx.beginPath();cx.arc(tp.x,tp.y,18*camZ+Math.sin(gt*0.2)*4,0,PI*2);cx.stroke();
     cx.beginPath();cx.moveTo(tp.x-10,tp.y);cx.lineTo(tp.x+10,tp.y);cx.moveTo(tp.x,tp.y-10);cx.lineTo(tp.x,tp.y+10);cx.stroke();
     cx.fillStyle='#eee';cx.font='bold '+(11*camZ)+'px sans-serif';cx.textAlign='center';
-    cx.fillText('☢️ 核弹来袭!',tp.x,tp.y-28*camZ);
+    cx.fillText('☢️ 轨道打击来袭!',tp.x,tp.y-28*camZ);
     cx.save();cx.translate(sp.x,sp.y);
     var ang=Math.atan2(tp.y-sp.y,tp.x-sp.x);
     cx.rotate(ang);
@@ -3506,7 +3496,7 @@ function onMove(e){
     cx.beginPath();cx.arc(_tc5.x,_tc5.y,70*camZ,0,PI*2);cx.stroke();
     cx.fillStyle=_inR?'rgba(120,220,255,0.12)':'rgba(255,80,80,0.12)';cx.beginPath();cx.arc(_tc5.x,_tc5.y,70*camZ,0,PI*2);cx.fill();
     cx.fillStyle=_inR?'#8df':'#f88';cx.font='bold '+(12*camZ)+'px sans-serif';cx.textAlign='center';
-    cx.fillText(_inR?'🌪️ 点击召唤台风':'⚠ 超出范围（靠近气象大师）',_tc5.x,_tc5.y-80*camZ);
+    cx.fillText(_inR?'🌪️ 点击召唤台风':'⚠ 超出范围（靠近风语者）',_tc5.x,_tc5.y-80*camZ);
   }
   if(bldMode||paraMode){var wp=scrToWorld(p.x,p.y);bldX=wp.x;bldY=wp.y;}
   if(mdn){var dx=p.x-dsx,dy=p.y-dsy;if(Math.abs(dx)+Math.abs(dy)>5)isDrag=true;if(isDrag)sBox={x1:dsx,y1:dsy,x2:p.x,y2:p.y};}
@@ -3628,7 +3618,7 @@ var _rallyR=300;
 function doRally(){
   var h=null;
   for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0&&!u.riding){if(!h||(u.skillCd||0)<(h.skillCd||0))h=u;}}
-  if(!h){alert('全能英雄不在场');return;}
+  if(!h){alert('统御者不在场');return;}
   if((h.skillCd||0)>0){alert('战吼冷却中：'+Math.ceil(h.skillCd/60)+'秒');return;}
   h.skillCd=2400;h.skillMax=2400;h._sklT=gt;
   for(var j=0;j<units.length;j++){var a=units[j];if(a.side!==mySide||a.hp<=0)continue;if(dist(a,h)<=_rallyR)a._rally=gt+480;}
@@ -3646,7 +3636,7 @@ function toggleTornado(){
     if(u.type==='weather'&&u.lv>=3)_okT=true;
     if(_okT&&(!c||(u._tornCd||0)<(c._tornCd||0)))c=u;
   }
-  if(!c){alert('没有可用的台风（气象大师3级解锁，或全能英雄12级偷学气象技能）');return;}
+  if(!c){alert('没有可用的台风（风语者3级解锁，或统御者12级偷学气象技能）');return;}
   var pbs=document.getElementById('tornFab');
   if(_tornMode&&_tornU===c){_tornMode=false;_tornU=null;if(pbs)pbs.classList.remove('stpArmed');return;}
   if(c._tornCd&&c._tornCd>gt){alert('台风冷却中：'+Math.ceil((c._tornCd-gt)/60)+'秒');return;}
@@ -3658,7 +3648,7 @@ function doTornado(wx,wy){
   var u=_tornU;
   if((u._tornCd||0)>gt){_tornMode=false;_tornU=null;return;}
   wx=Math.max(40,Math.min(MW-40,wx));wy=Math.max(40,Math.min(MH-40,wy));
-  if(dist({x:wx,y:wy},u)>_TORN_R){alert('只能在气象大师附近（蓝圈内）召唤台风');_tornMode=false;_tornU=null;var _pbz=document.getElementById('tornFab');if(_pbz)_pbz.classList.remove('stpArmed');return;}
+  if(dist({x:wx,y:wy},u)>_TORN_R){alert('只能在风语者附近（蓝圈内）召唤台风');_tornMode=false;_tornU=null;var _pbz=document.getElementById('tornFab');if(_pbz)_pbz.classList.remove('stpArmed');return;}
   var lv=u.lv||1,_bl9=(u.type==='hero')?true:(lv>=6);
   var _tN=lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
   for(var tq2=0;tq2<_tN;tq2++)torns.push({x:wx+_to2[tq2][0],y:wy+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:_bl9});
@@ -3676,7 +3666,7 @@ function _warpUnit(readyOnly){
 }
 function toggleStalker(){
   var s2=_warpUnit(true);
-  if(!s2){alert('没有就绪的时空行者');return;}
+  if(!s2){alert('没有就绪的隙行者');return;}
   if(s2.skillCd>0){alert('传送冷却中');return;}
   if(sklMode&&sklU===s2){sklMode=false;sklU=null;return;}
   sklU=s2;sklMode=true;paraMode=false;bldMode=null;
@@ -3927,7 +3917,7 @@ function buildPanels_update(){
     for(var c7=0;c7<units.length;c7++){var d7=units[c7];if(d7.type==='stalker'&&d7.side===mySide&&d7.hp>0){_stW=d7;break;}}
     if(sklMode){_wb.innerHTML='✋ 点击地图落点';_wb.style.borderColor='#0f0';_wb.style.color='#0f0';}
     else{_wb.style.borderColor='#a8f';_wb.style.color='#c8f';
-      _wb.innerHTML=_stW?(_stW.skillCd>0?'⏳ 瞬移冷却 '+Math.ceil(_stW.skillCd/60)+'s':'🌀 瞬移 · 就绪（点击）'):'💀 时空行者阵亡';}
+      _wb.innerHTML=_stW?(_stW.skillCd>0?'⏳ 瞬移冷却 '+Math.ceil(_stW.skillCd/60)+'s':'🌀 瞬移 · 就绪（点击）'):'💀 隙行者阵亡';}
   }
   var cards=document.querySelectorAll('#pb .ic');
   var keys=Object.keys(BD).filter(function(k){return k!=='hq';});
@@ -4038,7 +4028,7 @@ function updateSelInfo(){
   }else if(selB){
     var d2=BD[selB.type];
     el.style.display=(!mob||gt<_selHide)?'block':'none';
-    el.innerHTML='<b>'+d2.n+'</b>'+(selB.type==='nukesilo'&&selB.nukeCd?'<br>☢️ 核弹: '+Math.ceil(selB.nukeCd/60)+'s':'')+(mob?'':' ['+SIDES[selB.side].n+']')+'<br>HP: '+selB.hp+'/'+selB.mhp+'<div class="hb"><div class="hf" style="width:'+(selB.hp/BD[selB.type].hp*100)+'%"></div></div>';
+    el.innerHTML='<b>'+d2.n+'</b>'+(selB.type==='nukesilo'&&selB.nukeCd?'<br>☢️ 轨道打击: '+Math.ceil(selB.nukeCd/60)+'s':'')+(mob?'':' ['+SIDES[selB.side].n+']')+'<br>HP: '+selB.hp+'/'+selB.mhp+'<div class="hb"><div class="hf" style="width:'+(selB.hp/BD[selB.type].hp*100)+'%"></div></div>';
   }else{el.style.display='none';}
 }
 
@@ -4056,7 +4046,7 @@ function updateResUI(){
   er.innerHTML=html;
 }
 
-var GUIDE_TXT=['第一步：在「🏗 建筑」里建造 兵营 和 战车工厂（放在基地附近）','第二步：在「⚔ 兵种」里训练一个士兵','第三步：把部队派到土黄色的⛰高地上（射程+20%，受伤-15%）'];
+var GUIDE_TXT=['第一步：在「🏗 建筑」里建造 训练营 和 载具车间（放在基地附近）','第二步：在「⚔ 兵种」里训练一个士兵','第三步：把部队派到土黄色的⛰高地上（射程+20%，受伤-15%）'];
 var _guideStep=0,_guideDone=false,_guideEnd=0;
 try{_guideDone=localStorage.getItem('ra_guide_done')==='1';}catch(e){}
 function guideHide(){
@@ -4751,7 +4741,7 @@ if(location.search.indexOf('test=touch')>=0){
     selU=[];selB=null;bldMode=null;updateSelInfo();
     tap(W/2,H/2);
     res.selectHq=(selB===hq&&selU.length===0);
-    // 2) 放置电厂
+    // 2) 放置能量站
     selU=[];selB=null;updateSelInfo();
     var spot=null;
     for(var rr=180;rr<=560&&!spot;rr+=40){
@@ -4794,7 +4784,7 @@ if(location.search.indexOf('test=v2')>=0){
     res.techTeslaAfterLab=techUnlocked('tesla',mySide);
     var _lix=blds.indexOf(_lab);if(_lix>=0)blds.splice(_lix,1);
     var foeman=(mySide+1)%4;
-    // ---- 海军：船厂铺设/水上生成/舰载机子弹 ----
+    // ---- 海军：船坞铺设/水上生成/舰载机子弹 ----
     var _w3=null;
     for(var y3=2;y3<mData.length-2&&!_w3;y3++)for(var x3=2;x3<mData[0].length-2;x3++){
       if(mData[y3][x3]===3&&mData[y3-1][x3]===3&&mData[y3+1][x3]===3&&mData[y3][x3-1]===3&&mData[y3][x3+1]===3
@@ -4863,7 +4853,7 @@ if(location.search.indexOf('test=v2')>=0){
     for(var f2=0;f2<340;f2++){updateUnits();updateBullets();for(var bb=0;bb<bullets.length;bb++)if(bullets[bb].tesla)_tb++;}
     res.teslaChain=(e1.hp<=0)&&(e2.hp<=0);
     res.teslaNoShoot=(_tb===0);
-    // ---- 狙击手压制 & 气象大师解冻被动 ----
+    // ---- 狙击手压制 & 风语者解冻被动 ----
     var sfX=hq.x+560,sfY=hq.y+40;
     var sn1=spawnUnit('sniper',sfX,sfY,mySide);
     var et7=spawnUnit('rifle',sfX-220,sfY,foeman);
@@ -4917,6 +4907,8 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
+
 
 
 
