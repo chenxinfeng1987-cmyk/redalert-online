@@ -95,6 +95,12 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 
 /* --- B1155 readability scale --- */
 #topbar{height:38px;font-size:13px;gap:9px}
+.pbody.on{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;align-content:start}
+.pbody{max-width:420px}
+.ic{width:auto;min-width:0}
+#ph .ic{width:auto}
+#ph{max-width:420px}
+#warpBtn{grid-column:1 / -1;width:auto !important}
 #map-sel{font-size:12px;padding:2px 7px}
 #netbtn{font-size:12px;padding:2px 9px}
 .ptabs{flex-wrap:nowrap}
@@ -102,13 +108,11 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #btToggle{font-size:13px;padding:5px 9px}
 #hint{font-size:11px;padding:3px 8px}
 #selinfo{font-size:12px;min-width:170px;padding:8px 12px}
-.ic{width:74px;padding:4px 2px}
-.ic .e{font-size:19px}
-.ic .n{font-size:10px}
-.ic .p{font-size:9px}
-#ph .ic{width:70px}
-#ph{max-width:460px}
-.pbody{min-height:110px;max-height:176px;max-width:460px}
+.ic{padding:4px 2px}
+.ic .e{font-size:18px}
+.ic .n{font-size:9px}
+.ic .p{font-size:8px}
+.pbody{min-height:104px;max-height:170px}
 #guide{font-size:14px;padding:8px 14px}
 #guide button{font-size:14px;padding:4px 12px}
 #gameover h2{font-size:38px}
@@ -165,7 +169,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1158</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1159</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -2583,7 +2587,7 @@ function drawWhales(cx){
 function draw(){
   cx.fillStyle='#0a2a4a';cx.fillRect(0,0,W,H);
   var esc=8/camZ;
-  if(mptrIn){
+  if(mptrIn&&!bldMode&&!paraMode&&!sklMode&&!_tornMode&&mpy<=uiBottomTop(mpx)){
     var mvx=0,mvy=0;
     if(mpx<W*0.05)mvx-=1;else if(mpx>W*0.95)mvx+=1;
     if(mpy<50)mvy-=1;else if(mpy>H-180)mvy+=1;
@@ -4952,6 +4956,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
