@@ -127,7 +127,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1143</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1144</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -3124,6 +3124,28 @@ function draw(){
     if(u.lv){cx.fillStyle='#ff0';cx.font='bold '+(8*camZ)+'px sans-serif';cx.textAlign='left';cx.fillText('Lv'+u.lv,sp.x+sz+2,sp.y-sz+oy);}
     if(u.hp<u.mhp){var _hbz=(u.type==='hero'||u.type==='spy')?3.6:2.0;cx.fillStyle='#f00';cx.fillRect(sp.x-sz,sp.y-sz*_hbz+oy,sz*2*(u.hp/u.mhp),3*camZ);}
   });
+  units.forEach(function(u){
+    if(u.hp<=0||u.riding||u._tin||u.side!==mySide)return;
+    var _bfx=1;
+    var sp2=worldToScr(u.x,u.y),sz2=(u.type==='hero'||HERO5.indexOf(u.type)>=0)?10.5*camZ:7.5*camZ;
+    if(u._rally&&u._rally>gt){
+      var _ra=0.55+0.3*Math.sin(gt*0.2+u.id);
+      cx.strokeStyle='rgba(255,210,60,'+_ra.toFixed(2)+')';cx.lineWidth=2*camZ;
+      cx.beginPath();cx.ellipse(sp2.x,sp2.y+2*camZ,sz2*1.15,sz2*0.5,0,0,PI*2);cx.stroke();
+    }
+    var _cdCur=-1,_cdMax=1,_cdCol='#bbb';
+    if(u.type==='stalker'){_cdCur=u.skillCd||0;_cdMax=u.skillMax||1200;_cdCol='#b9f';}
+    else if(u.type==='hero'){_cdCur=u.skillCd||0;_cdMax=u.skillMax||2400;_cdCol='#fc4';}
+    else if(u.type==='weather'&&u.lv>=3){_cdCur=Math.max(0,(u._tornCd||0)-gt);_cdMax=300;_cdCol='#8df';}
+    if(_cdCur>=0){
+      var _by=sp2.y-sz2*2.4,_bw=sz2*2.2,_bh=3.2*camZ;
+      cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(sp2.x-_bw/2,_by,_bw,_bh);
+      var _fill=_cdCur<=0?1:Math.max(0,1-_cdCur/_cdMax);
+      cx.fillStyle=_cdCur<=0?'#5f5':_cdCol;
+      cx.fillRect(sp2.x-_bw/2,_by,_bw*_fill,_bh);
+      if(_cdCur<=0){cx.strokeStyle='rgba(120,255,120,0.8)';cx.lineWidth=1;cx.strokeRect(sp2.x-_bw/2-0.5,_by-0.5,_bw+1,_bh+1);}
+    }
+  });
   corpses.forEach(function(c){
     var img=uiGet(c.type,'_d');if(!img)return;
     var sp=worldToScr(c.x,c.y),sz=7.5*camZ;
@@ -4803,6 +4825,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
