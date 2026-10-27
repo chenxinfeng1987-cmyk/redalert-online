@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1165</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1166</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -4410,17 +4410,18 @@ function updateHeroSkill(){
       parts.push({x:u.x+Math.cos(gt*0.1)*30,y:u.y+Math.sin(gt*0.1)*30,vx:0,vy:0,life:10,col:'#0f0',sz:3});
   });
 }
-function tick(){
+function simOnce(){
   if(gOn&&!gOver&&!_artReady){
     _artWait++;
     if(_artWait>600)_artReady=1;
-    draw();
-    requestAnimationFrame(tick);return;
+    return;
   }
-  if(gOn&&!gOver){
-    if(NET.mode==='guest'){
-      guestFrame();
-    }else{
+  if(!(gOn&&!gOver))return;
+  if(NET.mode==='guest'){
+    guestFrame();
+    return;
+  }
+  {
     gt++;
     updateWhales();
     for(var ci=corpses.length-1;ci>=0;ci--){corpses[ci].t++;if(corpses[ci].t>=40)corpses.splice(ci,1);}
@@ -4483,8 +4484,20 @@ function tick(){
     }
     if(_towerT&&gt>=_towerT)spawnTower();
     if(NET.mode==='host'){NET.snapAcc++;if(NET.snapAcc>=NET.snapEvery){NET.snapAcc=0;hostSnapshot();}}
-    }
   }
+}
+var _simAcc=0,_simLast=0,_simFps=0,_simFrames=0,_simT0=0;
+function tick(ts){
+  var _now=(typeof ts==='number'&&ts>0)?ts:performance.now();
+  if(!_simLast)_simLast=_now;
+  var _dt=_now-_simLast;
+  _simLast=_now;
+  if(_dt<0)_dt=0;
+  if(_dt>120)_dt=120;
+  _simAcc+=_dt;
+  var _steps=0,_max=(NET.mode==='guest')?2:3;
+  while(_simAcc>=16.6667&&_steps<_max){_simAcc-=16.6667;_steps++;simOnce();}
+  if(!gOn||gOver||!_artReady)_simAcc=0;
   draw();
   requestAnimationFrame(tick);
 }
@@ -5072,6 +5085,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
