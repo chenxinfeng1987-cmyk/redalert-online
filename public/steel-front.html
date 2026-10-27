@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1164</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1165</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -2340,6 +2340,23 @@ function runAI(side){
       if(_d2<_ed2){_ed2=_d2;_eu2=e2;}
     }
     if(_eh2&&(h2.lv||0)<5)_eu2=_eh2;
+    if(DIFF==='hard'){
+      // 补刀：优先追猎残血目标（英雄优先），范围放宽到 900
+      var _wk9=null,_wkd9=900;
+      for(var wi9=0;wi9<units.length;wi9++){var wu9=units[wi9];
+        if(wu9.side===side||wu9.hp<=0||wu9.riding||wu9.bt!==undefined)continue;
+        if(wu9.hp/(wu9.mhp||1)>0.35)continue;
+        var wd9=dist(h2,wu9);
+        if(wd9>_wkd9)continue;
+        var _wpri=(wu9.type==='hero'||HERO5.indexOf(wu9.type)>=0)?0:1;
+        if(!_wk9){_wk9=wu9;_wkd9=wd9;}
+        else{
+          var _opri=(_wk9.type==='hero'||HERO5.indexOf(_wk9.type)>=0)?0:1;
+          if(_wpri<_opri||(_wpri===_opri&&wd9<_wkd9)){_wk9=wu9;_wkd9=wd9;}
+        }
+      }
+      if(_wk9)_eu2=_wk9;
+    }
     if(_eu2){
       if(!h2.tgt||h2.tgt.hp<=0){h2.tgt=_eu2;h2.ord='a';h2.tx=undefined;h2.ty=undefined;h2._path=null;}
     }else if(_cn2>=2&&h2.hp>h2.mhp*0.6){
@@ -5055,6 +5072,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
