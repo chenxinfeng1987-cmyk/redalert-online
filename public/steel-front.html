@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1163</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1164</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -2331,10 +2331,15 @@ function runAI(side){
       continue;
     }
     var _eu2=null,_ed2=(ai.atkOn?700:520);
+    var _eh2=null,_ehd2=780;
     for(var ei2=0;ei2<units.length;ei2++){var e2=units[ei2];
       if(e2.side===side||e2.hp<=0||e2.riding||e2.bt!==undefined)continue;
-      var _d2=dist(h2,e2);if(_d2<_ed2){_ed2=_d2;_eu2=e2;}
+      var _d2=dist(h2,e2);
+      var _isHE=(e2.type==='hero'||HERO5.indexOf(e2.type)>=0);
+      if(_isHE){ if(_d2<_ehd2){_ehd2=_d2;_eh2=e2;} }
+      if(_d2<_ed2){_ed2=_d2;_eu2=e2;}
     }
+    if(_eh2&&(h2.lv||0)<5)_eu2=_eh2;
     if(_eu2){
       if(!h2.tgt||h2.tgt.hp<=0){h2.tgt=_eu2;h2.ord='a';h2.tx=undefined;h2.ty=undefined;h2._path=null;}
     }else if(_cn2>=2&&h2.hp>h2.mhp*0.6){
@@ -2354,6 +2359,55 @@ function runAI(side){
       var _ehq9=blds.find(function(b){return b.type==='hq'&&b.side!==side&&b.hp>0;});
       if(_ehq9&&_hqOwn2&&dist(_hqOwn2,_ehq9)>180){
         h2.ord='m';h2.tx=_hqOwn2.x+(_ehq9.x-_hqOwn2.x)*0.45;h2.ty=_hqOwn2.y+(_ehq9.y-_hqOwn2.y)*0.45;h2._path=null;
+      }
+    }
+    if(DIFF==='hard'){
+      // 风语者：台风（3级起，敌人聚集或拆建筑）
+      if(h2.type==='weather'&&(h2.lv||0)>=3&&!(h2._tornCd>gt)){
+        var _tn9=0,_tx9=0,_ty9=0,_tb9=0,_bx9=0,_by9=0;
+        for(var tu9=0;tu9<units.length;tu9++){var uu9=units[tu9];
+          if(uu9.side===side||uu9.hp<=0||uu9.riding)continue;
+          if(Math.abs(uu9.x-h2.x)<=270&&Math.abs(uu9.y-h2.y)<=270){_tn9++;_tx9+=uu9.x;_ty9+=uu9.y;}
+        }
+        for(var tb9=0;tb9<blds.length;tb9++){var bb10=blds[tb9];
+          if(bb10.side===side||bb10.hp<=0)continue;
+          if(Math.abs(bb10.x-h2.x)<=240&&Math.abs(bb10.y-h2.y)<=240){_tb9++;_bx9+=bb10.x;_by9+=bb10.y;}
+        }
+        var _lv9=h2.lv||1;
+        if(_tn9>=2||(_tn9>=1&&_lv9>=6)||(_tb9>=1&&_lv9>=6)){
+          var _cx9=_tn9?(_tx9/_tn9):(_bx9/Math.max(1,_tb9));
+          var _cy9=_tn9?(_ty9/_tn9):(_by9/Math.max(1,_tb9));
+          var _cnt9=_lv9>=12?3:1,_ofs9=[[0,0],[-85,45],[85,-45]];
+          for(var tq9=0;tq9<_cnt9;tq9++)torns.push({x:_cx9+_ofs9[tq9][0],y:_cy9+_ofs9[tq9][1],side:side,life:180,cnt:0,bl:(_lv9>=6)});
+          h2._tornCd=gt+300;h2._sklT=gt;
+          parts.push({x:_cx9,y:_cy9,vx:0,vy:0,life:24,col:'#aef',sz:22});
+        }
+      }
+      // 统御者：战吼（周围有队友且附近有敌人）
+      if(h2.type==='hero'&&(h2.skillCd||0)<=0){
+        var _ally9=0,_enemy9=0;
+        for(var au9=0;au9<units.length;au9++){var u3=units[au9];
+          if(u3.hp<=0)continue;
+          if(u3.side===side){if(dist(u3,h2)<=300)_ally9++;}
+          else if(dist(u3,h2)<=420)_enemy9++;
+        }
+        if(_ally9>=3&&_enemy9>=2){
+          h2.skillCd=2400;h2.skillMax=2400;h2._sklT=gt;
+          for(var bu9=0;bu9<units.length;bu9++){var b6=units[bu9];
+            if(b6.side===side&&b6.hp>0&&dist(b6,h2)<=300)b6._rally=gt+480;
+          }
+          parts.push({x:h2.x,y:h2.y,vx:0,vy:0,life:30,col:'#fc0',sz:26});
+        }
+      }
+      // 隙行者：残血瞬移回基地
+      if(h2.type==='stalker'&&(h2.skillCd||0)<=0&&h2.hp<h2.mhp*0.35&&_hqOwn2){
+        var _wx9=_hqOwn2.x+(h2.id%2?90:-90),_wy9=_hqOwn2.y+90;
+        if(_okWarp(_wx9,_wy9,true)){
+          parts.push({x:h2.x,y:h2.y,vx:0,vy:0,life:16,col:'#a8f',sz:12});
+          h2.x=_wx9;h2.y=_wy9;h2.skillCd=1200;h2.skillMax=1200;h2._sklT=gt;
+          h2.tgt=null;h2.tx=undefined;h2.ty=undefined;h2._path=null;
+          parts.push({x:_wx9,y:_wy9,vx:0,vy:0,life:16,col:'#a8f',sz:12});
+        }
       }
     }
   }
@@ -5001,6 +5055,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
