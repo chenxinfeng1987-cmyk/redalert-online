@@ -173,7 +173,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1161</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1162</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -462,14 +462,26 @@ var screenFlash=0;
 
 function syncFabPos(){
   var h=innerHeight;
-  var gap=54;
-  var base=Math.max(84,Math.min(214,h-218));
   var f1=document.getElementById('stpFab'),f2=document.getElementById('tornFab'),
       f3=document.getElementById('rallyFab'),f4=document.getElementById('heroFab');
-  if(f1)f1.style.bottom=base+'px';
-  if(f2)f2.style.bottom=(base+gap)+'px';
-  if(f3)f3.style.bottom=(base+gap*2)+'px';
-  if(f4)f4.style.bottom=(base+gap*3)+'px';
+  var compact=h<620;
+  if(compact){
+    // 2x2 block above the minimap so nothing covers the top toolbar
+    var sz=44,gapx=52,rowA=130,rowB=130+gapx;
+    [[f4,12,rowA],[f3,12+gapx,rowA],[f1,12,rowB],[f2,12+gapx,rowB]].forEach(function(it){
+      var el=it[0];if(!el)return;
+      el.style.right=it[1]+'px';el.style.bottom=it[2]+'px';
+      el.style.width=sz+'px';el.style.height=sz+'px';
+      el.style.lineHeight=(sz-2)+'px';el.style.fontSize='18px';
+    });
+  }else{
+    var gap=54,base=Math.min(214,h*0.44);
+    [[f1,12,base],[f2,12,base+gap],[f3,12,base+gap*2],[f4,12,base+gap*3]].forEach(function(it){
+      var el=it[0];if(!el)return;
+      el.style.right=it[1]+'px';el.style.bottom=it[2]+'px';
+      el.style.width='';el.style.height='';el.style.lineHeight='';el.style.fontSize='';
+    });
+  }
 }
 function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();syncFabPos();}
 resize();onresize=resize;
@@ -4974,6 +4986,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
