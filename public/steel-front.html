@@ -22,6 +22,8 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #tornFab.stpRdy{border-color:#4f4;box-shadow:0 0 16px rgba(80,255,120,.65);animation:stpPulse 1.3s ease-in-out infinite}
 #tornFab.stpArmed{border-color:#ff4;box-shadow:0 0 18px rgba(255,255,80,.8)}
 #tornNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
+#heroFab{position:fixed;right:12px;bottom:376px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(45,40,15,.94);border:1.5px solid #fd4;color:#ffd;font-size:20px;display:block;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(255,210,60,.45);user-select:none;overflow:hidden}
+#heroFab:active{transform:scale(0.94)}
 #rallyFab{position:fixed;right:10px;bottom:322px;z-index:60;width:46px;height:46px;border-radius:50%;background:rgba(55,45,15,.94);border:1.5px solid #fc4;color:#fe8;font-size:20px;display:none;text-align:center;line-height:44px;cursor:pointer;box-shadow:0 0 8px rgba(255,200,60,.5);user-select:none;overflow:hidden}
 #rallyFab.stpRdy{border-color:#4f4;box-shadow:0 0 16px rgba(80,255,120,.65);animation:stpPulse 1.3s ease-in-out infinite}
 #rallyNum{position:absolute;top:1px;right:3px;font-size:11px;color:#fa5;font-weight:bold}
@@ -40,6 +42,8 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #gameover{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #gameover h2{font-size:30px;color:#fff}
 #gameover .rb{padding:8px 28px;font-size:14px;border:2px solid #fff;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer}
+#toast{position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:9998;background:rgba(20,24,36,.94);border:1px solid rgba(120,180,255,.45);color:#dff;padding:8px 16px;border-radius:8px;font-size:14px;pointer-events:none;opacity:0;transition:opacity .18s;max-width:82vw;text-align:center}
+#toast.on{opacity:1}
 #guide{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:55;background:rgba(15,20,35,.94);border:1px solid rgba(68,170,255,.5);border-radius:10px;padding:8px 14px;color:#dff;font-size:13px;display:none;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.5)}
 #guide button{margin-left:8px;background:#2a4a7a;border:1px solid rgba(120,180,255,.4);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
 #hint{background:rgba(10,10,20,.85);color:#667;font-size:9px;padding:3px 8px;line-height:1.4;align-self:flex-start;width:fit-content;white-space:nowrap;text-align:left;border-left:2px solid rgba(255,215,0,.25)}
@@ -118,7 +122,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 #gameover h2{font-size:38px}
 #gostats{font-size:15px}
 #panelBtn{font-size:15px;padding:10px 16px}
-#stpFab,#tornFab,#rallyFab{width:48px;height:48px;line-height:46px;font-size:21px}
+#stpFab,#tornFab,#rallyFab,#heroFab{width:48px;height:48px;line-height:46px;font-size:21px}
 #stpFabNum,#tornNum,#rallyNum{font-size:13px}
 #stpFab{right:12px}
 #tornFab{right:12px}
@@ -152,7 +156,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div id="fsbtn" onclick="goLandscape()" style="cursor:pointer;color:#8f8;font-size:12px;user-select:none">⛶ 横屏</div>
   <div id="netbtn" onclick="openLobby()">🌐 联机</div>
 </div>
-<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="隙行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div><div id="rallyFab" onclick="doRally()" title="战吼：周围300px友军8秒攻击+43%、移速+25%（40秒冷却）">📣</div>
+<div id="selinfo"></div><div id="heroTip"></div><div id="stpFab" onclick="toggleStalker()" title="隙行者传送">🌀</div><div id="tornFab" onclick="toggleTornado()" title="召唤台风（5秒冷却）">🌪️</div><div id="rallyFab" onclick="doRally()" title="战吼：周围300px友军8秒攻击+43%、移速+25%（40秒冷却）">📣</div><div id="heroFab" onclick="selectAllHeroes()" title="集结全部英雄（等同按 H）">⭐</div>
 <div id="bottom">
   <div class="ptabs">
     <div class="ptab on" onclick="showTab('b')">🏗️ 建筑</div>
@@ -165,11 +169,11 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
   <div class="pbody" id="pv"></div><div class="pbody" id="ph"><div id="warpBtn" onclick="event.stopPropagation();toggleStalker();return false;" style="width:100%;text-align:center;background:rgba(40,30,70,.92);color:#c8f;border:1px solid #a8f;border-radius:5px;padding:5px 8px;font-size:13px;cursor:pointer;">🌀 瞬移 · 就绪（点击）</div></div>
 </div>
 <div id="panelBtn" onclick="toggleMobPanel()">🏗️ 建造</div>
-<div id="guide"><span id="guideTxt"></span> <button onclick="guideHide()">跳过引导</button></div><div id="hint">左键选择 | 右键移动攻击 | 滚轮缩放 | H全选 | Ctrl+1~5存编队 | 1~5呼出</div>
+<div id="toast"></div><div id="guide"><span id="guideTxt"></span> <button onclick="guideHide()">跳过引导</button></div><div id="hint">左键选择 | 右键移动攻击 | 滚轮缩放 | H全选 | Ctrl+1~5存编队 | 1~5呼出</div>
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1160</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1161</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -458,12 +462,14 @@ var screenFlash=0;
 
 function syncFabPos(){
   var h=innerHeight;
-  var base=Math.min(214,Math.max(96,h*0.40));
-  var gap=58;
-  var f1=document.getElementById('stpFab'),f2=document.getElementById('tornFab'),f3=document.getElementById('rallyFab');
+  var gap=54;
+  var base=Math.max(84,Math.min(214,h-218));
+  var f1=document.getElementById('stpFab'),f2=document.getElementById('tornFab'),
+      f3=document.getElementById('rallyFab'),f4=document.getElementById('heroFab');
   if(f1)f1.style.bottom=base+'px';
   if(f2)f2.style.bottom=(base+gap)+'px';
   if(f3)f3.style.bottom=(base+gap*2)+'px';
+  if(f4)f4.style.bottom=(base+gap*3)+'px';
 }
 function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();syncFabPos();}
 resize();onresize=resize;
@@ -3637,8 +3643,7 @@ cv.ontouchcancel=function(){pinch=null;pinchDone=false;mdn=false;sBox=null;isDra
 document.onkeydown=function(e){
   if(e.key==='Escape'){bldMode=null;paraMode=false;sklMode=false;sklU=null;selU=[];selB=null;buildPanels();updateSelInfo();var pb=document.getElementById('paraBtn');if(pb){pb.style.borderColor='rgba(255,215,0,.3)';pb.style.color='#ffd700';}}
   else if(e.key==='h'||e.key==='H'){
-    selU=units.filter(function(q){return q.side===mySide&&q.hp>0&&!q.riding&&(q.type==='hero'||HERO5.indexOf(q.type)>=0);});
-    selB=null;bldMode=null;sklMode=false;sklU=null;buildPanels();updateSelInfo();
+    selectAllHeroes();
   }
   else if(e.key>='1'&&e.key<='5'){
     var _aeCG=document.activeElement;
@@ -3657,7 +3662,7 @@ document.onkeydown=function(e){
 
 function togglePara(){
   if(paraCd>0)return;
-  if(gold<500){alert('金币不足，伞兵需要500金');return;}
+  if(gold<500){toast('金币不足，伞兵需要 500 金');return;}
   paraMode=!paraMode;
   bldMode=null;
   var pb=document.getElementById('paraBtn');
@@ -3667,8 +3672,8 @@ var _rallyR=300;
 function doRally(){
   var h=null;
   for(var i=0;i<units.length;i++){var u=units[i];if(u.type==='hero'&&u.side===mySide&&u.hp>0&&!u.riding){if(!h||(u.skillCd||0)<(h.skillCd||0))h=u;}}
-  if(!h){alert('统御者不在场');return;}
-  if((h.skillCd||0)>0){alert('战吼冷却中：'+Math.ceil(h.skillCd/60)+'秒');return;}
+  if(!h){toast('统御者不在场');return;}
+  if((h.skillCd||0)>0){toast('战吼冷却中：'+Math.ceil(h.skillCd/60)+'秒');return;}
   h.skillCd=2400;h.skillMax=2400;h._sklT=gt;
   for(var j=0;j<units.length;j++){var a=units[j];if(a.side!==mySide||a.hp<=0)continue;if(dist(a,h)<=_rallyR)a._rally=gt+480;}
   parts.push({x:h.x,y:h.y,vx:0,vy:0,life:30,col:'#fc0',sz:26});
@@ -3685,10 +3690,10 @@ function toggleTornado(){
     if(u.type==='weather'&&u.lv>=3)_okT=true;
     if(_okT&&(!c||(u._tornCd||0)<(c._tornCd||0)))c=u;
   }
-  if(!c){alert('没有可用的台风（风语者3级解锁，或统御者12级偷学气象技能）');return;}
+  if(!c){toast('没有可用的台风（需风语者达到3级）');return;}
   var pbs=document.getElementById('tornFab');
   if(_tornMode&&_tornU===c){_tornMode=false;_tornU=null;if(pbs)pbs.classList.remove('stpArmed');return;}
-  if(c._tornCd&&c._tornCd>gt){alert('台风冷却中：'+Math.ceil((c._tornCd-gt)/60)+'秒');return;}
+  if(c._tornCd&&c._tornCd>gt){toast('台风冷却中：'+Math.ceil((c._tornCd-gt)/60)+'秒');return;}
   _tornU=c;_tornMode=true;sklMode=false;sklU=null;paraMode=false;bldMode=null;c._sklT=gt;
   if(pbs)pbs.classList.add('stpArmed');
 }
@@ -3697,7 +3702,7 @@ function doTornado(wx,wy){
   var u=_tornU;
   if((u._tornCd||0)>gt){_tornMode=false;_tornU=null;return;}
   wx=Math.max(40,Math.min(MW-40,wx));wy=Math.max(40,Math.min(MH-40,wy));
-  if(dist({x:wx,y:wy},u)>_TORN_R){alert('只能在风语者附近（蓝圈内）召唤台风');_tornMode=false;_tornU=null;var _pbz=document.getElementById('tornFab');if(_pbz)_pbz.classList.remove('stpArmed');return;}
+  if(dist({x:wx,y:wy},u)>_TORN_R){toast('只能在风语者附近（蓝圈内）召唤台风');_tornMode=false;_tornU=null;var _pbz=document.getElementById('tornFab');if(_pbz)_pbz.classList.remove('stpArmed');return;}
   var lv=u.lv||1,_bl9=(u.type==='hero')?true:(lv>=6);
   var _tN=lv>=12?3:1,_to2=[[0,0],[-85,45],[85,-45]];
   for(var tq2=0;tq2<_tN;tq2++)torns.push({x:wx+_to2[tq2][0],y:wy+_to2[tq2][1],side:u.side,life:180,cnt:0,bl:_bl9});
@@ -3715,8 +3720,8 @@ function _warpUnit(readyOnly){
 }
 function toggleStalker(){
   var s2=_warpUnit(true);
-  if(!s2){alert('没有就绪的隙行者');return;}
-  if(s2.skillCd>0){alert('传送冷却中');return;}
+  if(!s2){toast('没有就绪的隙行者');return;}
+  if(s2.skillCd>0){toast('传送冷却中');return;}
   if(sklMode&&sklU===s2){sklMode=false;sklU=null;return;}
   sklU=s2;sklMode=true;paraMode=false;bldMode=null;
   var pb=document.getElementById('stpFab');if(pb){pb.style.borderColor='#0f0';pb.style.color='#0f0';}
@@ -3746,9 +3751,9 @@ function updateTorns(){
 }
 function doStalkerWarp(wx,wy){
   if(!sklU||sklU.hp<=0||sklU.skillCd>0){sklMode=false;sklU=null;return;}
-  if(NET.mode==='guest'){alert('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
+  if(NET.mode==='guest'){toast('联机模式暂不支持传送');sklMode=false;sklU=null;return;}
   wx=Math.max(60,Math.min(MW-60,wx));wy=Math.max(60,Math.min(MH-60,wy));
-  if(!_okWarp(wx,wy,sklU.fly&&true)){alert('那里不能传送');return;}
+  if(!_okWarp(wx,wy,sklU.fly&&true)){toast('那里不能传送');return;}
   sklU.skillCd=1200;sklU.skillMax=1200;sklU._sklT=gt;
   parts.push({x:sklU.x,y:sklU.y,vx:0,vy:0,life:30,col:'#a8f',sz:18});
   var grp=[sklU],wi=0;
@@ -3952,7 +3957,7 @@ function buildPanels(){
       if(src&&gold>=c){gold-=c;sideGold[mySide]=gold;var ang=Math.random()*PI*2;var _sx=src.x+Math.cos(ang)*120,_sy=src.y+Math.sin(ang)*120;
       if(UD[uid].water){
         var _sp=seaSpot(src.x,src.y);
-        if(!_sp){gold+=c;sideGold[mySide]=gold;alert('附近没有水域，无法建造战舰');return;}
+        if(!_sp){gold+=c;sideGold[mySide]=gold;toast('附近没有水域，无法建造战舰');return;}
         _sx=_sp.x;_sy=_sp.y;
       }
       var _nu=spawnUnit(uid,_sx,_sy,mySide);if(_nu){_nu._born=gt;}}
@@ -4098,6 +4103,19 @@ function updateResUI(){
 var GUIDE_TXT=['第一步：在「🏗 建筑」里建造 训练营 和 载具车间（放在基地附近）','第二步：在「⚔ 兵种」里训练一个士兵','第三步：把部队派到土黄色的⛰高地上（射程+20%，受伤-15%）'];
 var _guideStep=0,_guideDone=false,_guideEnd=0;
 try{_guideDone=localStorage.getItem('ra_guide_done')==='1';}catch(e){}
+var _toastT=null;
+function toast(msg){
+  var el=document.getElementById('toast');
+  if(!el)return;
+  el.textContent=msg;el.classList.add('on');
+  if(_toastT)clearTimeout(_toastT);
+  _toastT=setTimeout(function(){el.classList.remove('on');},1500);
+}
+function selectAllHeroes(){
+  selU=units.filter(function(q){return q.side===mySide&&q.hp>0&&!q.riding&&(q.type==='hero'||HERO5.indexOf(q.type)>=0);});
+  selB=null;bldMode=null;sklMode=false;sklU=null;buildPanels();updateSelInfo();
+  toast(selU.length?('已集结 '+selU.length+' 名英雄'):'没有可集结的英雄');
+}
 function guideHide(){
   _guideDone=true;
   try{localStorage.setItem('ra_guide_done','1');}catch(e){}
@@ -4956,6 +4974,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
