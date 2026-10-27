@@ -140,6 +140,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="topbar">
   <div class="res" id="pRes"></div>
   <div class="info" id="mapname">对称竞技</div>
+  <select id="diff-sel" onchange="setDiff(this.value)" style="background:rgba(30,30,50,.9);color:#ffd;border:1px solid rgba(255,215,0,.35);border-radius:4px;padding:2px 6px;font-size:12px"><option value="easy">🟢 简单</option><option value="hard">🔴 困难</option></select>
   <select id="map-sel" onchange="changeMap(this.value)">
     <option value="symmetric">🗺️ 对称竞技</option>
     <option value="lanes">🛤️ 战术三路</option>
@@ -173,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1162</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1163</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -437,6 +438,17 @@ var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[];
 var selU=[],selB=null,bldMode=null,bldX=0,bldY=0,paraMode=false,paraCd=0,sklMode=false,sklU=null;
 var CG={};
+var DIFF='easy';
+try{DIFF=localStorage.getItem('ra_diff')||'easy';}catch(e){}
+function diffMul(){
+  return DIFF==='hard'?{hq:1.8,tw:1.45,tatk:1.35,trng:1.08,tcd:0.88}:{hq:1,tw:1,tatk:1,trng:1,tcd:1};
+}
+function setDiff(v){
+  DIFF=(v==='hard')?'hard':'easy';
+  try{localStorage.setItem('ra_diff',DIFF);}catch(e){}
+  try{genMap();}catch(e){}
+  try{toast('难度已切换：'+(DIFF==='hard'?'困难（指挥中枢更厚、防御塔更强）':'简单'));}catch(e){}
+}
 var STAT={kill:0,loss:0,inc:0,build:0,hkill:0,hlv:0};
 var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
@@ -486,6 +498,7 @@ function syncFabPos(){
 function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;setMiniCanvas();syncFabPos();}
 resize();onresize=resize;
 setTimeout(syncFabPos,0);
+try{var _ds=document.getElementById('diff-sel');if(_ds)_ds.value=(DIFF==='hard'?'hard':'easy');}catch(e){}
 
 function handleMapUpload(e){
   var file=e.target.files[0];if(!file)return;
@@ -860,8 +873,10 @@ function ensureMiners(){
 function addB(type,x,y,side){
   var d=BD[type];
   var b={id:_eid++,type:type,x:x,y:y,side:side,hp:d.hp,mhp:d.hp,ready:1,bt:0,sz:d.sz,atk:0,art:0};
-  if(type==='turret'){b.atk=14;b.art=150;}
-  if(type==='missile'){b.atk=34;b.art=190;}
+  var _dm=diffMul();
+  if(type==='hq'){b.hp=Math.round(b.hp*_dm.hq);b.mhp=b.hp;}
+  if(type==='turret'){b.atk=Math.round(14*_dm.tatk);b.art=Math.round(150*_dm.trng);b.hp=Math.round(b.hp*_dm.tw);b.mhp=b.hp;}
+  if(type==='missile'){b.atk=Math.round(34*_dm.tatk);b.art=Math.round(190*_dm.trng);b.hp=Math.round(b.hp*_dm.tw);b.mhp=b.hp;}
   if(type==='tunnel'){
     var best=null,bd=1e9;
     for(var i=0;i<blds.length;i++){
@@ -1962,7 +1977,7 @@ function updateTurrets(){
     if(b._emp&&gt<b._emp)return;
     b._cd=(b._cd||0)-1;
     if(b._cd>0)return;
-    var rng=b.type==='missile'?190:150;
+    var rng=b.art||(b.type==='missile'?190:150);
     var maxTargets=b.type==='missile'?2:1;
     var targets=[];
     var scan=blds.filter(function(e){return e.side!==b.side&&e.hp>0;})
@@ -1980,7 +1995,7 @@ function updateTurrets(){
       }
       else{bullets.push({x:b.x,y:b.y-10,tx:t.x,ty:t.y,spd:5,dmg:b.atk,side:b.side,life:50,t:t,ox:b.x,oy:b.y});sfxShot('mg');}
     });
-    if(targets.length>0)b._cd=b.type==='missile'?44:42;
+    if(targets.length>0){var _dcd=diffMul().tcd;b._cd=Math.round((b.type==='missile'?44:42)*_dcd);}
   });
 }
 
@@ -4986,6 +5001,7 @@ if(location.search.indexOf('test=v2')>=0){
   })();
 }
 </script></body></html>
+
 
 
 
