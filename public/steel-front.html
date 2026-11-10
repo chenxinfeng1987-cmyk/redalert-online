@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1168</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1169</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1591,8 +1591,8 @@ function updateMiners(){
           sideGold[m.side]+=m.carry;
           if(!isHumanSide(m.side)){
             sideGold[m.side]+=Math.round(m.carry*0.25);
-            sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.6:0.55));
-            if(sideDef[m.side]>2600)sideDef[m.side]=2600;
+            sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.2:0.4));
+            if(sideDef[m.side]>1800)sideDef[m.side]=1800;
           }
           if(m.side===mySide)gold=sideGold[mySide];
           m.carry=0;
@@ -1614,7 +1614,7 @@ function updateMiners(){
       }
     }else if(m.st==='return'){
       if(m.carry<=0){m.st='idle';return;}
-      if(dist(m,m.home)<60){if(m.side===mySide)STAT.inc+=m.carry;sideGold[m.side]+=m.carry;if(!isHumanSide(m.side)){sideGold[m.side]+=Math.round(m.carry*0.25);sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.6:0.55));if(sideDef[m.side]>2600)sideDef[m.side]=2600;}if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
+      if(dist(m,m.home)<60){if(m.side===mySide)STAT.inc+=m.carry;sideGold[m.side]+=m.carry;if(!isHumanSide(m.side)){sideGold[m.side]+=Math.round(m.carry*0.25);sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.2:0.4));if(sideDef[m.side]>1800)sideDef[m.side]=1800;}if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
       else{moveTowMiner(m,m.home.x,m.home.y,m.spd);}
     }
   });
@@ -2366,7 +2366,7 @@ function runAI(side){
     ai.bsvType=ai.bsv?_saveFor:null;
     ai.bsvT=gt+900;
     var _defN=blds.filter(function(b){return b.side===side&&(b.type==='turret'||b.type==='missile')&&b.hp>0;}).length;
-    var _defT=(DIFF==='hard')?Math.min(16,8+~~(gt/2400)):Math.min(9,5+~~(gt/3600));
+    var _defT=(DIFF==='hard')?Math.min(12,7+~~(gt/3000)):Math.min(8,4+~~(gt/4000));
     var _bcx=0,_bcy=0,_bcn=0;
     for(var _bi=0;_bi<blds.length;_bi++){
       var _bb=blds[_bi];
@@ -2375,7 +2375,10 @@ function runAI(side){
       _bcx+=_bb.x;_bcy+=_bb.y;_bcn++;
     }
     if(_bcn){_bcx/=_bcn;_bcy/=_bcn;}else{_bcx=hx;_bcy=hy;}
-    if(_defN<_defT){
+    var _armyN=0;
+    for(var _un=0;_un<units.length;_un++){var _uu=units[_un];if(_uu.side===side&&_uu.hp>0)_armyN++;}
+    if(_defN>=_defT)sideDef[side]=0;
+    if(_defN<_defT&&_armyN>=10){
       for(var _dr=0;_dr<2&&_defN<_defT;_dr++){
         var _dtyp=(_defN%5===4)?'turret':'missile';
         // 基地在角落：沿“朝向地图中心”的半圈铺塔，避免铺到地图外
