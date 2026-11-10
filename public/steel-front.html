@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1166</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1167</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -433,6 +433,7 @@ var mm=document.getElementById('minimap'),mx2=mm.getContext('2d');
 var W,H;
 var camX=0,camY=0,camZ=1.25,camFollowId=0,camFollowG=null;
 var sideGold=[5000,5000,5000,5000];
+var sideDef=[0,0,0,0];
 var gold=5000,pwr=0,pwrU=0;
 var gt=0,gOver=0,gOn=0;
 var blds=[],units=[],bullets=[],parts=[],ores=[],miners=[],whales=[];
@@ -454,7 +455,8 @@ var mdn=false,dsx=0,dsy=0,isDrag=false,sBox=null,upSkip=false;
 var mpx=0,mpy=0,mptrIn=false;
 var mData=[];
 var mapCX=0,mapCY=0,mapR=0;
-var ais=[null,null,null,null];
+var ais=[null,null,null,null];aiSave=[null,null,null,null];
+var aiSave=[null,null,null,null];
 var mType='symmetric';
 var _towerT=0;
 var mySide=0;
@@ -525,12 +527,13 @@ function handleMapUpload(e){
         }}
         ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];heroR=[];torns=[];dogQ=[];_hqDown={};
         selU=[];selB=null;bldMode=null;
-        sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
+        sideGold=[5000,5000,5000,5000];sideDef=[0,0,0,0];gold=5000;pwr=0;pwrU=0;
         gt=0;gOver=0;gOn=1;
         weather='clear';weatherTimer=1800;supplies=[];supplyTimer=2400;
-        ais=[null,null,null,null];
+        ais=[null,null,null,null];aiSave=[null,null,null,null];
         var strategies=['infantry','armor','turtle','spyRush','paraRush'];
-        for(var a2=1;a2<=3;a2++){ais[a2]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};}
+        for(var _sj=strategies.length-1;_sj>0;_sj--){var _sk=~~(Math.random()*(_sj+1));var _st=strategies[_sj];strategies[_sj]=strategies[_sk];strategies[_sk]=_st;}
+        for(var a2=1;a2<=3;a2++){ais[a2]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[(a2-1)%strategies.length],atkOn:false,atkSide:null,raidCd:600};}
         ais[0]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};
         placeOres();placeBases();paintRoads();paintSand();
         var _h=cornerOf(mySide);focusOnBase(mySide);
@@ -561,13 +564,14 @@ function genMap(){
   if(isCustom&&_mBase&&_mBase.length)mData=_mBase;else if(!isCustom){MW=MW0;MH=MH0;}
   if(!isCustom)mData=[];ores=[];blds=[];units=[];bullets=[];parts=[];miners=[];whales=[];heroR=[];torns=[];dogQ=[];_hqDown={};
   selU=[];selB=null;bldMode=null;
-  sideGold=[5000,5000,5000,5000];gold=5000;pwr=0;pwrU=0;
+  sideGold=[5000,5000,5000,5000];sideDef=[0,0,0,0];gold=5000;pwr=0;pwrU=0;
   gt=0;gOver=0;gOn=1;
   weather='clear';weatherTimer=1800;supplies=[];supplyTimer=2400;nukeStates={0:null,1:null,2:null,3:null};
   nukes=[];nukeFx=[];screenFlash=0;_towerT=0;neutrals=[];
-  ais=[null,null,null,null];
+  ais=[null,null,null,null];aiSave=[null,null,null,null];
   var strategies=['infantry','armor','turtle'];
-  for(var i=1;i<=3;i++){ais[i]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};}
+  for(var _sj2=strategies.length-1;_sj2>0;_sj2--){var _sk2=~~(Math.random()*(_sj2+1));var _st2=strategies[_sj2];strategies[_sj2]=strategies[_sk2];strategies[_sk2]=_st2;}
+  for(var i=1;i<=3;i++){ais[i]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[(i-1)%strategies.length],atkOn:false,atkSide:null,raidCd:600};}
   ais[0]={timer:900+~~(Math.random()*600),wave:0,bt:400,ut:200,strategy:strategies[~~(Math.random()*strategies.length)],atkOn:false,atkSide:null,raidCd:600};
   var cols=Math.ceil(MW/T),rows=Math.ceil(MH/T);
   if(!isCustom){
@@ -1168,10 +1172,12 @@ function moveTow(o,tx,ty,spd){
     }
     return false;
   }
-  if(!o._path||o._pi===undefined||o._stuckN>8||Math.random()<0.01){
+  var _needPath=(!o._path||o._pi===undefined||o._stuckN>8);
+  if(_needPath&&(o._pathCd===undefined||gt>=o._pathCd)){
+    o._pathCd=gt+24+((o.id||0)%12);
     var p=findPath(o.x,o.y,tx,ty);
     if(p&&p.length>0){o._path=p;o._pi=0;}
-    else{o._path=null;}
+    else{o._path=null;o._pathCd=gt+60+((o.id||0)%20);}
   }
   var step=null;
   if(o._path&&o._pi<o._path.length){
@@ -1226,12 +1232,21 @@ function findTgt(u,rng){
     if(bws)return bws;
   }
   if(u.wSide!==undefined){
+    // 先清掉贴脸的敌方部队，不要顶着枪口拆建筑
+    var _nu=null,_ndu=Math.max(u.rng*1.8,220);
+    for(var iu=0;iu<all.length;iu++){
+      var eu=all[iu];
+      if(eu.side!==u.wSide||eu.bt!==undefined)continue;
+      var du2=dist(u,eu);
+      if(du2<_ndu){_ndu=du2;_nu=eu;}
+    }
+    if(_nu)return _nu;
     for(var i=0;i<all.length;i++){
       if(all[i].side!==u.wSide)continue;
       var d2=dist(u,all[i]);
-      if(all[i].type==='hq')d2*=0.25;
-      else if(all[i].type==='refinery')d2*=0.45;
-      else if(all[i].type==='turret'||all[i].type==='missile')d2*=0.75;
+      if(all[i].type==='turret'||all[i].type==='missile')d2*=0.42;
+      else if(all[i].type==='hq')d2*=0.40;
+      else if(all[i].type==='refinery')d2*=0.55;
       if(d2<bd){bd=d2;best=all[i];}
     }
     if(best)return best;
@@ -1262,7 +1277,12 @@ function pickWeakTarget(side){
     if(blds.some(function(b){return b.type==='hq'&&b.side===s&&b.hp>0;}))enemies.push(s);
   }
   if(!enemies.length)return null;
-  enemies.sort(function(a,b){return sidePower(a)-sidePower(b);});
+  var _hb=(DIFF==='hard')?0.55:0.82;
+  enemies.sort(function(a,b){
+    var pa=sidePower(a)*(isHumanSide(a)?_hb:1);
+    var pb=sidePower(b)*(isHumanSide(b)?_hb:1);
+    return pa-pb;
+  });
   var r=Math.random();
   if(r<0.65||enemies.length===1)return enemies[0];
   if(r<0.9)return enemies[1]||enemies[0];
@@ -1569,6 +1589,11 @@ function updateMiners(){
         if(dist(m,m.home)<60){
           if(m.side===mySide)STAT.inc+=m.carry;
           sideGold[m.side]+=m.carry;
+          if(!isHumanSide(m.side)){
+            sideGold[m.side]+=Math.round(m.carry*0.25);
+            sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.6:0.55));
+            if(sideDef[m.side]>2600)sideDef[m.side]=2600;
+          }
           if(m.side===mySide)gold=sideGold[mySide];
           m.carry=0;
         }else{moveTowMiner(m,m.home.x,m.home.y,m.spd);}
@@ -1589,7 +1614,7 @@ function updateMiners(){
       }
     }else if(m.st==='return'){
       if(m.carry<=0){m.st='idle';return;}
-      if(dist(m,m.home)<60){if(m.side===mySide)STAT.inc+=m.carry;sideGold[m.side]+=m.carry;if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
+      if(dist(m,m.home)<60){if(m.side===mySide)STAT.inc+=m.carry;sideGold[m.side]+=m.carry;if(!isHumanSide(m.side)){sideGold[m.side]+=Math.round(m.carry*0.25);sideDef[m.side]+=Math.round(m.carry*(DIFF==='hard'?1.6:0.55));if(sideDef[m.side]>2600)sideDef[m.side]=2600;}if(m.side===mySide)gold=sideGold[mySide];m.carry=0;m.st='idle';}
       else{moveTowMiner(m,m.home.x,m.home.y,m.spd);}
     }
   });
@@ -1912,8 +1937,8 @@ function updateUnits(){
         if(_fp2){if(moveTow(u,_fp2.x,_fp2.y,u.spd)){u.tx=undefined;u.ty=undefined;}}
         else moveTow(u,tgt.x,tgt.y,u.spd);
       }else if(d<=u.rng*4||(u.wSide!==undefined&&tgt.side===u.wSide)){moveTow(u,tgt.x,tgt.y,u.spd);}
-      else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;}}
-    }else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;if(u.wSide!==undefined)u.wSide=undefined;}}
+      else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;if((u.type==='apc'||u.type==='heli')&&u.cargo&&u.cargo.length)applyUnload(u);}}
+    }else if(u.tx!==undefined){if(moveTow(u,u.tx,u.ty,u.spd)){u.tx=undefined;u.ty=undefined;if((u.type==='apc'||u.type==='heli')&&u.cargo&&u.cargo.length)applyUnload(u);if(u.wSide!==undefined)u.wSide=undefined;}}
   });
 }
 
@@ -2088,13 +2113,144 @@ function navyPatrol(u,side){
   }
   u.tgt=null;u.ord='m';u.tx=_wp2.x;u.ty=_wp2.y;
 }
+function aiCfg(){
+  if(DIFF==='hard')return{prod:0.72,max:1.24,first:520,wave:15,grow:3.8,cool:300,
+    retreat:0.28,garrison:0.16,gather:0.60,gatherT:200,micro:1};
+  return{prod:1.0,max:1.0,first:820,wave:11,grow:2.6,cool:480,
+    retreat:0.42,garrison:0.28,gather:0.72,gatherT:280,micro:0};
+}
+function aiArmyVal(side){
+  var v=0;
+  for(var i=0;i<units.length;i++){
+    var u=units[i];
+    if(u.side!==side||u.hp<=0||u.riding)continue;
+    var d=UD[u.type];if(!d)continue;
+    v+=d.g*(u.hp/(u.mhp||1))*(1+(u.lv||0)*0.25);
+  }
+  return v;
+}
+function aiHomeThreat(side,hq){
+  var r={n:0,x:0,y:0,hq:1};
+  if(!hq)return r;
+  r.hq=hq.hp/hq.mhp;
+  for(var i=0;i<units.length;i++){
+    var e=units[i];
+    if(e.side===side||e.hp<=0||e.riding)continue;
+    if(dist(e,hq)<640){r.n++;r.x+=e.x;r.y+=e.y;}
+  }
+  for(var j=0;j<miners.length;j++){
+    var m=miners[j];
+    if(m.side===side||m.hp<=0)continue;
+    if(dist(m,hq)<420){r.n++;r.x+=m.x;r.y+=m.y;}
+  }
+  return r;
+}
+function aiTrainPick(side,strat,hasBarr,hasFac,emergency){
+  var hard=(DIFF==='hard');
+  var want=[];
+  var _heroN=0;
+  for(var hh=0;hh<units.length;hh++){
+    var hu=units[hh];
+    if(hu.side===side&&hu.hp>0&&(hu.type==='hero'||HERO5.indexOf(hu.type)>=0))_heroN++;
+  }
+  function add(t,w){
+    var d=UD[t];if(!d)return;
+    if(!techUnlocked(t,side))return;
+    if(d.rq&&!blds.some(function(b){return b.type===d.rq&&b.side===side&&b.hp>0&&b.ready;}))return;
+    want.push([t,unitCost(d,side),Math.max(0.4,w)]);
+  }
+  var late=Math.min(2.2,1+gt/6000);
+  var _aiT=ais[side];
+  var _tw9=(_aiT&&_aiT.towerN)||0;
+  var _siegeW=_tw9>=5?3.6:(_tw9>=3?2.2:1);
+  if(hard){
+    if(strat==='armor'){
+      add('heavy',34*late);add('artillery',26*late*_siegeW);add('apc',22);
+      add('light',30);add('rocket',12);add('rifle',6);
+    }else if(strat==='turtle'){
+      add('apc',24);add('light',28);add('tesla',18);add('rocket',16);add('rifle',10);
+    }else if(strat==='spyRush'){
+      add('spy',30);add('rocket',20);add('light',22);add('rifle',14);
+    }else if(strat==='paraRush'){
+      add('rocket',30);add('apc',18);add('light',20);add('rifle',14);
+    }else{
+      add('light',26);add('tesla',16);add('apc',18);add('artillery',14*late*_siegeW);
+      add('rocket',18);add('rifle',12);
+    }
+  }else{
+    if(strat==='armor'){
+      add('heavy',22*late);add('artillery',18*late*_siegeW);add('apc',16);
+      add('light',20);add('rocket',10);add('rifle',8);
+    }else if(strat==='turtle'){
+      add('apc',16);add('light',18);add('tesla',14);add('rocket',20);add('rifle',18);
+    }else if(strat==='spyRush'){
+      add('spy',30);add('rocket',22);add('light',12);add('rifle',20);
+    }else if(strat==='paraRush'){
+      add('rocket',34);add('apc',12);add('light',10);add('rifle',24);
+    }else{
+      add('light',18);add('tesla',10);add('apc',12);add('artillery',7*late*_siegeW);
+      add('rocket',24);add('rifle',28);
+    }
+  }
+  if(hard&&_heroN<2){
+    add('hero',5);add('sniper',3);add('weather',3);add('tanya',3);add('stalker',3);
+  }
+  if(!want.length)return null;
+  var _aiO=ais[side];
+  if(!emergency&&_aiO&&_aiO.bsv&&_aiO.bsvType&&gt<(_aiO.bsvT||0)){
+    var _hasB=blds.some(function(b){return b.type===_aiO.bsvType&&b.side===side&&b.hp>0;});
+    if(!_hasB)return null;
+    _aiO.bsv=0;_aiO.bsvType=null;
+  }
+  // 已经选定要攒钱买的单位：攒够就买，不乱花钱
+  var _sv=aiSave[side];
+  if(_sv){
+    if(gt>_sv.until){aiSave[side]=null;}
+    else{
+      var _cur=null;
+      for(var si=0;si<want.length;si++)if(want[si][0]===_sv.t)_cur=want[si];
+      if(!_cur){aiSave[side]=null;}
+      else if(sideGold[side]>=_cur[1]){aiSave[side]=null;return _cur;}
+      else if(!emergency)return null;
+      else aiSave[side]=null;
+    }
+  }
+  function roll(){
+    var tw=0;for(var i=0;i<want.length;i++)tw+=want[i][2];
+    var r=Math.random()*tw;
+    for(var j=0;j<want.length;j++){r-=want[j][2];if(r<=0)return want[j];}
+    return want[want.length-1];
+  }
+  var pick=roll();
+  if(!pick)return null;
+  if(sideGold[side]>=pick[1])return pick;
+  // 贵兵种：进入攒钱模式，攒够再买（被打了就放弃，先出便宜兵）
+  if(pick[1]>=450&&!emergency&&(hard||Math.random()<0.75)){
+    aiSave[side]={t:pick[0],until:gt+900};
+    return null;
+  }
+  if(sideGold[side]>=pick[1]*0.55&&Math.random()<0.55)return null;
+  var cheap=null;
+  for(var k=0;k<want.length;k++){
+    if(want[k][1]<=sideGold[side]&&(!cheap||want[k][1]<cheap[1]))cheap=want[k];
+  }
+  return cheap;
+}
+
 function runAI(side){
   var ai=ais[side];if(!ai)return;
+  if(!ai._defInit){
+    ai._defInit=1;
+    var _seed=(DIFF==='hard')?2400:1200;
+    if(sideGold[side]>=_seed){sideGold[side]-=_seed;sideDef[side]+=_seed;}
+  }
   ai.timer--;ai.bt--;ai.ut--;
   var myGold=sideGold[side];
   var myHQ=blds.find(function(b){return b.type==='hq'&&b.side===side&&b.hp>0;});
   var hx=myHQ?myHQ.x:MW/2,hy=myHQ?myHQ.y:MH/2;
   var strat=ai.strategy||'infantry';
+  var _cf=aiCfg();
+  var _homeNow=myHQ?aiHomeThreat(side,myHQ):{n:0,x:0,y:0,hq:1};
 
   // ===== BUILD =====
   if(ai.bt<=0){
@@ -2103,59 +2259,81 @@ function runAI(side){
     blds.forEach(function(b){if(b.side===side){hasB[b.type]=1;bCount[b.type]=(bCount[b.type]||0)+1;}});
     var order;
     if(strat==='turtle'){
-      order=['power','refinery','refinery','barracks','turret','missile','turret','missile','lab','turret','missile','warfactory','refinery','turret','missile'];
+      order=['power','refinery','refinery','barracks','warfactory','lab','turret','missile','turret','missile','refinery','turret','missile'];
     }else if(strat==='armor'){
-      order=['power','refinery','refinery','barracks','turret','warfactory','missile','lab','warfactory','turret','missile','refinery','warfactory'];
+      order=['power','refinery','refinery','barracks','warfactory','lab','turret','missile','warfactory','turret','missile','refinery','warfactory'];
     }else if(strat==='spyRush'){
-      order=['power','refinery','barracks','turret','lab','refinery','refinery','warfactory','barracks','turret','missile'];
+      order=['power','refinery','barracks','warfactory','lab','turret','refinery','refinery','barracks','turret','missile'];
     }else if(strat==='paraRush'){
-      order=['power','refinery','barracks','turret','barracks','refinery','barracks','turret','barracks','warfactory','missile'];
+      order=['power','refinery','barracks','warfactory','lab','turret','barracks','refinery','barracks','turret','missile'];
     }else{
-      order=['power','refinery','refinery','barracks','turret','barracks','warfactory','turret','missile','lab','barracks','refinery'];
+      order=['power','refinery','refinery','barracks','warfactory','lab','turret','barracks','missile','barracks','refinery'];
     }
     if(strat!=='paraRush')order=order.concat(['missile','missile','missile','missile']);
-    var built=0;
+    var built=0,_saveFor=null;
+    var _mx=function(id){
+      if(strat==='turtle')return id==='turret'?2:id==='missile'?2:id==='refinery'?4:id==='lab'?1:1;
+      if(strat==='armor')return id==='warfactory'?3:id==='turret'?2:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;
+      if(strat==='spyRush')return id==='barracks'?2:id==='turret'?2:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;
+      if(strat==='paraRush')return id==='barracks'?3:id==='refinery'?3:id==='turret'?2:id==='missile'?2:1;
+      return id==='barracks'?2:id==='turret'?2:id==='missile'?2:id==='refinery'?3:id==='lab'?1:1;
+    };
+    var _placeB=function(id,ordI){
+      var sz=BD[id].sz*T/2;
+      for(var _tp=0;_tp<10;_tp++){
+        var bx,by;
+        if(id==='missile'){
+          var mi2=(bCount.missile||0);
+          var ang2=mi2*2.39996+_tp*0.63+Math.random()*0.2;
+          var r2=235+(_tp%4)*35+Math.random()*20;
+          bx=hx+Math.cos(ang2)*r2;by=hy+Math.sin(ang2)*r2;
+        }else if(id==='turret'){
+          var ang=Math.random()*PI*2;
+          var r=(strat==='turtle'?120:180)+_tp*28+Math.random()*70;
+          bx=hx+Math.cos(ang)*r;by=hy+Math.sin(ang)*r;
+        }else{
+          var spread=150+ordI*60+_tp*25;
+          bx=hx+(Math.random()-0.5)*spread*2;by=hy+(Math.random()-0.5)*spread*2;
+        }
+        bx=Math.max(120,Math.min(MW-120,bx));by=Math.max(120,Math.min(MH-120,by));
+        var ok=true;
+        for(var dy=-2;dy<=2;dy++)for(var dx=-2;dx<=2;dx++){
+          var tx=~~(bx/T)+dx,ty=~~(by/T)+dy;
+          if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length||mData[ty][tx]===3||mData[ty][tx]===4||mData[ty][tx]===9)ok=false;
+        }
+        if(ok)for(var j=0;j<blds.length;j++){var ob=blds[j];if(ob.hp<=0)continue;if(Math.abs(ob.x-bx)<(ob.sz*T/2+sz)&&Math.abs(ob.y-by)<(ob.sz*T/2+sz))ok=false;}
+        if(ok){var _ownB2=false;for(var jb=0;jb<blds.length;jb++){var ob2=blds[jb];if(ob2.side!==side||ob2.hp<=0)continue;if(dist({x:bx,y:by},ob2)<=400+ob2.sz*T/2){_ownB2=true;break;}}if(!_ownB2)ok=false;}
+        if(ok)return {x:bx,y:by};
+      }
+      return null;
+    };
     for(var loop=0;loop<3;loop++){
       for(var i=0;i<order.length;i++){
         var id=order[i];
-        var maxCount;
-        if(strat==='turtle'){maxCount=id==='turret'?8:id==='missile'?9:id==='refinery'?4:id==='lab'?1:1;}
-        else if(strat==='armor'){maxCount=id==='warfactory'?3:id==='turret'?4:id==='missile'?6:id==='refinery'?3:id==='lab'?1:1;}
-        else if(strat==='spyRush'){maxCount=id==='barracks'?3:id==='turret'?3:id==='missile'?5:id==='refinery'?3:id==='lab'?1:1;}
-    else if(strat==='paraRush'){maxCount=id==='barracks'?4:id==='refinery'?3:id==='turret'?3:id==='missile'?4:1;}
-    else{maxCount=id==='barracks'?3:id==='turret'?4:id==='missile'?6:id==='refinery'?3:id==='lab'?1:1;}
-        if((bCount[id]||0)<maxCount&&sideGold[side]>=BD[id].g){
-          var bx,by;
-          if(id==='missile'){
-            var mi2=(bCount.missile||0),ang2=mi2*2.39996+Math.random()*0.25,r2=235+Math.random()*25;
-            bx=hx+Math.cos(ang2)*r2;by=hy+Math.sin(ang2)*r2;
-          }else if(id==='turret'){
-            if(strat==='turtle'){
-              var ang=Math.random()*PI*2;var r=120+Math.random()*200;
-              bx=hx+Math.cos(ang)*r;by=hy+Math.sin(ang)*r;
-            }else{
-              var ang=Math.random()*PI*2;var r=180+Math.random()*120;
-              bx=hx+Math.cos(ang)*r;by=hy+Math.sin(ang)*r;
-            }
-          }else{
-            var spread=150+i*60;
-            bx=hx+(Math.random()-0.5)*spread*2;by=hy+(Math.random()-0.5)*spread*2;
+        var maxCount=_mx(id);
+        if((bCount[id]||0)<maxCount){
+          if(sideGold[side]<BD[id].g){_saveFor=id;break;}
+          var _pp=_placeB(id,i);
+          if(_pp){
+            sideGold[side]-=BD[id].g;addB(id,_pp.x,_pp.y,side);
+            bCount[id]=(bCount[id]||0)+1;built++;
           }
-          bx=Math.max(120,Math.min(MW-120,bx));by=Math.max(120,Math.min(MH-120,by));
-          var ok=true;var sz=BD[id].sz*T/2;
-          for(var dy=-2;dy<=2;dy++)for(var dx=-2;dx<=2;dx++){
-            var tx=~~(bx/T)+dx,ty=~~(by/T)+dy;
-            if(ty<0||ty>=mData.length||tx<0||tx>=mData[0].length||mData[ty][tx]===3||mData[ty][tx]===4||mData[ty][tx]===9)ok=false;
-          }
-          if(ok){for(var j=0;j<blds.length;j++){var ob=blds[j];if(ob.hp<=0)continue;if(Math.abs(ob.x-bx)<(ob.sz*T/2+sz)&&Math.abs(ob.y-by)<(ob.sz*T/2+sz))ok=false;}}
-          if(ok){var _ownB2=false;for(var jb=0;jb<blds.length;jb++){var ob2=blds[jb];if(ob2.side!==side||ob2.hp<=0)continue;if(dist({x:bx,y:by},ob2)<=400+ob2.sz*T/2){_ownB2=true;break;}}if(!_ownB2)ok=false;}
-          if(ok){sideGold[side]-=BD[id].g;addB(id,bx,by,side);bCount[id]=(bCount[id]||0)+1;built++;}
           if(built>=2)break;
         }
       }
       if(built>=2)break;
     }
-    if(!bCount.shipyard&&sideGold[side]>=1700&&units.filter(function(u){return u.side===side&&u.hp>0&&u.water!==1;}).length>=4){
+    if(!_saveFor){
+      for(var ni=0;ni<order.length;ni++){
+        var _id2=order[ni];
+        if((bCount[_id2]||0)<_mx(_id2)){
+          // 买不起，或者这一轮一块都没建成（多半是没找到空地）→ 先攒着
+          if(sideGold[side]<BD[_id2].g||built===0)_saveFor=_id2;
+          break;
+        }
+      }
+    }
+    if(!bCount.shipyard&&!_saveFor&&sideGold[side]>=1700&&units.filter(function(u){return u.side===side&&u.hp>0&&u.water!==1;}).length>=4){
       var _ysp=seaSpot(hx,hy);
       if(_ysp){sideGold[side]-=900;addB('shipyard',_ysp.x,_ysp.y,side);}
     }
@@ -2168,17 +2346,45 @@ function runAI(side){
       if(ok)for(var jj=0;jj<blds.length;jj++){var ob3=blds[jj];if(ob3.hp<=0)continue;if(Math.abs(ob3.x-bxx)<(ob3.sz*T/2+sz2)&&Math.abs(ob3.y-byy)<(ob3.sz*T/2+sz2))ok=false;}
       return ok;
     };
+    ai.bsv=(_saveFor&&(_saveFor==='warfactory'||_saveFor==='lab'||_saveFor==='refinery'||_saveFor==='power'||_saveFor==='barracks'||_saveFor==='nukesilo'))?BD[_saveFor].g:0;
+    ai.bsvType=ai.bsv?_saveFor:null;
+    ai.bsvT=gt+900;
     var _defN=blds.filter(function(b){return b.side===side&&(b.type==='turret'||b.type==='missile')&&b.hp>0;}).length;
-    var _defT=Math.min(10,4+~~(gt/3600));
+    var _defT=(DIFF==='hard')?Math.min(16,8+~~(gt/2400)):Math.min(9,5+~~(gt/3600));
+    var _bcx=0,_bcy=0,_bcn=0;
+    for(var _bi=0;_bi<blds.length;_bi++){
+      var _bb=blds[_bi];
+      if(_bb.side!==side||_bb.hp<=0)continue;
+      if(_bb.type==='turret'||_bb.type==='missile')continue;
+      _bcx+=_bb.x;_bcy+=_bb.y;_bcn++;
+    }
+    if(_bcn){_bcx/=_bcn;_bcy/=_bcn;}else{_bcx=hx;_bcy=hy;}
     if(_defN<_defT){
       for(var _dr=0;_dr<2&&_defN<_defT;_dr++){
-        var _dtyp=(_defN%3===2)?'turret':'missile';
-        var _dang=_defN*2.399+side*1.5708;
-        var _drad=175+(_defN%3)*75;
-        var _dbx=hx+Math.cos(_dang)*_drad,_dby=hy+Math.sin(_dang)*_drad;
-        _dbx=Math.max(120,Math.min(MW-120,_dbx));_dby=Math.max(120,Math.min(MH-120,_dby));
-        if(sideGold[side]>=BD[_dtyp].g&&_tinOk(_dbx,_dby,BD[_dtyp].sz*T/2)){
-          sideGold[side]-=BD[_dtyp].g;addB(_dtyp,_dbx,_dby,side);_defN++;
+        var _dtyp=(_defN%5===4)?'turret':'missile';
+        // 基地在角落：沿“朝向地图中心”的半圈铺塔，避免铺到地图外
+        var _mapAng=Math.atan2(MH/2-_bcy,MW/2-_bcx);
+        var _slot=_defN%10;
+        var _bAng=_mapAng+((_slot/9)-0.5)*Math.PI*1.15;
+        var _okT2=false;
+        for(var _tr=0;_tr<16&&!_okT2;_tr++){
+          var _a2=_bAng+(Math.random()-0.5)*2.2;
+          var _drad=205+Math.random()*185;
+          var _dbx=_bcx+Math.cos(_a2)*_drad,_dby=_bcy+Math.sin(_a2)*_drad;
+          _dbx=Math.max(120,Math.min(MW-120,_dbx));_dby=Math.max(120,Math.min(MH-120,_dby));
+          if(sideDef[side]>=BD[_dtyp].g&&_tinOk(_dbx,_dby,BD[_dtyp].sz*T/2)){
+            sideDef[side]-=BD[_dtyp].g;addB(_dtyp,_dbx,_dby,side);_defN++;_okT2=true;
+          }
+        }
+      }
+    }
+    if(DIFF==='hard'&&!bCount.nukesilo&&bCount.lab&&sideGold[side]>=3000){
+      for(var _nsk=0;_nsk<10;_nsk++){
+        var _nsa=Math.random()*PI*2,_nsr=210+Math.random()*90;
+        var _nsx=hx+Math.cos(_nsa)*_nsr,_nsy=hy+Math.sin(_nsa)*_nsr;
+        _nsx=Math.max(140,Math.min(MW-140,_nsx));_nsy=Math.max(140,Math.min(MH-140,_nsy));
+        if(_tinOk(_nsx,_nsy,BD.nukesilo.sz*T/2)){
+          sideGold[side]-=3000;addB('nukesilo',_nsx,_nsy,side);break;
         }
       }
     }
@@ -2205,12 +2411,12 @@ function runAI(side){
 
   // ===== TRAIN UNITS =====
   if(ai.ut<=0){
-    ai.ut=strat==='turtle'?45:strat==='armor'?32:22;
+    ai.ut=Math.round((strat==='turtle'?45:strat==='armor'?32:22)*_cf.prod);
     var hasBarr=blds.some(function(b){return b.type==='barracks'&&b.side===side&&b.hp>0&&b.ready;});
     var hasFac=blds.some(function(b){return b.type==='warfactory'&&b.side===side&&b.hp>0&&b.ready;});
     var labOk=hasLab(side);
     var armyCount=units.filter(function(u){return u.side===side&&u.hp>0;}).length;
-    var maxUnits=strat==='turtle'?30:strat==='armor'?45:55;
+    var maxUnits=Math.round((strat==='turtle'?40:strat==='armor'?45:55)*_cf.max);
     var _espX=units.some(function(u2){return u2.side!==side&&u2.type==='spy'&&u2.hp>0;});
     if(_espX){
       var _dgX=0;
@@ -2250,37 +2456,8 @@ function runAI(side){
       var _shSp=(_yb&&_shCnt<8)?seaSpot(_yb.x,_yb.y):null;
       if(_shSp&&sideGold[side]>=3200&&Math.random()<0.35){sideGold[side]-=unitCost(UD.carrier,side);spawnUnit('carrier',_shSp.x,_shSp.y,side);}
       else if(_shSp&&sideGold[side]>=2200){sideGold[side]-=unitCost(UD.ship,side);spawnUnit('ship',_shSp.x,_shSp.y,side);}
-      if(strat==='spyRush'){
-        if(labOk&&hasBarr&&sideGold[side]>=600&&spyCnt<4){sideGold[side]-=600;spawnUnit('spy',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
-        else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
-      }else if(strat==='paraRush'){
-        if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
-        else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
-        else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
-      }else if(strat==='armor'){
-        if(labOk&&hasFac&&sideGold[side]>=900){sideGold[side]-=900;spawnUnit('heavy',0,0,side);}
-        else if(labOk&&hasFac&&sideGold[side]>=700){sideGold[side]-=700;spawnUnit('artillery',0,0,side);}
-        else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
-        else if(labOk&&hasBarr&&sideGold[side]>=400){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
-        else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
-      }else if(strat==='turtle'){
-        if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
-        else if(labOk&&hasBarr&&sideGold[side]>=400){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
-        else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
-      }else{
-        if(hasBarr&&sideGold[side]>=100){sideGold[side]-=100;spawnUnit('rifle',0,0,side);}
-        else if(hasBarr&&sideGold[side]>=200){sideGold[side]-=200;spawnUnit('rocket',0,0,side);}
-        else if(hasFac&&sideGold[side]>=600){sideGold[side]-=600;spawnUnit('apc',0,0,side);}
-        else if(labOk&&hasBarr&&sideGold[side]>=400){sideGold[side]-=400;spawnUnit('tesla',0,0,side);}
-        else if(hasFac&&sideGold[side]>=500){sideGold[side]-=500;spawnUnit('light',0,0,side);}
-      }
+      var _pick=aiTrainPick(side,strat,hasBarr,hasFac,_homeNow.n>=2);
+      if(_pick){sideGold[side]-=_pick[1];spawnUnit(_pick[0],0,0,side);}
     }
   }
 
@@ -2455,58 +2632,254 @@ function runAI(side){
       }
     }
   }
-  var _combatN=0;
-  for(var cn2=0;cn2<myArmy.length;cn2++){var cu2=myArmy[cn2];if(cu2.type==='dog'||cu2.type==='hero'||cu2.type==='engineer'||HERO5.indexOf(cu2.type)>=0)continue;_combatN++;}
-  if(ai.atkOn){
-    ai.loadCd=(ai.loadCd===undefined?90:ai.loadCd)-1;
-    if(ai.loadCd<=0){ai.loadCd=150;aiBoardApcs(myArmy);}
-    var eHQ=blds.find(function(b){return b.type==='hq'&&b.side===ai.atkSide&&b.hp>0;});
-    if(!eHQ){ai.atkOn=false;ai.atkSide=null;ai.timer=400;}
-    else{
-      for(var ui=0;ui<myArmy.length;ui++){
-        var au=myArmy[ui];
-        if(au.type==='engineer'||au.type==='dog')continue;
-        if(au.type==='hero'||HERO5.indexOf(au.type)>=0)continue;
-        if(au.water===1)continue;
-        var engaged=au.tgt&&au.tgt.hp>0&&dist(au,au.tgt)<au.rng*2.5;
-        if(!engaged&&au.tx===undefined){
-          var wa=ui*2.4;
-          au.tx=eHQ.x+Math.cos(wa)*280;
-          au.ty=eHQ.y+Math.sin(wa)*280;
-          au.wSide=ai.atkSide;
-          au.tgt=null;au._path=null;au._stuckN=0;
-        }else if(au.tx!==undefined){au.wSide=ai.atkSide;}
+  // ===== 指挥官：集结 → 进攻 → 撤退/回防 → 重组 =====
+  var _combatList=[],_combatN=0;
+  for(var cn2=0;cn2<myArmy.length;cn2++){
+    var cu2=myArmy[cn2];
+    if(cu2.type==='dog'||cu2.type==='engineer'||cu2.type==='spy')continue;
+    if(cu2.type==='hero'||HERO5.indexOf(cu2.type)>=0)continue;
+    if(cu2.water===1||cu2.riding)continue;
+    _combatN++;_combatList.push(cu2);
+  }
+  if(!ai.state)ai.state='build';
+  if(ai.waveGap===undefined)ai.waveGap=_cf.first;
+  if(ai.cmdCd===undefined)ai.cmdCd=0;
+  if(ai.recallCd===undefined)ai.recallCd=0;
+  ai.waveGap--;ai.cmdCd--;ai.recallCd--;
+
+  // 基地被袭：立刻回防，放弃当前进攻
+  var _home=_homeNow;
+  var _underAttack=myHQ&&(_home.n>=3||(_home.n>=2&&_home.hq<0.96));
+  if(_underAttack&&ai.state!=='defend'&&ai.recallCd<=0){
+    ai.state='defend';ai.defT=0;ai.recallCd=200;
+    ai.atkOn=false;ai.atkSide=null;ai.phase='gather';
+    for(var gi0=0;gi0<myArmy.length;gi0++)myArmy[gi0]._gar=0;
+  }
+  if(ai.state==='defend'){
+    ai.defT=(ai.defT||0)+1;
+    if(!_underAttack&&ai.defT>150){ai.state='build';ai.waveGap=Math.min(ai.waveGap,60);}
+  }
+  ai._garN=Math.max(2,Math.round(_combatN*_cf.garrison));
+
+  // 基地已被摧毁：残余部队直接扑向最近敌人
+  if(!myHQ&&ai.state!=='attack'){
+    var _ls=pickWeakTarget(side);
+    if(_ls!==null&&_ls!==undefined){
+      var _lh=blds.find(function(b){return b.type==='hq'&&b.side===_ls&&b.hp>0;});
+      if(_lh){
+        ai.state='attack';ai.phase='push';ai.gatherT=999;
+        ai.atkOn=true;ai.atkSide=_ls;ai.stage={x:_lh.x,y:_lh.y};ai.aval0=1;
       }
-      var defendersNear=0;
-      for(var di=0;di<myArmy.length;di++){
-        if(myHQ&&dist(myArmy[di],myHQ)<350)defendersNear++;
-      }
-      if(_combatN<=1&&defendersNear===0){ai.atkOn=false;ai.atkSide=null;ai.timer=600;}
     }
-  }else if(ai.timer<=0){
-    var minArmy=strat==='turtle'?8:strat==='armor'?7:6;
-    if(_combatN>=minArmy){
-      var tSide=pickWeakTarget(side);
-      if(tSide!==null&&tSide!==undefined){
-        ai.atkSide=tSide;ai.atkOn=true;
-        var eHQ2=blds.find(function(b){return b.type==='hq'&&b.side===tSide&&b.hp>0;});
-        if(eHQ2){
-          for(var ui2=0;ui2<myArmy.length;ui2++){
-            var au2=myArmy[ui2];
-            if(au2.type==='engineer'||au2.type==='dog')continue;
-            if(au2.type==='hero'||HERO5.indexOf(au2.type)>=0)continue;
-            if(au2.water===1)continue;
-            au2.tx=eHQ2.x+Math.cos(ui2*2.4)*300;
-            au2.ty=eHQ2.y+Math.sin(ui2*2.4)*300;
-            au2.tgt=null;au2._path=null;au2._stuckN=0;au2.wSide=tSide;
-          }
-          aiBoardApcs(myArmy);
-        }
-        ai.timer=1100+~~(Math.random()*400);ai.wave++;
-      }else{ai.timer=600;}
-    }else{ai.timer=300;}
   }
 
+  if(ai.state==='defend'){
+    for(var di2=0;di2<_combatList.length;di2++){
+      var du2=_combatList[di2];
+      if(myHQ&&dist(du2,myHQ)>430&&!(du2.tgt&&du2.tgt.hp>0)){
+        var da2=di2*2.399;
+        du2.tx=myHQ.x+Math.cos(da2)*150;
+        du2.ty=myHQ.y+Math.sin(da2)*150;
+        du2.wSide=undefined;du2.tgt=null;du2._path=null;
+      }
+    }
+  }else if(ai.state==='attack'){
+    ai.phase=ai.phase||'gather';
+    ai.gatherT=(ai.gatherT||0)+1;
+    var eHQ=blds.find(function(b){return b.type==='hq'&&b.side===ai.atkSide&&b.hp>0;});
+    if(!eHQ){
+      ai.state='build';ai.atkOn=false;ai.atkSide=null;
+      ai.phase='gather';ai.waveGap=_cf.cool;
+      for(var ge0=0;ge0<_combatList.length;ge0++)_combatList[ge0]._gar=0;
+    }else{
+      if(!ai.aval0)ai.aval0=Math.max(1,aiArmyVal(side));
+      ai.waveT=(ai.waveT||0)+1;
+      // 识别敌方基地的塔阵：统计数量，并挑一个离集结点最近的塔作为拆塔目标
+      if(gt%120===0||!ai.siegeT||ai.siegeT.hp<=0){
+        var _tn9=0,_st9=null,_sd9=1e9;
+        for(var tb9=0;tb9<blds.length;tb9++){
+          var _t9=blds[tb9];
+          if(_t9.side!==ai.atkSide||_t9.hp<=0)continue;
+          if(_t9.type!=='missile'&&_t9.type!=='turret')continue;
+          if(dist(_t9,eHQ)<540)_tn9++;
+          var _td9=ai.stage?dist(ai.stage,_t9):dist(myHQ,_t9);
+          if(_td9<_sd9){_sd9=_td9;_st9=_t9;}
+        }
+        ai.towerN=_tn9;ai.siegeT=_st9;
+      }
+      if(gt%30===0){
+        var _av9=aiArmyVal(side);
+        var _eR=eHQ.hp/eHQ.mhp;
+        var _keep=(_eR<0.5)?0.05:_cf.retreat;
+        var _lossKeep=(DIFF==='hard')?0.25:(_eR<0.6?0.30:0.40);
+        var _cmAlive=0;
+        for(var gk=0;gk<_combatList.length;gk++)
+          if(!_combatList[gk]._gar&&_combatList[gk]._cm)_cmAlive++;
+        if(ai.gatherT>150&&(_av9<ai.aval0*_keep||
+           (ai.waveN0>4&&ai.phase==='push'&&_cmAlive<ai.waveN0*_lossKeep))){
+          ai.state='retreat';ai.retreatT=0;ai.atkOn=false;
+        }
+      }
+      if(ai.state==='attack'&&ai.phase==='gather'){
+        var _arr=0,_waveN=0;
+        for(var ai7=0;ai7<_combatList.length;ai7++){
+          if(_combatList[ai7]._gar)continue;
+          _waveN++;
+          if(ai.stage&&dist(_combatList[ai7],ai.stage)<300)_arr++;
+        }
+        if(ai.gatherT>_cf.gatherT||(_arr>=Math.ceil(Math.max(1,_waveN)*_cf.gather))){
+          ai.phase='push';ai.cmdCd=0;
+        }
+      }
+      if(ai.state==='attack'){
+        var _push=(ai.phase==='push');
+        var _arm=Math.max(70,Math.min(220,55+Math.ceil((_combatN-ai._garN)*5)));
+        var _waitN=0;
+        for(var ui=0;ui<_combatList.length;ui++){
+          var au=_combatList[ui];
+          if(au._gar)continue;
+          if(au.tgt&&au.tgt.hp>0){
+            if(!_push||dist(au,eHQ)<720)continue;
+            au.tgt=null;
+          }
+          if(!_push||!au._cm){
+            // 还没投入 / 新到的兵：先在集结点待命，攒够一批再一起压上
+            if(ai.cmdCd<=0||au.tx===undefined){
+              var wa9=ui*2.399;
+              au.tx=ai.stage.x+Math.cos(wa9)*_arm;
+              au.ty=ai.stage.y+Math.sin(wa9)*_arm;
+              au.wSide=ai.atkSide;au._path=null;au._stuckN=0;
+            }
+            if(_push&&!au._cm&&dist(au,ai.stage)<340)_waitN++;
+          }else{
+            if(ai.microFocus&&ai.focus&&ai.focus.hp>0&&dist(au,ai.focus)<760&&au.tgt!==ai.focus){
+              au.tgt=ai.focus;au.tx=undefined;au.ty=undefined;au._path=null;au.wSide=ai.atkSide;
+            }
+            // 远程单位（火炮等）优先拆塔：站在塔射程外点掉防御塔
+            if((au.rng||0)>=220&&ai.siegeT&&ai.siegeT.hp>0&&dist(au,ai.siegeT)<860){
+              if(au.tgt!==ai.siegeT){
+                au.tgt=ai.siegeT;au.tx=undefined;au.ty=undefined;au._path=null;
+              }
+              au.wSide=ai.atkSide;
+              continue;
+            }
+            if(au.tx===undefined){
+              var wa2=ui*2.399;
+              var _rr=Math.max(110,Math.round((au.rng||110)*0.82));
+              au.tx=eHQ.x+Math.cos(wa2)*_rr;
+              au.ty=eHQ.y+Math.sin(wa2)*_rr;
+              au.wSide=ai.atkSide;au.tgt=null;au._path=null;au._stuckN=0;
+            }else au.wSide=ai.atkSide;
+          }
+        }
+        if(_push&&_waitN>=Math.max(4,Math.round((ai.waveSize||8)*0.5))){
+          for(var cw=0;cw<_combatList.length;cw++){
+            var cu3=_combatList[cw];
+            if(cu3._gar)continue;
+            cu3._cm=1;cu3.tx=undefined;cu3.ty=undefined;cu3._path=null;
+          }
+          ai.wave++;
+          ai.waveSize=Math.min(36,(ai.waveSize||8)+Math.round(_cf.grow));
+        }
+      }
+      if(ai.state==='attack'&&ai.cmdCd<=0)ai.cmdCd=(DIFF==='hard')?36:60;
+    }
+  }else if(ai.state==='retreat'){
+    ai.retreatT=(ai.retreatT||0)+1;
+    for(var ri=0;ri<_combatList.length;ri++){
+      var ru=_combatList[ri];ru._gar=0;
+      if(ru.tx===undefined||ai.retreatT%40===0){
+        var ra=ri*2.399;
+        ru.tx=myHQ.x+Math.cos(ra)*140;
+        ru.ty=myHQ.y+Math.sin(ra)*140;
+        ru.wSide=undefined;ru.tgt=null;ru._path=null;
+      }
+    }
+    if(ai.retreatT>150||_combatN<=1){
+      ai.state='build';ai.phase='gather';ai.waveGap=_cf.cool;ai.aval0=0;
+      ai.atkOn=false;ai.atkSide=null;
+      for(var rr0=0;rr0<_combatList.length;rr0++){_combatList[rr0]._gar=0;_combatList[rr0]._cm=0;}
+    }
+  }else{
+    // build：回家集结，等待下一波
+    for(var bi2=0;bi2<_combatList.length;bi2++){
+      var bu=_combatList[bi2];bu._gar=0;bu._cm=0;
+      if(bu.tx===undefined&&!(bu.tgt&&bu.tgt.hp>0)&&myHQ&&dist(bu,myHQ)>620){
+        var ba2=bi2*2.399;
+        bu.tx=myHQ.x+Math.cos(ba2)*175;
+        bu.ty=myHQ.y+Math.sin(ba2)*175;
+        bu.wSide=undefined;bu._path=null;
+      }
+    }
+    if(ai.waveGap<=0&&myHQ){
+      var _ws=Math.min(36,Math.round(_cf.wave+ai.wave*_cf.grow));
+      var _need=Math.max(5,Math.round(_ws*0.85));
+      // 等太久了：兵力虽然不够也先打一波，避免永远憋在家里
+      if(ai.waveGap<-700)_need=Math.max(4,Math.min(_need,Math.round(_ws*0.5)));
+      if(_combatN>=_need){
+        var tSide2=pickWeakTarget(side);
+        var eHQ3=(tSide2!==null&&tSide2!==undefined)?blds.find(function(b){return b.type==='hq'&&b.side===tSide2&&b.hp>0;}):null;
+        if(tSide2!==null&&tSide2!==undefined&&eHQ3){
+          var _enT=0,_siegeN9=0;
+          for(var _et=0;_et<blds.length;_et++){
+            var _eb9=blds[_et];
+            if(_eb9.side===tSide2&&_eb9.hp>0&&(_eb9.type==='missile'||_eb9.type==='turret')&&dist(_eb9,eHQ3)<540)_enT++;
+          }
+          for(var _es9=0;_es9<_combatList.length;_es9++)if((_combatList[_es9].rng||0)>=220)_siegeN9++;
+          ai.towerN=_enT;
+          if(_enT>=5&&_siegeN9<2&&(ai.stallT=(ai.stallT||0)+1)<420){
+            ai.waveGap=60;
+          }else{
+          ai.stallT=0;
+          var dxh=myHQ.x-eHQ3.x,dyh=myHQ.y-eHQ3.y,dlh=Math.hypot(dxh,dyh)||1;
+          var _stg=Math.min(620,Math.max(400,dlh*0.38));
+          ai.state='attack';ai.phase='gather';ai.gatherT=0;
+          ai.atkOn=true;ai.atkSide=tSide2;ai.waveSize=_ws;ai.waveT=0;
+          ai.aval0=Math.max(1,aiArmyVal(side));ai.cmdCd=0;
+          ai.stage={x:eHQ3.x+dxh/dlh*_stg,y:eHQ3.y+dyh/dlh*_stg};
+          ai.wave++;
+          ai.microFocus=(DIFF==='hard');ai.focus=null;
+          if(ai.microFocus){
+            var _fb=null,_fd=1e9;
+            for(var fbi=0;fbi<blds.length;fbi++){
+              var fb9=blds[fbi];
+              if(fb9.side!==tSide2||fb9.hp<=0)continue;
+              var fd9=dist(ai.stage,fb9);
+              if(fb9.type==='hq')fd9*=0.35;
+              else if(fb9.type==='refinery'||fb9.type==='power')fd9*=0.7;
+              if(fd9<_fd){_fd=fd9;_fb=fb9;}
+            }
+            ai.focus=_fb;
+          }
+          var _garN=Math.max(2,Math.round(_combatN*_cf.garrison));
+          var _byHome=_combatList.slice().sort(function(a2,b2){return dist(a2,myHQ)-dist(b2,myHQ);});
+          for(var gi2=0;gi2<_byHome.length;gi2++){
+            var _gu2=_byHome[gi2];
+            _gu2._gar=(gi2<_garN&&gi2<_byHome.length-4)?1:0;
+            _gu2._cm=_gu2._gar?0:1;
+            _gu2.tx=undefined;_gu2.ty=undefined;
+          }
+          ai.waveN0=Math.max(1,_combatN-_garN);
+          ai.stallT=0;
+          aiBoardApcs(myArmy);
+          }
+        }else{
+          ai.waveGap=150;
+        }
+      }
+    }
+  }
+  // 困难：集火目标失效时重选
+  if(ai.state==='attack'&&ai.microFocus&&(!ai.focus||ai.focus.hp<=0)&&gt%30===0){
+    var _fbt=null,_fbd=1e9;
+    for(var fbj=0;fbj<blds.length;fbj++){
+      var fb8=blds[fbj];
+      if(fb8.side!==ai.atkSide||fb8.hp<=0)continue;
+      var _fdj=dist(ai.stage||{x:0,y:0},fb8);
+      if(_fdj<_fbd){_fbd=_fdj;_fbt=fb8;}
+    }
+    ai.focus=_fbt;
+  }
   if(ai.dropCd===undefined||gt>=ai.dropCd){
     var tSide4=pickWeakTarget(side),_idle4=0;
     for(var i4=0;i4<units.length;i4++){var u4=units[i4];if(u4.side===side&&u4.hp>0&&!u4.riding&&!u4._tin)_idle4++;}
@@ -2526,7 +2899,7 @@ function runAI(side){
     }else{ai.dropCd=gt+300;}
   }
   // ===== RAID: small harassment when not full attacking =====
-  if(!ai.atkOn){
+  if(!ai.atkOn&&ai.state!=='defend'&&ai.state!=='retreat'){
     ai.raidCd=(ai.raidCd===undefined?600:ai.raidCd)-1;
     if(ai.raidCd<=0){
       ai.raidCd=500+~~(Math.random()*400);
@@ -4882,7 +5255,7 @@ function guestStart(m){
   blds=reconcile(NET.bStore,m.blds,upB);
   miners=reconcile(NET.mStore,m.miners,upM);
   units=[];bullets=[];parts=[];supplies=[];nukes=[];nukeFx=[];NET.ghosts=[];heroR=[];torns=[];dogQ=[];_hqDown={};
-  ais=[null,null,null,null];
+  ais=[null,null,null,null];aiSave=[null,null,null,null];
   if(m.ais){for(i=0;i<4;i++)ais[i]=(!humanSide[i]&&m.ais[i])?{strategy:m.ais[i]}:null;}
   selU=[];selB=null;bldMode=null;
   var h=cornerOf(mySide);focusOnBase(mySide);
