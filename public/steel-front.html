@@ -174,7 +174,7 @@ select#map-sel{background:rgba(30,30,50,.9);color:#fff;border:1px solid rgba(255
 <div id="lobby">
   <div class="lb">
     <h2>🌐 联机对战</h2>
-    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1167</div>
+    <div style="text-align:center;color:#556;font-size:10px;margin:-8px 0 8px">版本 B1168</div>
     <div id="lb-main">
       <div class="lrow"><label>昵称</label><input id="lb-name" maxlength="12" placeholder="输入昵称"></div>
       <div class="lrow"><label>服务器</label><input id="lb-server" placeholder="部署后自动填；本机需手填" style="width:200px"></div>
@@ -1660,6 +1660,21 @@ function updateUnits(){
   units.forEach(function(u){
     if(u.hp<=0)return;
     u.cooldown=u.cooldown?u.cooldown-1:0;
+    if(!isHumanSide(u.side)&&(u.type==='hero'||HERO5.indexOf(u.type)>=0)&&u.hp>0&&u.hp<u.mhp&&gt%15===0){
+      var _ohq=null;
+      for(var _hb0=0;_hb0<blds.length;_hb0++){
+        var _bb0=blds[_hb0];
+        if(_bb0.type==='hq'&&_bb0.side===u.side&&_bb0.hp>0){_ohq=_bb0;break;}
+      }
+      if(_ohq&&dist(u,_ohq)<300){
+        var _en0=false;
+        for(var _ue0=0;_ue0<units.length;_ue0++){
+          var _eu0=units[_ue0];
+          if(_eu0.side!==u.side&&_eu0.hp>0&&dist(_eu0,u)<420){_en0=true;break;}
+        }
+        if(!_en0)u.hp=Math.min(u.mhp,u.hp+4);
+      }
+    }
     if(u.type==='weather'&&gt%90===u.id%90){
       for(var fc9=0;fc9<units.length;fc9++){var fu9=units[fc9];
         if(fu9.side!==u.side||fu9.hp<=0)continue;
@@ -1922,7 +1937,8 @@ function updateUnits(){
       }
     }
     var tgt=u.tgt;
-    if(!tgt||tgt.hp<=0||dist(u,tgt)>u.rng*2||(u.wSide!==undefined&&tgt.side!==u.wSide&&tgt.side!==undefined)){
+    var _isHeroU=(u.type==='hero'||HERO5.indexOf(u.type)>=0);
+    if(!tgt||tgt.hp<=0||(!_isHeroU&&dist(u,tgt)>u.rng*2)||(u.wSide!==undefined&&tgt.side!==u.wSide&&tgt.side!==undefined)){
       var scanRng=(u.water===1)?u.rng*3:(u.tx!==undefined?(u.wSide!==undefined?u.rng*2:u.rng):u.rng*2.5);
       u.tgt=findTgt(u,scanRng);tgt=u.tgt;
     }
@@ -2493,66 +2509,126 @@ function runAI(side){
     var _dhq=blds.find(function(b){return b.type==='hq'&&b.side===side&&b.hp>0;});
     if(_dhq&&Math.random()<0.02){dg9.tx=_dhq.x+(Math.random()-0.5)*420;dg9.ty=_dhq.y+(Math.random()-0.5)*420;dg9.ord='m';dg9._path=null;}
   }
-  // ===== HERO CONTROL: stay behind army, retreat when hurt, farm units not towers =====
+  // ===== HERO CONTROL: 进攻时带头推进，残血回家，空档期骚扰 =====
   var _hqOwn2=blds.find(function(b){return b.type==='hq'&&b.side===side&&b.hp>0;});
   var _cx2=0,_cy2=0,_cn2=0;
-  for(var hi2=0;hi2<myArmy.length;hi2++){var hu2=myArmy[hi2];
+  for(var hi2=0;hi2<myArmy.length;hi2++){
+    var hu2=myArmy[hi2];
     if(hu2.type==='hero'||HERO5.indexOf(hu2.type)>=0)continue;
     if(hu2.type==='dog'||hu2.type==='engineer')continue;
-    if(hu2.water===1)continue;_cx2+=hu2.x;_cy2+=hu2.y;_cn2++;}
+    if(hu2.water===1)continue;
+    _cx2+=hu2.x;_cy2+=hu2.y;_cn2++;
+  }
   if(_cn2){_cx2/=_cn2;_cy2/=_cn2;}
-  for(var hh2=0;hh2<myArmy.length;hh2++){var h2=myArmy[hh2];
+  var _pushH=(ai.state==='attack');
+  var _eHQh=(_pushH&&ai.atkSide!==null&&ai.atkSide!==undefined)?
+    blds.find(function(b){return b.type==='hq'&&b.side===ai.atkSide&&b.hp>0;}):null;
+  for(var hh2=0;hh2<myArmy.length;hh2++){
+    var h2=myArmy[hh2];
     if(h2.type!=='hero'&&HERO5.indexOf(h2.type)<0)continue;
-    if(h2.hp<h2.mhp*0.3){
-      if(_hqOwn2){h2.tgt=null;h2.ord='m';h2.tx=_hqOwn2.x+(h2.id%2?120:-120);h2.ty=_hqOwn2.y+120;h2._path=null;}
+    if(h2.riding)continue;
+
+    // 1) 残血回家
+    if(h2.hp<h2.mhp*0.22&&_hqOwn2){
+      h2.tgt=null;h2.ord='m';
+      h2.tx=_hqOwn2.x+(h2.id%2?110:-110);h2.ty=_hqOwn2.y+110;
+      h2._path=null;h2.wSide=undefined;
       continue;
     }
-    var _eu2=null,_ed2=(ai.atkOn?700:520);
-    var _eh2=null,_ehd2=780;
-    for(var ei2=0;ei2<units.length;ei2++){var e2=units[ei2];
-      if(e2.side===side||e2.hp<=0||e2.riding||e2.bt!==undefined)continue;
-      var _d2=dist(h2,e2);
-      var _isHE=(e2.type==='hero'||HERO5.indexOf(e2.type)>=0);
-      if(_isHE){ if(_d2<_ehd2){_ehd2=_d2;_eh2=e2;} }
-      if(_d2<_ed2){_ed2=_d2;_eu2=e2;}
-    }
-    if(_eh2&&(h2.lv||0)<5)_eu2=_eh2;
-    if(DIFF==='hard'){
-      // 补刀：优先追猎残血目标（英雄优先），范围放宽到 900
-      var _wk9=null,_wkd9=900;
-      for(var wi9=0;wi9<units.length;wi9++){var wu9=units[wi9];
-        if(wu9.side===side||wu9.hp<=0||wu9.riding||wu9.bt!==undefined)continue;
-        if(wu9.hp/(wu9.mhp||1)>0.35)continue;
-        var wd9=dist(h2,wu9);
-        if(wd9>_wkd9)continue;
-        var _wpri=(wu9.type==='hero'||HERO5.indexOf(wu9.type)>=0)?0:1;
-        if(!_wk9){_wk9=wu9;_wkd9=wd9;}
+
+    var _heroTgt=null,_heroSide=null;
+
+    // 2) 进攻：先打附近敌人，再拆建筑，最后压向敌方 HQ
+    if(_pushH&&_eHQh){
+      var _allyNear=0;
+      for(var an2=0;an2<myArmy.length;an2++){
+        var au2=myArmy[an2];
+        if(au2.side!==side||au2.hp<=0||au2.riding)continue;
+        if(au2.type==='hero'||HERO5.indexOf(au2.type)>=0)continue;
+        if(dist(h2,au2)<400)_allyNear++;
+      }
+      if(h2.hp<h2.mhp*0.35||_allyNear===0){
+        h2.tgt=null;h2.wSide=undefined;
+        if(_cn2&&h2.tx===undefined){
+          h2.ord='m';
+          h2.tx=_cx2+(h2.id%2?130:-130);
+          h2.ty=_cy2+90;
+          h2._path=null;
+        }
+        continue;
+      }
+      var _best=null,_bd=900;
+      for(var ei2=0;ei2<units.length;ei2++){
+        var e2=units[ei2];
+        if(e2.side===side||e2.hp<=0||e2.riding||e2.bt!==undefined)continue;
+        var _d2=dist(h2,e2);
+        if(e2.type==='hero'||HERO5.indexOf(e2.type)>=0)_d2*=0.6;
+        if(_d2<_bd){_bd=_d2;_best=e2;}
+      }
+      // 困难：优先补刀残血目标
+      if(DIFF==='hard'&&(!_best||_best.hp/(_best.mhp||1)>0.4)){
+        var _wk=null,_wkd=950;
+        for(var wi=0;wi<units.length;wi++){
+          var wu=units[wi];
+          if(wu.side===side||wu.hp<=0||wu.riding||wu.bt!==undefined)continue;
+          if(wu.hp/(wu.mhp||1)>0.35)continue;
+          var wd=dist(h2,wu);
+          if(wd<_wkd){_wkd=wd;_wk=wu;}
+        }
+        if(_wk)_best=_wk;
+      }
+      if(_best){_heroTgt=_best;_heroSide=_best.side;}
+      else{
+        var _hb=null,_hbd=550;
+        for(var bi=0;bi<blds.length;bi++){
+          var bb=blds[bi];
+          if(bb.side===side||bb.hp<=0)continue;
+          var db=dist(h2,bb);
+          if(bb.type==='turret'||bb.type==='missile')db*=0.5;
+          else if(bb.type==='hq')db*=0.75;
+          if(db<_hbd){_hbd=db;_hb=bb;}
+        }
+        if(_hb){_heroTgt=_hb;_heroSide=_hb.side;}
         else{
-          var _opri=(_wk9.type==='hero'||HERO5.indexOf(_wk9.type)>=0)?0:1;
-          if(_wpri<_opri||(_wpri===_opri&&wd9<_wkd9)){_wk9=wu9;_wkd9=wd9;}
+          var _fx=_cx2+(_eHQh.x-_cx2)*0.28;
+          var _fy=_cy2+(_eHQh.y-_cy2)*0.28;
+          var _ha=(h2.id%8)*0.785;
+          h2.ord='m';
+          h2.tx=_fx+Math.cos(_ha)*130;
+          h2.ty=_fy+Math.sin(_ha)*130;
+          h2.tgt=null;h2._path=null;h2.wSide=ai.atkSide;
         }
       }
-      if(_wk9)_eu2=_wk9;
     }
-    if(_eu2){
-      if(!h2.tgt||h2.tgt.hp<=0){h2.tgt=_eu2;h2.ord='a';h2.tx=undefined;h2.ty=undefined;h2._path=null;}
-    }else if(_cn2>=2&&h2.hp>h2.mhp*0.6){
-      var _eb9=null,_ed9=420;
-      for(var bi9=0;bi9<blds.length;bi9++){
-        var bb9=blds[bi9];
-        if(bb9.side===side||bb9.hp<=0)continue;
-        var _db9=dist(h2,bb9);
-        if(_db9<_ed9){_ed9=_db9;_eb9=bb9;}
+    // 4) 防守/待命：只打附近的敌人，没目标就回基地
+    else{
+      var _dbest=null,_dbd=700;
+      for(var di=0;di<units.length;di++){
+        var du=units[di];
+        if(du.side===side||du.hp<=0||du.riding||du.bt!==undefined)continue;
+        var dd=dist(h2,du);
+        if(dd<_dbd){_dbd=dd;_dbest=du;}
       }
-      if(_eb9){if(!h2.tgt||h2.tgt.hp<=0){h2.tgt=_eb9;h2.ord='a';h2.tx=undefined;h2.ty=undefined;h2._path=null;}}
-      else if(!h2.tgt||h2.tgt.hp<=0){h2.ord='m';h2.tx=_cx2+(h2.id%2?110:-110);h2.ty=_cy2+90;h2._path=null;}
-    }else if(_cn2&&(!h2.tgt||h2.tgt.hp<=0)&&(h2.tx===undefined||dist(h2,{x:_cx2,y:_cy2})>260)){
-      var _ax2=h2.x-_cx2,_ay2=h2.y-_cy2,_al2=Math.hypot(_ax2,_ay2)||1;
-      h2.ord='m';h2.tx=_cx2+_ax2/_al2*120;h2.ty=_cy2+_ay2/_al2*120;h2.tgt=null;h2._path=null;
-    }else if(!_cn2&&(!h2.tgt||h2.tgt.hp<=0)&&h2.tx===undefined){
-      var _ehq9=blds.find(function(b){return b.type==='hq'&&b.side!==side&&b.hp>0;});
-      if(_ehq9&&_hqOwn2&&dist(_hqOwn2,_ehq9)>180){
-        h2.ord='m';h2.tx=_hqOwn2.x+(_ehq9.x-_hqOwn2.x)*0.45;h2.ty=_hqOwn2.y+(_ehq9.y-_hqOwn2.y)*0.45;h2._path=null;
+      if(_dbest){_heroTgt=_dbest;_heroSide=_dbest.side;}
+    }
+
+    // 5) 应用目标
+    if(_heroTgt&&_heroTgt.hp>0){
+      h2.tgt=_heroTgt;h2.ord='a';h2.wSide=_heroSide;
+      if(dist(h2,_heroTgt)>h2.rng*2&&h2.tx===undefined){
+        h2.tx=_heroTgt.x;h2.ty=_heroTgt.y;h2._path=null;
+      }
+    }else if(!_pushH){
+      h2.tgt=null;h2.wSide=undefined;
+      if(_hqOwn2&&dist(h2,_hqOwn2)>520){
+        if(h2.tx===undefined){
+          h2.ord='m';
+          h2.tx=_hqOwn2.x+(h2.id%2?130:-130);
+          h2.ty=_hqOwn2.y+130;
+          h2._path=null;
+        }
+      }else{
+        h2.tx=undefined;h2.ty=undefined;h2._path=null;
       }
     }
     if(DIFF==='hard'){
